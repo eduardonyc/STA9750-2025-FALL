@@ -2,9 +2,7 @@
 title: "Eduardonyc's Website"
 ---
 
-Hi, I'm Eduardo. Feel free to take a peek into **my life**. 
-
-If you're feeling like Inspector Gadget today, take a gander [here](https://www.eduardoalarcon.co).
+Hi, I'm Eduardo. Feel free to take on the role of Inspector Gadget and peek into **my life** by taking a gander [here](https://www.eduardoalarcon.co).
 
 ```{r}
 #| echo: false
