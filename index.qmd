@@ -29,6 +29,10 @@ I also love the Metroid franchise. Anyone else a fan of an early 1990s, pixelate
 
 ![The galaxy is at peace...for now.](https://1.bp.blogspot.com/-8LBE3YkM-vI/WxgCkHGNEwI/AAAAAAAADDE/Mod521rmCDU0o2cveat2l0vJOVFZAYDSwCLcBGAs/s1600/Metroid%2Bgifgifsgif%2B%2B8.gif.gif)
 
+**Enjoy some video game music while you shamelessly stalk my page:**
+
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXdfOcg1fm0VG?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
 ```{r}
 #| include: false
 1+1
