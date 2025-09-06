@@ -24,7 +24,7 @@ leaflet() |>
   addPopups(baruch_longitude, baruch_latitude, 
             "I am a Doctoral student visiting <b>Baruch College</b>!")
 ```
-
+<b>
 I also love the Metroid franchise. Anyone else a fan of an early 1990s, pixelated Samus? 🤔
 
 ![The galaxy is at peace...for now.](https://1.bp.blogspot.com/-8LBE3YkM-vI/WxgCkHGNEwI/AAAAAAAADDE/Mod521rmCDU0o2cveat2l0vJOVFZAYDSwCLcBGAs/s1600/Metroid%2Bgifgifsgif%2B%2B8.gif.gif)
