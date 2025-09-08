@@ -1,9 +1,11 @@
 ---
-title: "Eduardonyc's Website"
+title: "Welcome to a Page in My Life"
 ---
 
-Hi, I'm Eduardo. Feel free to assume the role of Inspector Gadget and peek into **my life** by taking a gander [here](https://www.eduardoalarcon.co).
+Hi, I'm Eduardo. Feel free to assume the role of Inspector Gadget and peek into **my life** by taking a gander using the clickable button below.
 
+<center><button onclick="window.location.href='https://www.eduardoalarcon.co'">Who is Eduardo?</button></center>
+<br>
 ```{r}
 #| echo: false
 #| message: false
