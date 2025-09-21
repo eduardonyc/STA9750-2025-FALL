@@ -1,30 +1,49 @@
 ---
 title: "Welcome to a Page in My Life"
 ---
+<style>
+h1.title {
+  text-align: center;
+}
+</style>
 
-Hi, I'm Eduardo. Feel free to assume the role of Inspector Gadget and peek into **my life** by taking a gander using the clickable button below.
+<table style="width: 100%; border: none;">
+<tr>
+<td style="vertical-align: top; width: 40%; text-align: left;">
+Hi, I'm Eduardo! 
 
+Feel free to assume the role of Inspector Gadget and peek into <strong>my life</strong> by taking a gander using the clickable button below.
+<br><br>
 <center><button onclick="window.location.href='https://www.eduardoalarcon.co'">Who is Eduardo?</button></center>
+</td>
+<td style="vertical-align: top; width: 60%; text-align: center;">
+<div style="background: white; padding: 20px 20px 60px 20px; border-radius: 8px; display: inline-block; transform: rotate(-2deg); box-shadow: 0 15px 50px rgba(0,0,0,0.4), 0 5px 20px rgba(0,0,0,0.2); transition: all 0.4s ease; cursor: pointer; border: 1px solid #e0e0e0;" onmouseover="this.style.transform='rotate(-1deg) scale(1.05)'; this.style.boxShadow='0 25px 80px rgba(0,0,0,0.6), 0 10px 40px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='rotate(-2deg) scale(1)'; this.style.boxShadow='0 15px 50px rgba(0,0,0,0.4), 0 5px 20px rgba(0,0,0,0.2)';">
+<img src="https://github.com/user-attachments/assets/11ff0b99-4e68-4dee-9beb-856fe66baf3e" alt="Eduardo's Photo" style="width: 100%; max-width: 400px; border-radius: 3px; display: block;">
+<div style="text-align: center; margin-top: 15px; font-family: 'Courier New', monospace; color: #555; font-size: 18px; font-weight: bold;">
+<span style="font-size: 24px;">♪</span> A Song in the Key of Life <span style="font-size: 24px;">♪</span>
+</div>
+</div>
+</td>
+</tr>
+</table>
+
 <br>
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
-
 if(!require("leaflet")){
     options(repos=c(CRAN="https://cloud.r-project.org"))
     install.packages("leaflet")
     stopifnot(require("leaflet"))
 }
-
-baruch_longitude <- -73.98333
-baruch_latitude  <- +40.75028
-
+kyoto_longitude <- 135.7681
+kyoto_latitude  <- 35.0116
 leaflet() |>
   addTiles() |>
-  setView(baruch_longitude, baruch_latitude, zoom=17) |>
-  addPopups(baruch_longitude, baruch_latitude, 
-            "I am a Doctoral student visiting <b>Baruch College</b>!")
+  setView(kyoto_longitude, kyoto_latitude, zoom=6) |>
+  addPopups(kyoto_longitude, kyoto_latitude, 
+            "I'm a Doctoral student visiting <b>Baruch College</b>, but my mind often drifts to the serenity of <b>Kyoto, Japan</b>!")
 ```
 <br>
 I also love the Metroid franchise. Anyone else a fan of an early 1990s, pixelated Samus? 🤔
