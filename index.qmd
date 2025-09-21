@@ -12,7 +12,7 @@ h1.title {
 <td style="vertical-align: top; width: 40%; text-align: left;">
 Hi, I'm Eduardo! 
 
-Feel free to assume the role of Inspector Gadget and peek into <strong>my life</strong> by taking a gander using the clickable button below.
+Check out what I've been up to - hit the button below and take a look around.
 <br><br>
 <center><button onclick="window.location.href='https://www.eduardoalarcon.co'">Who is Eduardo?</button></center>
 </td>
@@ -48,7 +48,50 @@ leaflet() |>
 <br>
 I also love the Metroid franchise. Anyone else a fan of an early 1990s, pixelated Samus? 🤔
 
-![The galaxy is at peace...for now.](https://1.bp.blogspot.com/-8LBE3YkM-vI/WxgCkHGNEwI/AAAAAAAADDE/Mod521rmCDU0o2cveat2l0vJOVFZAYDSwCLcBGAs/s1600/Metroid%2Bgifgifsgif%2B%2B8.gif.gif)
+<center>![](https://1.bp.blogspot.com/-8LBE3YkM-vI/WxgCkHGNEwI/AAAAAAAADDE/Mod521rmCDU0o2cveat2l0vJOVFZAYDSwCLcBGAs/s1600/Metroid%2Bgifgifsgif%2B%2B8.gif.gif)</center>
+
+<style>
+.neon-galaxy {
+    text-align: center;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: bold;
+    color: #00a033;
+    text-shadow: 
+        0 0 5px #00cc44,
+        0 0 10px #00cc44,
+        0 0 15px #00cc44,
+        0 0 20px #00cc44,
+        0 0 25px #00cc44;
+    margin: 20px 0;
+    letter-spacing: 1px;
+    animation: neon-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+    from {
+        text-shadow: 
+            0 0 10px #00cc44,
+            0 0 20px #00cc44,
+            0 0 30px #00cc44,
+            0 0 40px #00cc44,
+            0 0 50px #00cc44;
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    to {
+        text-shadow: 
+            0 0 1px #00cc44,
+            0 0 3px #00cc44,
+            0 0 5px #00cc44,
+            0 0 8px #00cc44,
+            0 0 10px #00cc44;
+        opacity: 0.6;
+        transform: scale(0.98);
+    }
+}
+</style>
+<div class="neon-galaxy">The galaxy is at peace...for now.</div>
 
 **Enjoy some video game music while you shamelessly stalk my page:**
 
