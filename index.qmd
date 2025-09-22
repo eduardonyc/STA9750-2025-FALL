@@ -5,6 +5,58 @@ title: "Welcome to a Page in My Life"
 h1.title {
   text-align: center;
 }
+
+html {
+    height: 100%;
+}
+
+body {
+    background: linear-gradient(to bottom, #ffffff, #f0f0f0, #e0e0e0, #d0d0d0, #c0c0c0, #b0b0b0);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 400vh;
+    min-height: 200vh;
+    margin: 0;
+    padding: 0;
+    animation: fade-in-gradient 3s ease-out forwards, noticeable-shift 12s ease-in-out infinite 3s;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    z-index: -1;
+    animation: fade-out-white 3s ease-out forwards;
+}
+
+@keyframes fade-out-white {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes fade-in-gradient {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes noticeable-shift {
+    0% { 
+        background-position: 0% 0%;
+        filter: brightness(1);
+    }
+    50% { 
+        background-position: 0% 60%;
+        filter: brightness(0.9);
+    }
+    100% { 
+        background-position: 0% 0%;
+        filter: brightness(1);
+    }
+}
 </style>
 
 <table style="width: 100%; border: none;">
