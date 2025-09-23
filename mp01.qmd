@@ -1,4 +1,101 @@
 ---
-title: "mp01.qmd"
+title: "Eduardo's Mini Project 1 (WIP)"
 ---
 
+<div style="text-align: center; padding: 20px;">
+  <h2>Real-time Netflix Users</h2>
+  <canvas id="userChart" width="800" height="400" style="border: 1px solid #ddd;"></canvas>
+  <p style="color: #666; margin-top: 15px;">Updates every 2 seconds</p>
+</div>
+
+<div id="live-counter-bottom" style="text-align: center; margin-top: 20px; font-size: 1.1em;">
+🔴 LIVE: Loading...
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize data arrays
+let timeLabels = [];
+let userCounts = [];
+let maxDataPoints = 15;
+
+// Get canvas and create chart
+const ctx = document.getElementById('userChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: timeLabels,
+        datasets: [{
+            label: 'Active Users (Millions)',
+            data: userCounts,
+            borderColor: '#E50914',
+            backgroundColor: 'rgba(229, 9, 20, 0.1)',
+            borderWidth: 3,
+            pointBackgroundColor: '#E50914',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Time',
+                    font: { size: 14, weight: 'bold' }
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Active Users (Millions)',
+                    font: { size: 14, weight: 'bold' }
+                },
+                min: 210,
+                max: 250
+            }
+        },
+        animation: {
+            duration: 800
+        }
+    }
+});
+
+function updateGraph() {
+    // Generate new data point
+    const now = new Date().toLocaleTimeString();
+    const users = +(220 + Math.random() * 20).toFixed(1);
+    
+    // Update live counter at the bottom
+    document.getElementById('live-counter-bottom').innerHTML = 
+        '🔴 <strong>LIVE:</strong> <span style="color: #E50914; font-weight: bold;">' + users + ' Million Users Online</span>';
+    
+    // Add new data
+    timeLabels.push(now);
+    userCounts.push(users);
+    
+    // Keep only last 15 points
+    if (timeLabels.length > maxDataPoints) {
+        timeLabels.shift();
+        userCounts.shift();
+    }
+    
+    // Update chart
+    chart.update('none'); // No animation for smoother updates
+}
+
+// Start updates
+updateGraph();
+setInterval(updateGraph, 2000);
+</script>
