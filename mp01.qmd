@@ -1,119 +1,359 @@
 ---
-title: "Eduardo's Mini Project 1 (WIP)"
+title: "STA 9750 Mini-Project #01: Netflix Analysis"
+author: "Eduardo Alarcon"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+execute:
+  message: false
+  warning: false
 ---
 
-<div style="text-align: center; padding: 20px;">
-  <h2>Real-time Netflix Users</h2>
-  <canvas id="userChart" width="800" height="400" style="border: 1px solid #ddd;"></canvas>
-  <p style="color: #666; margin-top: 15px;">Updates every 2 seconds</p>
-</div>
+```{r setup}
+library(dplyr)
+library(lubridate)
+library(readr)
+library(scales)
+library(tidyverse)
+library(knitr)
+```
 
-<div id="live-counter-bottom" style="text-align: center; margin-top: 20px; font-size: 1.1em;">
-🔴 LIVE: Loading...
-</div>
+```{r}
+#| include: false 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-// Initialize data arrays
-let timeLabels = [];
-let userCounts = [];
-let maxDataPoints = 15;
+if(!dir.exists(file.path("data", "mp01"))){ dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE) }
+GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
+if(!file.exists(GLOBAL_TOP_10_FILENAME)){ download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", destfile=GLOBAL_TOP_10_FILENAME) }
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
+if(!file.exists(COUNTRY_TOP_10_FILENAME)){ download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", destfile=COUNTRY_TOP_10_FILENAME) }
 
-// Get canvas and create chart
-const ctx = document.getElementById('userChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: timeLabels,
-        datasets: [{
-            label: 'Active Users (Millions)',
-            data: userCounts,
-            borderColor: '#E50914',
-            backgroundColor: 'rgba(229, 9, 20, 0.1)',
-            borderWidth: 3,
-            pointBackgroundColor: '#E50914',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: false,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top'
-            }
-        },
-        scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: 'Time',
-                    font: { size: 14, weight: 'bold' }
-                }
-            },
-            y: {
-                title: {
-                    display: true,
-                    text: 'Active Users (Millions)',
-                    font: { size: 14, weight: 'bold' }
-                },
-                min: 210,
-                max: 250
-            }
-        },
-        animation: {
-            duration: 800
-        }
-    }
-});
+if(!require("tidyverse")) install.packages("tidyverse")
 
-function updateGraph() {
-    // Generate new data point
-    const now = new Date().toLocaleTimeString();
-    const users = +(220 + Math.random() * 20).toFixed(1);
-    
-    // Update live counter at the bottom
-    document.getElementById('live-counter-bottom').innerHTML = 
-        '🔴 <strong>LIVE:</strong> <span style="color: #E50914; font-weight: bold;">' + users + ' Million Users Online</span>';
-    
-    // Add new data
-    timeLabels.push(now);
-    userCounts.push(users);
-    
-    // Keep only last 15 points
-    if (timeLabels.length > maxDataPoints) {
-        timeLabels.shift();
-        userCounts.shift();
-    }
-    
-    // Update chart
-    chart.update('none'); // No animation for smoother updates
+GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME)
+str(GLOBAL_TOP_10)
+glimpse(GLOBAL_TOP_10)
+
+GLOBAL_TOP_10 <- GLOBAL_TOP_10 %>%
+  mutate(season_title = if_else(season_title == "N/A", NA, season_title))
+glimpse(GLOBAL_TOP_10)
+
+COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, na = "N/A")
+glimpse(COUNTRY_TOP_10)
+str(COUNTRY_TOP_10)
+
+n_distinct(COUNTRY_TOP_10$country_name)
+
+GLOBAL_TOP_10 %>%
+filter(category == "Films (Non-English)") %>%
+group_by(show_title) %>%
+summarise(max_cumulweeks = max(cumulative_weeks_in_top_10, na.rm = TRUE)) %>%
+arrange(desc(max_cumulweeks)) %>%
+slice(1)
+
+library(stringr)
+library(DT)
+
+format_titles <- function(df){
+    colnames(df) <- str_replace_all(colnames(df), "_", " ") |> str_to_title()
+    df
 }
 
-// Start updates
-updateGraph();
-setInterval(updateGraph, 2000);
-</script>
+GLOBAL_TOP_10 |> 
+head(n=20) |>
+datatable(options=list(searching=FALSE, info=FALSE))
+
+GLOBAL_TOP_10 |> 
+format_titles() |>
+head(n=20) |>
+datatable(options=list(searching=FALSE, info=FALSE)) |>
+formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+
+```
+
+## Task 4
+
+The following questions address Task 4. Please click on the "Show Code" for an detailed approach on how I obtained my results.
+
+<br>
+
+1. How many different countries does Netflix operate in? (You can use the viewing history as a proxy for countries in which Netflix operates.)
+
+```{r}
+#| output: false
+n_distinct(COUNTRY_TOP_10$country_name)
+``` 
+**Answer:** Netflix operates in ```r n_distinct(COUNTRY_TOP_10$country_name)``` different countries based on the viewing history data.
+
+<br>
+
+2. Which non-English-language film has spent the most cumulative weeks in the global top 10? How many weeks did it spend?
+
+```{r}
+Q2_RESULT <- GLOBAL_TOP_10 %>%
+  filter(category == "Films (Non-English)") %>%
+  group_by(show_title) %>%
+  summarise(`Maximum Cumulative Weeks` = max(cumulative_weeks_in_top_10, na.rm = TRUE)) %>%
+  arrange(desc(`Maximum Cumulative Weeks`)) %>%
+  slice(1)
+
+film_name_2 <- Q2_RESULT$show_title
+weeks_count_2 <- Q2_RESULT[[2]]
+
+Q2_RESULT %>%
+  format_titles() %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+
+```
+
+<br>
+
+**Answer:** The non-English-language film `r film_name_2` spent the most cumulative weeks in the Global Top 10, with `r weeks_count_2` weeks.
+
+<br>
+
+3.	What is the longest film (English or non-English) to have ever appeared in the Netflix global Top 10? How long is it in minutes?
+```{r}
+Q3_RESULT <- GLOBAL_TOP_10 %>%
+  filter(category %in% c("Films (Non-English)", "Films (English)")) %>%
+  filter(!is.na(runtime)) %>%   
+  group_by(show_title) %>%
+  summarise(max_runtime = max(runtime)) %>%   
+  arrange(desc(max_runtime)) %>%
+  slice(1) %>%
+  mutate(max_runtime_minutes = round(60 * max_runtime))
+
+film_name_3 <- Q3_RESULT$show_title
+run_time_3 <- Q3_RESULT[[3]]
+
+Q3_RESULT %>%
+select(-max_runtime) %>%
+format_titles() %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+
+```
+
+<br>
+
+**Answer:** The longest English or non-English film to have ever topped in the Netflix Global Top 10 is `r film_name_3`, with a length of `r run_time_3` minutes.
+
+<br>
+
+4. For each of the four categories, what program has the most total hours of global viewership?
+
+```{r}
+Q4_RESULT <- GLOBAL_TOP_10 %>%
+group_by(category, show_title) %>%
+summarise(total_hours_global_viewership = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
+group_by(category) %>%
+slice_max(total_hours_global_viewership, n = 1) %>%
+arrange(desc(total_hours_global_viewership)) %>%
+mutate(total_hours_global_viewership = comma(total_hours_global_viewership))
+
+Q4_RESULT %>%
+format_titles() %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+```
+
+<br>
+
+**Answer:** The above table highlights the programs achieving the highest global viewership in their respective categories. 
+
+<br>
+
+5.	Which TV show had the longest run in a country’s Top 10? How long was this run and in what country did it occur?
 
 ```{r}
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-if(!dir.exists(file.path("data", "mp01"))){
-    dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE)
-}
-GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
-if(!file.exists(GLOBAL_TOP_10_FILENAME)){
-    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", 
-                  destfile=GLOBAL_TOP_10_FILENAME)
-}
-COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
-if(!file.exists(COUNTRY_TOP_10_FILENAME)){
-    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
-                  destfile=COUNTRY_TOP_10_FILENAME)
-}
+Q5_RESULT <- COUNTRY_TOP_10 %>%
+filter(category == "TV") %>%
+filter(!is.na(season_title)) %>%
+group_by(country_name, show_title) %>%
+summarise(max_cumulative_weeks = max(cumulative_weeks_in_top_10), .groups = "drop") %>%
+arrange(desc(max_cumulative_weeks)) %>%
+slice(1)
+
+Q5_RESULT %>%
+format_titles() %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 ```
+
+<br>
+
+**Answer:** Money Heist had the longest run in Pakistan, with 127 weeks in Netflix's Country Top 10 list. 
+
+<br>
+
+6. Netflix provides over 200 weeks of service history for all but one country in our data set. Which country is this and when did Netflix cease operations in that country?
+
+```{r}
+
+Q6_RESULT <- COUNTRY_TOP_10 %>%
+group_by(country_name) %>%
+summarise(total_weeks_of_data = n_distinct(week),final_week = max(week, na.rm = TRUE)) %>%
+filter(total_weeks_of_data < 200) %>%
+arrange(total_weeks_of_data)
+
+Q6_RESULT %>%
+format_titles() %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+
+```
+
+<br>
+
+**Answer:** Netflix could not provide over 200 weeks of service for Russia, as it ceased operations during the week of February 27, 2022, resulting in 35 weeks of data in the Country Top 10 list.
+
+<br>
+
+7. What is the total viewership of the TV show Squid Game? Note that there are three seasons total and we are looking for the total number of hours watched across all seasons.
+
+```{r}
+Q7_RESULT_SEASONS <- GLOBAL_TOP_10 %>%
+filter(show_title == "Squid Game") %>%
+filter(!is.na(season_title)) %>%
+group_by(season_title) %>%
+summarise(sum_hours = sum(weekly_hours_viewed, na.rm = TRUE)) %>%
+mutate(hours_watched = comma(sum_hours))
+
+Q7_RESULT_SEASONS_SUM <- Q7_RESULT_SEASONS %>%
+summarise(
+season_title = "Total Hours Watched Across All Seasons",
+sum_hours_1 = sum(sum_hours),
+hours_watched = comma(sum_hours_1))
+
+Q7_RESULT_FINAL <- bind_rows(Q7_RESULT_SEASONS, Q7_RESULT_SEASONS_SUM) %>%
+select(season_title, hours_watched)
+
+Q7_RESULT_FINAL %>%
+format_titles() %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+```
+
+<br>
+
+**Answer:** Across all three seasons, Squid Game had a total of 5,048,300,000 hours of global viewership. 
+
+<br>
+
+8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
+
+```{r}
+Q8_RESULT <- GLOBAL_TOP_10 %>%
+filter(show_title == "Red Notice") %>%
+filter(year(week) == 2021) %>%
+summarise(
+total_hours_2021 = sum(weekly_hours_viewed, na.rm = TRUE),
+runtime_hours = 1 + 58/60,
+approximate_views = total_hours_2021 / runtime_hours) %>%
+mutate(
+approximate_views_formatted = comma(round(approximate_views)),
+total_hours_formatted = comma(total_hours_2021)
+)
+
+Q8_RESULT %>%
+select(total_hours_formatted, approximate_views_formatted) %>%
+rename(
+`Total Hours Viewed (2021)` = total_hours_formatted,
+`Approximate Views` = approximate_views_formatted) %>%
+datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+```
+
+<br>
+
+**Answer:** Based on the total number of hours viewed in 2021, Red Notice has approximately, 201,732,203 global views.
+
+<br>
+
+9. Part A: How many Films reached Number 1 in the US but did not originally debut there? 
+
+
+```{r}
+
+COUNTRY_TOP_10_US_ONLY <- COUNTRY_TOP_10 %>%
+  filter(country_iso2 == "US", category == "Films")
+
+US_TOP_SHOW_TITLES_NUMBER1 <- COUNTRY_TOP_10_US_ONLY %>%
+  group_by(show_title) %>%
+  summarise(highest_weekly_rank = min(weekly_rank, na.rm = TRUE)) %>%
+  filter(highest_weekly_rank == 1) %>%
+  pull(show_title)
+
+Q9_RESULT_PT1 <- COUNTRY_TOP_10_US_ONLY %>%
+  filter(show_title %in% US_TOP_SHOW_TITLES_NUMBER1) %>%
+  group_by(show_title) %>%
+  summarise(first_rank = first(weekly_rank)) %>%
+  filter(first_rank > 1) %>%
+  summarise(number_of_films = n())
+
+```
+
+<br>
+
+**Answer:** A total of ```r Q9_RESULT_PT1``` films in the US reached to Number 1 after debuting at a lower ranking. 
+
+<br>
+
+9. Part B: What is the most recent film to pull this off?
+
+```{r}
+
+COUNTRY_TOP_10_US_ONLY <- COUNTRY_TOP_10 %>%
+  filter(country_iso2 == "US", category == "Films")
+
+US_TOP_SHOW_TITLES_NUMBER1 <- COUNTRY_TOP_10_US_ONLY %>%
+  group_by(show_title) %>%
+  summarise(highest_weekly_rank = min(weekly_rank, na.rm = TRUE)) %>%
+  filter(highest_weekly_rank == 1) %>%
+  pull(show_title)
+
+Q9_RESULT_PT2 <- COUNTRY_TOP_10_US_ONLY %>%
+  filter(show_title %in% US_TOP_SHOW_TITLES_NUMBER1) %>%
+  filter(weekly_rank == 1) %>%
+  arrange(desc(week)) %>%
+  slice(1) %>%
+  select(show_title, week) %>%
+  rename(`Most Recent Film` = show_title, `Date Reached #1` = week)
+
+Q9_RESULT_PT2 %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+
+```
+
+<br>
+
+**Answer:** The most recent film to accomplish this was Ice Road: Vengeance, which reached Number 1 during the week of September 21, 2025. 
+
+<br>
+
+10. Which TV show/season hit the top 10 in the most countries in its debut week? In how many countries did it chart?
+
+```{r}
+
+COUNTRY_TOP_10_DEBUT <- COUNTRY_TOP_10 %>%
+filter(category == "TV") %>%
+group_by(show_title, season_title, country_name) %>%
+summarise(
+debut_week = min(week, na.rm = TRUE),
+debut_rank = weekly_rank[which.min(week)][1],
+.groups = "drop"
+) %>%
+arrange(debut_week)
+
+Q10_RESULT <- COUNTRY_TOP_10_DEBUT %>% 
+group_by(show_title, season_title, debut_week) %>% 
+summarise(country_appearance = n_distinct(country_name), .groups = "drop") %>% 
+arrange(desc(country_appearance)) %>% 
+slice(1) %>%
+rename(`Show Title` = show_title, `Season Title` = season_title, `Debut Week` = debut_week, `Number of Countries Charted` = country_appearance)
+
+Q10_RESULT %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+
+```
+
+<br>
+
+**Answer:** Emily in Paris (Season 2) charted in 94 countries during its debut week in December 26, 2021. 
+
+<br>
