@@ -14,10 +14,6 @@ website:
         text: Home
       - href: mp01.qmd
         text: Mini-Project 1
-    right:
-      - icon: github
-        href: https://eduardonyc.github.io/STA9750-2025-FALL/
-        aria-label: GitHub Repository
 
 format:
   html:
