@@ -4,13 +4,29 @@ project:
 
 website:
   title: "STA 9750 Submission Material"
-  description:
-    Course Projects for STA 9750 at Baruch College
+  description: "Course Projects for STA 9750 at Baruch College"
   site-url: "https://eduardonyc.github.io/STA9750-2025-FALL/"
   navbar:
     background: primary
     search: false
-    
+    left:
+      - href: index.qmd
+        text: Home
+      - href: mp01.qmd
+        text: Mini-Project 1
+      - href: mp02.qmd
+        text: Mini-Project 2
+      - href: mp03.qmd
+        text: Mini-Project 3
+      - href: mp04.qmd
+        text: Mini-Project 4
+      - href: resources.qmd
+        text: Resources
+    right:
+      - icon: github
+        href: https://eduardonyc.github.io/STA9750-2025-FALL/
+        aria-label: GitHub Repository
+
 format:
   html:
     theme: lux
