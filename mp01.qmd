@@ -637,7 +637,7 @@ GLOBAL_REACH_SUMMARY <- data.frame(
 cat("India-exclusive NON-ENGLISH, (proxy for Hindi; excludes Telugu/Tamil) that achieved global top 10 status:\n")
 global_appearing_breakdown %>%
   rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
-  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 cat("Total NON-ENGLISH (proxy for Hindi; excludes Telugu/Tamil) appearing in global charts:", shows_in_global_count, "of", total_combinations, "\n\n")
 
@@ -690,8 +690,8 @@ INDIA_EXCLUSIVE_METRICS <- GLOBAL_TOP_10 %>%
 
 INDIA_EXCLUSIVE_METRICS %>%
   format_titles() %>%
-  datatable(options = list(searching = TRUE, info = TRUE, paging = TRUE, pageLength = 5
-  ))
+  datatable(options = list(searching = TRUE, info = TRUE, paging = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+
 
 ```
 
@@ -754,7 +754,7 @@ YEARLY_ANALYSIS <- yearly_hours %>%
 
 cat("India-exclusive NON-ENGLISH (proxy for Hindi; excludes Telugu/Tamil) Content - Yearly Viewing Hours Analysis:\n")
 YEARLY_ANALYSIS %>%
-  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
   geom_line(color = "steelblue", size = 1.2) +
@@ -859,7 +859,7 @@ SOUTH_ASIA_DETAILED_ANALYSIS %>%
     paging = FALSE,
     scrollX = TRUE,
     columnDefs = list(
-      list(className = 'dt-center', targets = "_all"),
+      list(className = 'dt-left', targets = "_all"),
       list(width = '80px', targets = 1:8)
     )
   ))
