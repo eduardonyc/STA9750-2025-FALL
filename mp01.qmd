@@ -1029,3 +1029,13 @@ grand_total_views <- sum(totals$`Approx Global Views`, na.rm = TRUE)
 cat("Grand Total Weekly Hours Viewed:", comma(grand_total_hours), "\n")
 cat("Grand Total Approx Global Views:", comma(grand_total_views), "\n")
 ```
+
+Hours are global for the listed titles as the country TSV does not contain this information.
+
+*[Netflix’s Average Episode Runtime for Pablo Escobar: El Patrón del Mal](https://www.netflix.com/title/80035684?utm_source=chatgpt.com)*
+
+*[Wikipedia’s Average Episode Runtime for Pasión de Gavilanes](https://en.wikipedia.org/wiki/Pasi%C3%B3n_de_Gavilanes?utm_source=chatgpt.com)*
+
+*[tvdb’s Average Episode Runtime for Café con Aroma de Mujer](https://thetvdb.com/series/cafe-con-aroma-de-mujer-2021#general)*
+
+*[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
