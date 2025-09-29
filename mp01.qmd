@@ -634,12 +634,12 @@ GLOBAL_REACH_SUMMARY <- data.frame(
   )
 )
 
-cat("India-exclusive NON-ENGLISH, (i.e., implied Hindi content) that achieved global top 10 status:\n")
+cat("India-exclusive NON-ENGLISH, (proxy for Hindi; excludes Telugu/Tamil) that achieved global top 10 status:\n")
 global_appearing_breakdown %>%
   rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 
-cat("Total NON-ENGLISH (i.e., implied Hindi content) appearing in global charts:", shows_in_global_count, "of", total_combinations, "\n\n")
+cat("Total NON-ENGLISH (proxy for Hindi; excludes Telugu/Tamil) appearing in global charts:", shows_in_global_count, "of", total_combinations, "\n\n")
 
 GLOBAL_REACH_SUMMARY %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
@@ -742,7 +742,7 @@ YEARLY_ANALYSIS <- yearly_hours %>%
     `Year-over-Year Change` = yoy_change_formatted
   )
 
-cat("India-exclusive NON-ENGLISH (i.e., implied Hindi) Content - Yearly Viewing Hours Analysis:\n")
+cat("India-exclusive NON-ENGLISH (proxy for Hindi; excludes Telugu/Tamil) Content - Yearly Viewing Hours Analysis:\n")
 YEARLY_ANALYSIS %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 
