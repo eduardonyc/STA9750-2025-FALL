@@ -157,7 +157,7 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 
 <br>
 
-**Answer:** The above table highlights the programs achieving the highest global viewership in their respective categories. 
+**Answer:** The above table highlights calculations that sum all seasons together (i.e.,franchise-level data). In other words, Stranger Things and Squid Game reflect the combined global viewership across all of their respective seasons.
 
 <br>
 
@@ -271,19 +271,24 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 ```{r}
 
 COUNTRY_TOP_10_US_ONLY <- COUNTRY_TOP_10 %>%
-  filter(country_iso2 == "US", category == "Films")
+  filter(country_iso2 == "US", category == "Films") %>%
+  mutate(week = as.Date(week))
 
-US_TOP_SHOW_TITLES_NUMBER1 <- COUNTRY_TOP_10_US_ONLY %>%
+US_FILMS_REACH1 <- COUNTRY_TOP_10_US_ONLY %>%
   group_by(show_title) %>%
-  summarise(highest_weekly_rank = min(weekly_rank, na.rm = TRUE)) %>%
-  filter(highest_weekly_rank == 1) %>%
-  pull(show_title)
+  summarise(best_rank = min(weekly_rank, na.rm = TRUE), .groups = "drop") %>%
+  filter(best_rank == 1)
 
-Q9_RESULT_PT1 <- COUNTRY_TOP_10_US_ONLY %>%
-  filter(show_title %in% US_TOP_SHOW_TITLES_NUMBER1) %>%
+US_DEBUT <- COUNTRY_TOP_10_US_ONLY %>%
   group_by(show_title) %>%
-  summarise(first_rank = first(weekly_rank)) %>%
-  filter(first_rank > 1) %>%
+  arrange(week, .by_group = TRUE) %>%   # <-- critical: order before taking first
+  slice(1L) %>%                         # earliest appearance in US
+  ungroup() %>%
+  transmute(show_title, debut_week = week, debut_rank = weekly_rank)
+
+Q9_RESULT_PT1 <- US_FILMS_REACH1 %>%
+  inner_join(US_DEBUT, by = "show_title") %>%
+  filter(debut_rank > 1) %>%
   summarise(number_of_films = n())
 
 ```
@@ -298,31 +303,34 @@ Q9_RESULT_PT1 <- COUNTRY_TOP_10_US_ONLY %>%
 
 ```{r}
 
-COUNTRY_TOP_10_US_ONLY <- COUNTRY_TOP_10 %>%
-  filter(country_iso2 == "US", category == "Films")
+Q9_RESULT_PT2 <- COUNTRY_TOP_10 %>%
+filter(country_iso2 == "US", category == "Films") %>%
+mutate(week = as.Date(week)) %>%
+group_by(show_title) %>%
+summarise(
+debut_week = min(week),
+debut_rank = weekly_rank[which.min(week)],
+best_rank  = min(weekly_rank, na.rm = TRUE),
+.groups = "drop") %>%
+filter(best_rank == 1, debut_rank > 1) %>%
+inner_join(COUNTRY_TOP_10 %>%
+filter(country_iso2 == "US", category == "Films") %>%
+mutate(week = as.Date(week)) %>%
+select(show_title, week, weekly_rank), by = "show_title") %>%
+filter(weekly_rank == 1) %>%
+slice_max(order_by = week, n = 1, with_ties = FALSE) %>%
+transmute(`Most Recent Film` = show_title, `Date Reached #1` = week)
 
-US_TOP_SHOW_TITLES_NUMBER1 <- COUNTRY_TOP_10_US_ONLY %>%
-  group_by(show_title) %>%
-  summarise(highest_weekly_rank = min(weekly_rank, na.rm = TRUE)) %>%
-  filter(highest_weekly_rank == 1) %>%
-  pull(show_title)
-
-Q9_RESULT_PT2 <- COUNTRY_TOP_10_US_ONLY %>%
-  filter(show_title %in% US_TOP_SHOW_TITLES_NUMBER1) %>%
-  filter(weekly_rank == 1) %>%
-  arrange(desc(week)) %>%
-  slice(1) %>%
-  select(show_title, week) %>%
-  rename(`Most Recent Film` = show_title, `Date Reached #1` = week)
-
+# Present as datatable
 Q9_RESULT_PT2 %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+datatable(
+  options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 ```
 
 <br>
 
-**Answer:** The most recent film to accomplish this was Ice Road: Vengeance, which reached Number 1 during the week of September 21, 2025. 
+**Answer:** The most recent film to accomplish this was KPop Demon Hunters, which reached Number 1 during the week of September 14, 2025. 
 
 <br>
 
@@ -883,5 +891,136 @@ top_country <- summary_stats$country_name[1]
 top_avg_growth <- summary_stats$avg_yoy_change[1]
 
 cat("\nHighlight: ", top_country, " shows the greatest average year-over-year growth rate at ", top_avg_growth, "% annually.")
+
+```
+
+<br>
+
+## Task 7:
+## Press Release 3: Commericial Success in India
+
+<br>
+
+```{r}
+
+# Get top 10 Latin American countries (excluding Brazil) and combine with global data
+combined_data <- COUNTRY_TOP_10 %>%
+  filter(
+    country_name %in% c("Colombia", "El Salvador", "Honduras", 
+                       "Nicaragua", "Venezuela", "Guatemala", "Ecuador", 
+                       "Paraguay", "Panama", "Costa Rica", "Peru", 
+                       "Bolivia", "Argentina", "Chile") |
+    grepl("Dominican Rep", country_name, ignore.case = TRUE)
+  ) %>%
+  group_by(country_name) %>%
+  slice_max(cumulative_weeks_in_top_10, n = 1) %>%
+  arrange(desc(cumulative_weeks_in_top_10)) %>%
+  head(10) %>%
+  mutate(
+    season_title = ifelse(is.na(season_title), "N/A", as.character(season_title))
+  ) %>%
+  left_join(
+    GLOBAL_TOP_10 %>%
+      mutate(season_title = ifelse(is.na(season_title), "N/A", as.character(season_title))) %>%
+      group_by(show_title, season_title) %>%
+      slice_max(week, n = 1),
+    by = c("show_title", "season_title"),
+    suffix = c("_country", "_global")
+  ) %>%
+  select(
+    Country = country_name,
+    `Show Title` = show_title,
+    `Season Title` = season_title,
+    `Cumulative Weeks in Top 10` = cumulative_weeks_in_top_10_country,
+    `Global Hours Viewed` = weekly_hours_viewed,
+    `Global Rank` = weekly_rank_global
+  )
+
+# Create DataTable
+datatable(combined_data,
+          caption = "Top Latin American Shows: Regional vs Global Performance",
+          options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+          rownames = FALSE) %>%
+  formatCurrency('Global Hours Viewed', 
+                 currency = "", 
+                 digits = 0, 
+                 mark = ",")
+
+```
+
+```{r}
+
+# Get top 10 Latin American countries (excluding Brazil)
+combined_data <- COUNTRY_TOP_10 %>%
+  filter(
+    country_name %in% c("Colombia", "El Salvador", "Honduras", "Nicaragua", 
+                       "Venezuela", "Guatemala", "Ecuador", "Paraguay", 
+                       "Panama", "Costa Rica", "Peru", "Bolivia", 
+                       "Argentina", "Chile") |
+    grepl("Dominican Rep", country_name, ignore.case = TRUE)
+  ) %>%
+  group_by(country_name) %>%
+  slice_max(cumulative_weeks_in_top_10, n = 1) %>%
+  head(10) %>%
+  mutate(season_title = ifelse(is.na(season_title), "N/A", season_title)) %>%
+  left_join(
+    GLOBAL_TOP_10 %>%
+      mutate(season_title = ifelse(is.na(season_title), "N/A", season_title)) %>%
+      group_by(show_title, season_title) %>%
+      slice_max(week, n = 1),
+    by = c("show_title", "season_title"),
+    suffix = c("_country", "_global")
+  ) %>%
+  select(
+    Country = country_name,
+    `Show Title` = show_title,
+    `Season Title` = season_title,
+    `Cumulative Weeks` = cumulative_weeks_in_top_10_country,
+    `Global Hours Viewed` = weekly_hours_viewed,
+    `Global Rank` = weekly_rank_global
+  )
+
+# Display first table
+datatable(combined_data,
+          caption = "Top Latin American Shows: Regional vs Global Performance",
+          options = list(pageLength = 10, searching = FALSE, dom = 't', ordering = FALSE),
+          rownames = FALSE) %>%
+  formatCurrency('Global Hours Viewed', currency = "", digits = 0, mark = ",")
+
+# Get unique shows
+show_summary <- combined_data %>%
+  filter(!is.na(`Global Hours Viewed`)) %>%
+  group_by(`Show Title`, `Season Title`, `Global Hours Viewed`) %>%
+  summarize(Countries = n(), .groups = 'drop') %>%
+  select(
+    show_title = `Show Title`,
+    season_title = `Season Title`,
+    total_hours = `Global Hours Viewed`,
+    countries = Countries
+  )
+
+# Add total row
+total_row <- tibble(
+  show_title = "TOTAL",
+  season_title = "",
+  total_hours = sum(show_summary$total_hours),
+  countries = sum(show_summary$countries)
+)
+
+show_summary_final <- bind_rows(show_summary, total_row) %>%
+  select(
+    `Show Title` = show_title,
+    `Season Title` = season_title,
+    `Total Hours Viewed` = total_hours,
+    `Total Episode Views` = total_hours,
+    Countries = countries
+  )
+
+# Display summary table
+datatable(show_summary_final,
+          options = list(pageLength = 10, searching = FALSE, dom = 't', ordering = FALSE),
+          rownames = FALSE) %>%
+  formatCurrency(c('Total Hours Viewed', 'Total Episode Views'), 
+                 currency = "", digits = 0, mark = ",")
 
 ```
