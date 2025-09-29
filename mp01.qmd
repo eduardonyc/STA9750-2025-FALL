@@ -918,110 +918,114 @@ cat("\nHighlight: ", top_country, " shows the greatest average year-over-year gr
 
 ```{r}
 
-# -----------------------------
-# 1) Countries (LATAM, excl. Brazil) — 15 exactly
-# -----------------------------
-latam_15 <- c(
-  "Colombia","El Salvador","Honduras","Nicaragua","Venezuela",
-  "Guatemala","Ecuador","Paraguay","Panama","Costa Rica",
-  "Peru","Bolivia","Argentina","Chile","Dominican Republic"
+# Define Spanish-speaking Latin American countries (exclude Brazil)
+spanish_latam <- c(
+  "Argentina","Bolivia","Chile","Colombia","Costa Rica","Dominican Republic",
+  "Ecuador","El Salvador","Guatemala","Honduras","Mexico","Nicaragua",
+  "Panama","Paraguay","Peru","Uruguay","Venezuela"
 )
 
-# -----------------------------
-# 2) For each country: top (show, season) by cumulative weeks
-# -----------------------------
-latam_top_per_country <- COUNTRY_TOP_10 %>%
-  filter(country_name %in% latam_15) %>%
-  mutate(season_title = coalesce(season_title, "")) %>%   # make joins NA-safe
-  group_by(country_name) %>%
-  # Keep the single best title; break ties by greater cumulative weeks, then earlier week
-  slice_max(cumulative_weeks_in_top_10, n = 1, with_ties = FALSE) %>%
-  ungroup()
-
-# -----------------------------
-# 3) Global totals for those titles (sum of all weeks) + best global rank
-# -----------------------------
-global_metrics <- GLOBAL_TOP_10 %>%
-  mutate(season_title = coalesce(season_title, "")) %>%
-  group_by(show_title, season_title) %>%
-  summarise(
-    global_total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
-    global_best_rank   = suppressWarnings(min(weekly_rank, na.rm = TRUE)),
-    .groups = "drop"
+# Ensure NA values handled consistently
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 %>%
+  mutate(
+    show_title = coalesce(show_title, "N/A"),
+    season_title = coalesce(season_title, "N/A")
   )
 
-# -----------------------------
-# 4) Combine and format like the screenshot
-# -----------------------------
-latin_table <- latam_top_per_country %>%
-  select(
+# Identify the single show/season with most cumulative weeks for each country
+latam_top <- COUNTRY_TOP_10 %>%
+  filter(country_name %in% spanish_latam) %>%
+  group_by(country_name, show_title, season_title) %>%
+  summarise(max_cumulative = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = "drop") %>%
+  group_by(country_name) %>%
+  slice_max(order_by = max_cumulative, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  arrange(country_name) %>%
+  rename(
     Country = country_name,
     `Show Title` = show_title,
     `Season Title` = season_title,
-    `Cumulative Weeks in Top 10` = cumulative_weeks_in_top_10
-  ) %>%
-  left_join(global_metrics,
-            by = c("Show Title" = "show_title", "Season Title" = "season_title")) %>%
-  transmute(
-    Country,
-    `Show Title`,
-    `Season Title` = ifelse(`Season Title` == "", "N/A", `Season Title`),
-    `Cumulative Weeks in Top 10`,
-    `Global Hours Viewed` = global_total_hours,
-    `Global Best Rank`    = global_best_rank
-  ) %>%
-  arrange(desc(`Cumulative Weeks in Top 10`), Country)
+    `Cumulative Weeks in Top 10` = max_cumulative
+  )
 
-# -----------------------------
-# 5) Display
-# -----------------------------
+# Display interactive table
 datatable(
-  latin_table,
-  caption = "Top Latin American Countries’ Top Shows: Regional vs Global Performance",
-  options = list(
-    searching = FALSE, info = FALSE, paging = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  ),
+  latam_top,
+  caption = "Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10",
+  options = list(pageLength = 20, searching = FALSE, paging = FALSE, info = FALSE),
   rownames = FALSE
-) %>%
-  formatCurrency('Global Hours Viewed', currency = "", digits = 0, mark = ",")
-
-# 1) Collapse to unique title/season with their (already summed) global hours
-unique_title_seasons <- latin_table %>%
-  group_by(`Show Title`, `Season Title`) %>%
-  summarise(
-    `Global Hours Viewed` = first(`Global Hours Viewed`),
-    .groups = "drop"
-  ) %>%
-  mutate(`Approx Global Views` = `Global Hours Viewed`) %>%
-  arrange(desc(`Global Hours Viewed`))
-
-# Add TOTAL row
-total_row <- tibble(
-  `Show Title` = "TOTAL",
-  `Season Title` = "",
-  `Global Hours Viewed` = sum(unique_title_seasons$`Global Hours Viewed`, na.rm = TRUE),
-  `Approx Global Views` = sum(unique_title_seasons$`Approx Global Views`, na.rm = TRUE)
 )
 
-unique_final <- bind_rows(unique_title_seasons, total_row)
+```
 
-# Render table
+```{r}
+# --- Assumes GLOBAL_TOP_10 is already loaded from all-weeks-global.tsv ---
+
+# 1) Define the exact show/season targets and runtimes (in hours) from external sources
+targets <- tribble(
+  ~show_title,                         ~season_title,                              ~avg_runtime_hrs,
+  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",        45/60,  # Wikipedia: ~45m
+  "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60, # Netflix: ~45m
+  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",            44/60,  # Wikipedia: 42–45m → use 44m
+  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",           30/60   # IMDb: ~30m
+)
+
+# 2) Make sure GLOBAL_TOP_10 has consistent NA handling
+g_global <- GLOBAL_TOP_10 %>%
+  mutate(
+    show_title   = coalesce(show_title, ""),
+    season_title = coalesce(season_title, "")
+  )
+
+# 3) Pull totals for the four target shows/seasons
+totals <- g_global %>%
+  inner_join(targets, by = c("show_title", "season_title")) %>%
+  group_by(category, show_title, season_title, avg_runtime_hrs) %>%
+  summarise(
+    `Total Weekly Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    `Approx Global Views` = round(`Total Weekly Hours Viewed` / avg_runtime_hrs)
+  ) %>%
+  transmute(
+    Category        = category,
+    `Show Title`    = show_title,
+    `Season Title`  = season_title,
+    `Total Weekly Hours Viewed`,
+    `Avg Runtime (hrs)` = avg_runtime_hrs,
+    `Approx Global Views`
+  )
+
+# 4) Add TOTAL row
+tot_row <- tibble(
+  Category               = "TOTAL",
+  `Show Title`           = "—",
+  `Season Title`         = "—",
+  `Total Weekly Hours Viewed` = sum(totals$`Total Weekly Hours Viewed`, na.rm = TRUE),
+  `Avg Runtime (hrs)`    = NA_real_,
+  `Approx Global Views`  = sum(totals$`Approx Global Views`, na.rm = TRUE)
+)
+
+final_tbl <- bind_rows(totals, tot_row)
+
+# 5) Display as interactive datatable
 datatable(
-  unique_final,
-  caption = "Unique Titles: Global Hours Viewed and Approximate Global Views (≈1 hr per view)",
-  options = list(
-    pageLength = 5,
-    lengthMenu = c(5, 10, 25, 50),
-    searching = TRUE,
-    paging = TRUE,
-    info = TRUE
-  ),
+  final_tbl,
+  caption = "Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)",
+  options = list(pageLength = 10, searching = FALSE, paging = FALSE, info = FALSE),
   rownames = FALSE
 ) %>%
   formatCurrency(
-    c("Global Hours Viewed", "Approx Global Views"),
+    c("Total Weekly Hours Viewed", "Approx Global Views"),
     currency = "", digits = 0, mark = ","
-  )
+  ) %>%
+  formatRound("Avg Runtime (hrs)", digits = 2)
 
+# 6) Print grand totals to console too
+grand_total_hours <- sum(totals$`Total Weekly Hours Viewed`, na.rm = TRUE)
+grand_total_views <- sum(totals$`Approx Global Views`, na.rm = TRUE)
+
+cat("Grand Total Weekly Hours Viewed:", comma(grand_total_hours), "\n")
+cat("Grand Total Approx Global Views:", comma(grand_total_views), "\n")
 ```
