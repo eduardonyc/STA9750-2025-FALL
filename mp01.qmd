@@ -746,15 +746,6 @@ cat("India-exclusive Non-English Content - Yearly Viewing Hours Analysis:\n")
 YEARLY_ANALYSIS %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 
-first_year <- yearly_hours$total_hours_viewed[1]
-last_year <- yearly_hours$total_hours_viewed[nrow(yearly_hours)]
-total_growth <- round(((last_year - first_year) / first_year) * 100, 1)
-avg_annual_growth <- round(mean(yearly_hours$yoy_change, na.rm = TRUE), 1)
-
-cat("\nGrowth Summary:\n")
-cat("Total Growth (2021-2022 to 2024-2025):", total_growth, "%\n")
-cat("Average Annual Growth Rate:", avg_annual_growth, "%")
-
 ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
   geom_line(color = "steelblue", size = 1.2) +
   geom_point(color = "darkred", size = 3) +
@@ -765,6 +756,17 @@ ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
     caption = "Source: Netflix Top 10 data (all weeks)"
   ) +
   scale_y_continuous(labels = scales::comma)
+
+first_year <- yearly_hours$total_hours_viewed[1]
+last_year <- yearly_hours$total_hours_viewed[nrow(yearly_hours)]
+total_growth <- round(((last_year - first_year) / first_year) * 100, 1)
+avg_annual_growth <- round(mean(yearly_hours$yoy_change, na.rm = TRUE), 1)
+
+cat("\nGrowth Summary:\n")
+cat("Total Growth (2021-2022 to 2024-2025):", total_growth, "%\n")
+cat("Average Annual Growth Rate:", avg_annual_growth, "%")
+
+
 
 ```
 
