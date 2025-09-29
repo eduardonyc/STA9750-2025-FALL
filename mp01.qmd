@@ -239,24 +239,36 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
 
 ```{r}
-Q8_RESULT <- GLOBAL_TOP_10 %>%
-filter(show_title == "Red Notice") %>%
-filter(year(week) == 2021) %>%
+
+library(dplyr)
+library(lubridate)
+library(scales)
+library(DT)
+library(tibble)
+
+Q8_ROWS <- GLOBAL_TOP_10 %>%
+  mutate(week = as.Date(week)) %>%
+  filter(show_title == "Red Notice", year(week) == 2021)
+
+if (nrow(Q8_ROWS) == 0) {
+  Q8_RESULT <- tibble(
+    `Total Hours Viewed (2021)` = "N/A",
+    `Approximate Views` = "N/A"
+  )
+} else {
+Q8_RESULT <- Q8_ROWS %>%
 summarise(
 total_hours_2021 = sum(weekly_hours_viewed, na.rm = TRUE),
-runtime_hours = 1 + 58/60,
+runtime_hours = 1 + 58/60,  # 1h 58m
 approximate_views = total_hours_2021 / runtime_hours) %>%
-mutate(
-approximate_views_formatted = comma(round(approximate_views)),
-total_hours_formatted = comma(total_hours_2021)
-)
+mutate(`Total Hours Viewed (2021)` = comma(total_hours_2021), `Approximate Views` = comma(round(approximate_views))) %>%
+select(`Total Hours Viewed (2021)`, `Approximate Views`)
+}
 
 Q8_RESULT %>%
-select(total_hours_formatted, approximate_views_formatted) %>%
-rename(
-`Total Hours Viewed (2021)` = total_hours_formatted,
-`Approximate Views` = approximate_views_formatted) %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+datatable(options = list( searching = FALSE, info = FALSE, paging = FALSE,
+columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+
 ```
 
 <br>
