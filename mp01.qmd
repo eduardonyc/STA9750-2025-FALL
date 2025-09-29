@@ -652,6 +652,7 @@ GLOBAL_REACH_SUMMARY %>%
 ```{r}
 
 india_exclusive_combinations <- COUNTRY_TOP_10 %>%
+  mutate(season_title = coalesce(season_title, "")) %>%
   group_by(show_title, season_title) %>%
   summarise(
     appears_in_india = any(country_name == "India"),
@@ -662,7 +663,8 @@ india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
 
 INDIA_EXCLUSIVE_METRICS <- GLOBAL_TOP_10 %>%
-  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%  # ADD THIS LINE
+  mutate(season_title = coalesce(season_title, "")) %>%
+  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%  
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
   group_by(show_title, season_title, category) %>%
   summarise(
