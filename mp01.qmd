@@ -735,6 +735,10 @@ yearly_hours <- GLOBAL_TOP_10 %>%
                                  paste0(ifelse(yoy_change > 0, "+", ""), yoy_change, "%"))
   )
 
+yearly_hours <- yearly_hours %>%
+  mutate(year_period = factor(year_period,
+    levels = c("2021-2022","2022-2023","2023-2024","2024-2025")))
+
 YEARLY_ANALYSIS <- yearly_hours %>%
   select(year_period, total_hours_formatted, yoy_change_formatted) %>%
   rename(
@@ -750,17 +754,21 @@ YEARLY_ANALYSIS %>%
 ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
   geom_line(color = "steelblue", size = 1.2) +
   geom_point(color = "darkred", size = 3) +
-  labs(
+ labs(
     title = "Yearly Viewing Hours for India-Exclusive Non-English Content",
     x = "Year Period",
-    y = "Total Hours Viewed (billions)",
+    y = "Total Hours Viewed",  # >>> NEW: match the actual scale (not 'billions')
     caption = "Source: Netflix Top 10 data (all weeks)"
   ) +
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = comma)
 
 first_year <- yearly_hours$total_hours_viewed[1]
-last_year <- yearly_hours$total_hours_viewed[nrow(yearly_hours)]
-total_growth <- round(((last_year - first_year) / first_year) * 100, 1)
+last_year  <- yearly_hours$total_hours_viewed[nrow(yearly_hours)]
+
+total_growth <- if (first_year > 0) {
+  round(((last_year - first_year) / first_year) * 100, 1)
+} else { NA_real_ }
+
 avg_annual_growth <- round(mean(yearly_hours$yoy_change, na.rm = TRUE), 1)
 
 cat("\nGrowth Summary:\n")
