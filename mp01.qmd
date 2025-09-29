@@ -1044,18 +1044,13 @@ datatable(show_summary_final,
 
 ```{r}
 
-# -------------------------
-# 1) Define your LATAM set
-# -------------------------
 latam_countries <- c(
   "Argentina","Bolivia","Chile","Colombia","Costa Rica","Ecuador",
   "El Salvador","Guatemala","Honduras","Nicaragua","Panama","Paraguay",
   "Peru","Venezuela","Dominican Republic"
 )
 
-# -------------------------
-# 2) Top show per country
-# -------------------------
+# Top show per country by cumulative weeks, keep top 10 countries
 latam_top <- COUNTRY_TOP_10 %>%
   filter(country_name %in% latam_countries) %>%
   mutate(season_title = coalesce(season_title, "")) %>%
@@ -1063,11 +1058,9 @@ latam_top <- COUNTRY_TOP_10 %>%
   slice_max(cumulative_weeks_in_top_10, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
   arrange(desc(cumulative_weeks_in_top_10)) %>%
-  slice_head(n = 10)  # top 10 countries by their top show's run
+  slice_head(n = 10)
 
-# -------------------------
-# 3) Global metrics (totals)
-# -------------------------
+# GLOBAL TOTALS (sum across all weeks) + best global rank
 global_metrics <- GLOBAL_TOP_10 %>%
   mutate(season_title = coalesce(season_title, "")) %>%
   group_by(show_title, season_title) %>%
@@ -1077,9 +1070,7 @@ global_metrics <- GLOBAL_TOP_10 %>%
     .groups = "drop"
   )
 
-# -------------------------
-# 4) Combine for display
-# -------------------------
+# Combine using the TOTALS, not a single week
 combined_data <- latam_top %>%
   select(
     Country = country_name,
@@ -1087,63 +1078,24 @@ combined_data <- latam_top %>%
     `Season Title` = season_title,
     `Cumulative Weeks in Top 10` = cumulative_weeks_in_top_10
   ) %>%
-  left_join(global_metrics, by = c("Show Title" = "show_title", "Season Title" = "season_title")) %>%
-  mutate(
-    `Global Hours Viewed` = global_total_hours,
+  left_join(global_metrics,
+            by = c("Show Title" = "show_title", "Season Title" = "season_title")) %>%
+  transmute(
+    Country,
+    `Show Title`,
+    `Season Title`,
+    `Cumulative Weeks in Top 10`,
+    `Global Hours Viewed` = global_total_hours,   # <-- use TOTALS
     `Global Best Rank`    = global_best_rank
-  ) %>%
-  select(Country, `Show Title`, `Season Title`,
-         `Cumulative Weeks in Top 10`,
-         `Global Hours Viewed`, `Global Best Rank`)
+  )
 
-# -------------------------
-# 5) Table 1: Per-country view
-# -------------------------
 datatable(
   combined_data,
-  caption = "Top Latin American Countries’ Top Shows: Regional vs. Global Performance",
+  caption = "Top Latin American Countries’ Top Shows: Regional vs Global Performance",
   options = list(searching = FALSE, info = FALSE, paging = FALSE,
                  columnDefs = list(list(className = 'dt-left', targets = "_all"))),
   rownames = FALSE
 ) %>%
   formatCurrency('Global Hours Viewed', currency = "", digits = 0, mark = ",")
-
-# -------------------------
-# 6) Show summary across LATAM
-# -------------------------
-# True regional country count (distinct countries in LATAM where the show/season charted)
-latam_country_counts <- COUNTRY_TOP_10 %>%
-  filter(country_name %in% latam_countries) %>%
-  mutate(season_title = coalesce(season_title, "")) %>%
-  group_by(show_title, season_title) %>%
-  summarise(latam_countries = n_distinct(country_name), .groups = "drop")
-
-show_summary <- combined_data %>%
-  rename(show_title = `Show Title`, season_title = `Season Title`) %>%
-  select(show_title, season_title, `Global Hours Viewed`) %>%
-  left_join(latam_country_counts, by = c("show_title","season_title")) %>%
-  arrange(desc(`Global Hours Viewed`))
-
-# Optional total row
-total_row <- tibble(
-  show_title = "TOTAL",
-  season_title = "",
-  `Global Hours Viewed` = sum(show_summary$`Global Hours Viewed`, na.rm = TRUE),
-  latam_countries = sum(show_summary$latam_countries, na.rm = TRUE)
-)
-
-show_summary_final <- bind_rows(show_summary, total_row) %>%
-  rename(`Show Title` = show_title,
-         `Season Title` = season_title,
-         `Total Hours Viewed` = `Global Hours Viewed`,
-         `LATAM Countries` = latam_countries)
-
-datatable(
-  show_summary_final,
-  caption = "Summary of Top Shows (LATAM Top Countries) with Global Totals",
-  options = list(pageLength = 10, searching = FALSE, dom = 't', ordering = FALSE),
-  rownames = FALSE
-) %>%
-  formatCurrency(c('Total Hours Viewed'), currency = "", digits = 0, mark = ",")
 
 ```
