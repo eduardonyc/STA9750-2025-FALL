@@ -497,7 +497,7 @@ options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = lis
 <br>
 
 ## Task 6:
-## Press Release 2: Commericial Success in India
+## Press Release 2: Commercial Success in India
 
 <br>
 
@@ -710,6 +710,7 @@ india_exclusive_combinations <- COUNTRY_TOP_10 %>%
 yearly_hours <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
+  mutate(week = as.Date(week)) %>%
   mutate(
     year_period = case_when(
       week >= as.Date("2021-07-04") & week < as.Date("2022-07-04") ~ "2021-2022",
