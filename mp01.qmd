@@ -698,18 +698,21 @@ INDIA_EXCLUSIVE_METRICS %>%
 ```{r}
 
 india_exclusive_combinations <- COUNTRY_TOP_10 %>%
+  mutate(season_title = coalesce(season_title, "")) %>%
   group_by(show_title, season_title) %>%
   summarise(
     appears_in_india = any(country_name == "India"),
-    appears_in_us = any(country_name == "United States"),
+    appears_in_us    = any(country_name == "United States"),
     .groups = "drop"
   ) %>%
-  filter(appears_in_india == TRUE & appears_in_us == FALSE) %>%
-  filter(!str_detect(tolower(show_title), "telugu|tamil"))
+  filter(appears_in_india & !appears_in_us) %>%
+  filter(!str_detect(show_title, regex("telugu|tamil", ignore_case = TRUE)))
 
 yearly_hours <- GLOBAL_TOP_10 %>%
+  mutate(season_title = coalesce(season_title, ""),
+         week = as.Date(week)) %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
+  semi_join(india_exclusive_combinations, by = c("show_title","season_title")) %>%
   mutate(week = as.Date(week)) %>%
   mutate(
     year_period = case_when(
@@ -757,7 +760,7 @@ ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
  labs(
     title = "Yearly Viewing Hours for India-Exclusive Non-English Content",
     x = "Year Period",
-    y = "Total Hours Viewed",  # >>> NEW: match the actual scale (not 'billions')
+    y = "Total Hours Viewed", 
     caption = "Source: Netflix Top 10 data (all weeks)"
   ) +
   scale_y_continuous(labels = comma)
