@@ -17,6 +17,7 @@ library(readr)
 library(scales)
 library(tidyverse)
 library(knitr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -501,7 +502,7 @@ options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = lis
 <br>
 
 ```{r}
-# Get the detailed list first
+
 INDIA_SHOWS_LIST <- COUNTRY_TOP_10 %>%
 filter(country_name == "India") %>%
 distinct(show_title, season_title, category) %>%
@@ -510,17 +511,14 @@ str_detect(category, "Films") ~ "Films",
 str_detect(category, "TV") ~ "TV Shows",TRUE ~ "Other")) %>%
 arrange(content_type, show_title, season_title)
 
-# Get the summary counts
 INDIA_TOTAL_PROGRAMS <- INDIA_SHOWS_LIST %>%
 count(content_type, name = "distinct_shows") %>%
 mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1))
 
-# Display the summary table
 INDIA_TOTAL_PROGRAMS %>%
 rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
 datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
-# Show total count
 total_shows <- sum(INDIA_TOTAL_PROGRAMS$distinct_shows)
 cat("Total distinct viewing options in India:", total_shows)
 ```
@@ -529,7 +527,6 @@ cat("Total distinct viewing options in India:", total_shows)
 
 ```{r}
 
-# Get shows that appear in India but NOT in the United States (considering show+season combinations)
 india_exclusive_from_us <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
   summarise(
@@ -539,7 +536,6 @@ india_exclusive_from_us <- COUNTRY_TOP_10 %>%
   ) %>%
   filter(appears_in_india == TRUE & appears_in_us == FALSE)
 
-# Get the detailed list first, excluding Telugu and Tamil content
 india_only_list <- COUNTRY_TOP_10 %>%
   filter(country_name == "India") %>%
   semi_join(india_exclusive_from_us, by = c("show_title", "season_title")) %>%
@@ -552,17 +548,14 @@ india_only_list <- COUNTRY_TOP_10 %>%
   )) %>%
   arrange(content_type, show_title, season_title)
 
-# Get breakdown by content type
 india_only_breakdown <- india_only_list %>%
   count(content_type, name = "distinct_shows") %>%
   mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1))
 
-# Display the summary results
 india_only_breakdown %>%
   rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
-# Show total count
 total_india_only <- sum(india_only_breakdown$distinct_shows)
 cat("Total distinct viewing options in India that do NOT 
   appear in US (excluding Telugu/Tamil language viewing options):", total_india_only)
@@ -573,7 +566,6 @@ cat("Total distinct viewing options in India that do NOT
 
 ```{r}
 
-# Get India-exclusive show+season combinations (excluding Telugu/Tamil)
 india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
   summarise(
@@ -584,7 +576,6 @@ india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   filter(appears_in_india == TRUE & appears_in_us == FALSE) %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
 
-# Table 1: India-exclusive NON-ENGLISH content that achieved global top 10 status
 global_appearing_breakdown <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
@@ -597,7 +588,6 @@ global_appearing_breakdown <- GLOBAL_TOP_10 %>%
   count(content_type, name = "distinct_shows") %>%
   mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1))
 
-# Calculate separate metrics for Films and TV Shows (hours only)
 films_metrics <- GLOBAL_TOP_10 %>%
   filter(category == "Films (Non-English)") %>%
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
@@ -608,7 +598,6 @@ tv_metrics <- GLOBAL_TOP_10 %>%
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
   summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE))
 
-# Calculate overall summary metrics for NON-ENGLISH content
 shows_in_global_count <- sum(global_appearing_breakdown$distinct_shows)
 total_combinations <- nrow(india_exclusive_combinations)
 global_penetration <- round((shows_in_global_count / total_combinations) * 100, 1)
@@ -626,7 +615,6 @@ INDIA_EXCLUSIVE_SUMMARY <- GLOBAL_TOP_10 %>%
     avg_weeks_formatted = round(avg_weeks_in_top_10, 1)
   )
 
-# Create comprehensive summary table (hours only)
 GLOBAL_REACH_SUMMARY <- data.frame(
   Metric = c("Total Show+Season Combinations", 
              "Total Hours Viewed - Non-English Films", 
@@ -646,7 +634,6 @@ GLOBAL_REACH_SUMMARY <- data.frame(
   )
 )
 
-# Display India-exclusive NON-ENGLISH content that achieved global status
 cat("India-exclusive NON-ENGLISH content that achieved global top 10 status:\n")
 global_appearing_breakdown %>%
   rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
@@ -654,7 +641,6 @@ global_appearing_breakdown %>%
 
 cat("Total NON-ENGLISH appearing in global charts:", shows_in_global_count, "of", total_combinations, "\n\n")
 
-# Display comprehensive metrics table (hours only)
 GLOBAL_REACH_SUMMARY %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 ```
@@ -665,7 +651,6 @@ GLOBAL_REACH_SUMMARY %>%
 
 ```{r}
 
-# Get show+season combinations that appear in India but NOT in the United States
 india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
   summarise(
@@ -676,7 +661,6 @@ india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   filter(appears_in_india == TRUE & appears_in_us == FALSE) %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
 
-# Cross-reference with GLOBAL_TOP_10 - FILTER FOR NON-ENGLISH ONLY
 INDIA_EXCLUSIVE_METRICS <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%  # ADD THIS LINE
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
@@ -702,7 +686,6 @@ INDIA_EXCLUSIVE_METRICS <- GLOBAL_TOP_10 %>%
   select(show_title, season_title, content_type, total_hours_formatted, avg_runtime_minutes, 
          total_views_formatted, max_cumulative_weeks_in_top_10, weeks_appeared)
 
-# Display the metrics table
 INDIA_EXCLUSIVE_METRICS %>%
   format_titles() %>%
   datatable(options = list(searching = TRUE, info = TRUE, paging = TRUE, pageLength = 5
@@ -714,7 +697,6 @@ INDIA_EXCLUSIVE_METRICS %>%
 
 ```{r}
 
-# Get India-exclusive show+season combinations (excluding Telugu/Tamil)
 india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
   summarise(
@@ -725,7 +707,6 @@ india_exclusive_combinations <- COUNTRY_TOP_10 %>%
   filter(appears_in_india == TRUE & appears_in_us == FALSE) %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
 
-# Calculate yearly totals from July 4, 2021 to July 4, 2025
 yearly_hours <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
   semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
@@ -753,7 +734,6 @@ yearly_hours <- GLOBAL_TOP_10 %>%
                                  paste0(ifelse(yoy_change > 0, "+", ""), yoy_change, "%"))
   )
 
-# Create yearly analysis table
 YEARLY_ANALYSIS <- yearly_hours %>%
   select(year_period, total_hours_formatted, yoy_change_formatted) %>%
   rename(
@@ -762,12 +742,10 @@ YEARLY_ANALYSIS <- yearly_hours %>%
     `Year-over-Year Change` = yoy_change_formatted
   )
 
-# Display the yearly analysis
 cat("India-exclusive Non-English Content - Yearly Viewing Hours Analysis:\n")
 YEARLY_ANALYSIS %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
 
-# Calculate overall growth metrics
 first_year <- yearly_hours$total_hours_viewed[1]
 last_year <- yearly_hours$total_hours_viewed[nrow(yearly_hours)]
 total_growth <- round(((last_year - first_year) / first_year) * 100, 1)
@@ -776,6 +754,17 @@ avg_annual_growth <- round(mean(yearly_hours$yoy_change, na.rm = TRUE), 1)
 cat("\nGrowth Summary:\n")
 cat("Total Growth (2021-2022 to 2024-2025):", total_growth, "%\n")
 cat("Average Annual Growth Rate:", avg_annual_growth, "%")
+
+ggplot(yearly_hours, aes(x = year_period, y = total_hours_viewed, group = 1)) +
+  geom_line(color = "steelblue", size = 1.2) +
+  geom_point(color = "darkred", size = 3) +
+  labs(
+    title = "Yearly Viewing Hours for India-Exclusive Non-English Content",
+    x = "Year Period",
+    y = "Total Hours Viewed (billions)",
+    caption = "Source: Netflix Top 10 data (all weeks)"
+  ) +
+  scale_y_continuous(labels = scales::comma)
 
 ```
 
