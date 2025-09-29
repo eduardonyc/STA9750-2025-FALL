@@ -293,8 +293,8 @@ US_FILMS_REACH1 <- COUNTRY_TOP_10_US_ONLY %>%
 
 US_DEBUT <- COUNTRY_TOP_10_US_ONLY %>%
   group_by(show_title) %>%
-  arrange(week, .by_group = TRUE) %>%   # <-- critical: order before taking first
-  slice(1L) %>%                         # earliest appearance in US
+  arrange(week, .by_group = TRUE) %>%    
+  slice(1L) %>%                         
   ungroup() %>%
   transmute(show_title, debut_week = week, debut_rank = weekly_rank)
 
@@ -333,7 +333,7 @@ filter(weekly_rank == 1) %>%
 slice_max(order_by = week, n = 1, with_ties = FALSE) %>%
 transmute(`Most Recent Film` = show_title, `Date Reached #1` = week)
 
-# Present as datatable
+
 Q9_RESULT_PT2 %>%
 datatable(
   options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
