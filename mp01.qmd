@@ -986,4 +986,33 @@ datatable(
 ) %>%
   formatCurrency('Global Hours Viewed', currency = "", digits = 0, mark = ",")
 
+# 1) Collapse to unique title/season with their (already summed) global hours
+unique_title_seasons <- latin_table %>%
+  group_by(`Show Title`, `Season Title`) %>%
+  summarise(
+    `Global Hours Viewed` = first(`Global Hours Viewed`),  # already totals from global_metrics
+    .groups = "drop"
+  ) %>%
+  # 2) Convert hours → "views" assuming ~1 hour per view (identical numerically)
+  mutate(`Approx Global Views` = `Global Hours Viewed`) %>%
+  arrange(desc(`Global Hours Viewed`))
+
+# 3) Render table (searchable, 5 rows per page, with paging)
+datatable(
+  unique_title_seasons,
+  caption = "Unique Titles: Global Hours Viewed and Approximate Global Views (≈1 hr per view)",
+  options = list(
+    pageLength = 5,
+    lengthMenu = c(5, 10, 25, 50),
+    searching = TRUE,
+    paging = TRUE,
+    info = TRUE
+  ),
+  rownames = FALSE
+) %>%
+  formatCurrency(
+    c("Global Hours Viewed", "Approx Global Views"),
+    currency = "", digits = 0, mark = ","
+  )
+
 ```
