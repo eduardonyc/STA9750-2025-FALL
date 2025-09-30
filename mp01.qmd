@@ -912,7 +912,9 @@ cat("\nHighlight: ", top_country, " shows the greatest average year-over-year gr
 <br>
 
 ## Task 7:
-## Press Release 3: Latin American Trends
+## Press Release 3: 
+## Latin America Streams the Chisme: 
+## Netflix Keeps Millions Glued to the Screen
 
 <br>
 
