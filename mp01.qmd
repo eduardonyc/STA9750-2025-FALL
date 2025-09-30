@@ -911,20 +911,20 @@ cat("\nHighlight: ", top_country, " shows the greatest average year-over-year gr
 
 <br>
 
-## Task 7:
-## Press Release 3: 
-## Latin America Streams the Chisme: 
-## Netflix Keeps Millions Glued to the Screen
+## Task 7: Press Release 3 
+## Latin America Streams the Chisme: Netflix Keeps Millions Glued to the Screen
 
 <br>
 
 Viewers across Latin America are voting with their eyes. Since 2021, nearly two billion hours of Netflix programming have been streamed in the region, with telenovelas accounting for most of the engagement. Long a staple of Latin American culture, the telenovela, or soap opera, blends love, betrayal, family, and, above all else, the chisme, or gossip, with its power to unite and divide viewing communities.
 
-Netflix has captured this audience’s attention with classic and rebooted titles such as Yo Soy Betty La Fea and Café con Aroma de Mujer, respectively, which together have contributed more than 1.6 billion viewing hours since arriving on the platform. Notably, Betty premiered in 1999 and Café dates back to 1994, showing that nostalgia remains powerful in the streaming era, especially in Latin America.
+Netflix has captured this audience’s attention with classic and rebooted titles such as Yo Soy Betty La Fea and Café con Aroma de Mujer, which together have contributed more than 1.6 billion viewing hours since arriving on the platform. Notably, Betty premiered in 1999 and Café dates back to 1994, showing that nostalgia remains powerful in the streaming era, especially in Latin America.
 
-At the same time, Netflix Originals like Elite highlight the company’s strength in creating sagas that resonate with viewers worldwide. Since its 2018 debut, Elite has reached audiences in 17 Latin American countries, generating over 700 million global viewing hours across its eight seasons. With a regional population of over 670 million people, the potential for original telenovela content is enormous.
+At the same time, Netflix Originals like Elite highlight the company’s strength in creating sagas that resonate with viewers worldwide. Since its 2018 debut, Elite has reached audiences in 17 Latin American countries, generating over 700 million global viewing hours across its eight seasons. With a regional population of more than 670 million people, the potential for original telenovela content is enormous.
 
-Looking ahead, Netflix could build on this momentum by rebooting a legendary series such as Kassandra. Originally aired in 1992, Kassandra set a Guinness World Record as the most broadcast Spanish-language telenovela, reaching roughly 140 countries and translated into 60 languages. Although it is currently unavailable on Netflix, a Kassandra revival could tap into the region’s demand for nostalgia while attracting new audiences. Netflix has a golden opportunity to lead a new wave of telenovela streaming success. However, it must act before competitors find ways to thrive from all the chisme.
+Looking ahead, Netflix could build on this momentum by rebooting a legendary series such as Kassandra. Originally aired in 1992, Kassandra set a Guinness World Record as the most broadcast Spanish-language telenovela, reaching roughly 140 countries and translated into 60 languages. Although Kassandra is currently unavailable on Netflix, a revival could tap into the region’s demand for nostalgia while attracting new audiences. 
+
+With nearly two billion streaming hours already recorded in Latin America, the demand is undeniable. Netflix can no longer afford to rely on streaming archival content. By reviving iconic shows, Netflix can honor the legacy of telenovelas while fueling future growth in the region. However, it must act quickly before competitors turn the chisme into their own streaming success story.
 
 <br>
 
