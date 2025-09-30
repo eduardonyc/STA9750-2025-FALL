@@ -1033,3 +1033,41 @@ Hours are global for the listed titles as the country TSV does not contain this 
 *[tvdb’s Average Episode Runtime for Café con Aroma de Mujer](https://thetvdb.com/series/cafe-con-aroma-de-mujer-2021#general)*
 
 *[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
+
+<br>
+
+```{r}
+
+# Define runtime assumption for Elite (~50 minutes per episode = 0.83 hours)
+elite_runtime <- 50/60  
+
+elite_total <- GLOBAL_TOP_10 %>%
+  mutate(show_title = coalesce(show_title, "")) %>%
+  filter(show_title == "Elite") %>%
+  summarise(
+    `Total Weekly Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    Category = "TV (Non-English)",
+    `Show Title`   = "Elite",
+    `Season Title` = "All Seasons (8)",
+    `Avg Runtime (hrs)` = elite_runtime,
+    `Approx Global Views` = round(`Total Weekly Hours Viewed` / elite_runtime),
+    `Total Weekly Hours Viewed` = comma(`Total Weekly Hours Viewed`),
+    `Approx Global Views` = comma(`Approx Global Views`)
+  ) %>%
+  select(
+    Category, `Show Title`, `Season Title`,
+    `Total Weekly Hours Viewed`, `Avg Runtime (hrs)`, `Approx Global Views`
+  )
+
+datatable(
+  elite_total,
+  caption = "Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)",
+  options = list(searching = FALSE, paging = FALSE, info = FALSE),
+  rownames = FALSE
+) %>%
+  formatRound("Avg Runtime (hrs)", digits = 2)
+
+```
