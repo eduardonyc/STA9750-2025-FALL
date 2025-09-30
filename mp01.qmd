@@ -918,23 +918,19 @@ cat("\nHighlight: ", top_country, " shows the greatest average year-over-year gr
 
 ```{r}
 
-# Define Spanish-speaking Latin American countries (exclude Brazil)
-spanish_latam <- c(
+SPANISH_LATAMER <- c(
   "Argentina","Bolivia","Chile","Colombia","Costa Rica","Dominican Republic",
   "Ecuador","El Salvador","Guatemala","Honduras","Mexico","Nicaragua",
   "Panama","Paraguay","Peru","Uruguay","Venezuela"
 )
 
-# Ensure NA values handled consistently
 COUNTRY_TOP_10 <- COUNTRY_TOP_10 %>%
   mutate(
     show_title = coalesce(show_title, "N/A"),
-    season_title = coalesce(season_title, "N/A")
-  )
+    season_title = coalesce(season_title, "N/A"))
 
-# Identify the single show/season with most cumulative weeks for each country
-latam_top <- COUNTRY_TOP_10 %>%
-  filter(country_name %in% spanish_latam) %>%
+LATAMER_TOP <- COUNTRY_TOP_10 %>%
+  filter(country_name %in% SPANISH_LATAMER) %>%
   group_by(country_name, show_title, season_title) %>%
   summarise(max_cumulative = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = "drop") %>%
   group_by(country_name) %>%
@@ -948,38 +944,35 @@ latam_top <- COUNTRY_TOP_10 %>%
     `Cumulative Weeks in Top 10` = max_cumulative
   )
 
-# Display interactive table
 datatable(
-  latam_top,
-  caption = "Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10",
+LATAMER_TOP,
+caption = "Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10",
   options = list(pageLength = 20, searching = FALSE, paging = FALSE, info = FALSE),
   rownames = FALSE
 )
 
 ```
 
-```{r}
-# --- Assumes GLOBAL_TOP_10 is already loaded from all-weeks-global.tsv ---
+<br>
 
-# 1) Define the exact show/season targets and runtimes (in hours) from external sources
-targets <- tribble(
+```{r}
+
+TOP_PROGRAMS <- tribble(
   ~show_title,                         ~season_title,                              ~avg_runtime_hrs,
-  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",        45/60,  # Wikipedia: ~45m
-  "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60, # Netflix: ~45m
-  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",            44/60,  # Wikipedia: 42–45m → use 44m
-  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",           30/60   # IMDb: ~30m
+  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",          43/60,  
+  "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60, 
+  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",              44/60,  
+  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",             30/60   
 )
 
-# 2) Make sure GLOBAL_TOP_10 has consistent NA handling
-g_global <- GLOBAL_TOP_10 %>%
+GLOBAL_CLEAN <- GLOBAL_TOP_10 %>%
   mutate(
     show_title   = coalesce(show_title, ""),
     season_title = coalesce(season_title, "")
   )
 
-# 3) Pull totals for the four target shows/seasons
-totals <- g_global %>%
-  inner_join(targets, by = c("show_title", "season_title")) %>%
+TOTALS_GLOBAL <- GLOBAL_CLEAN %>%
+  inner_join(TOP_PROGRAMS, by = c("show_title", "season_title")) %>%
   group_by(category, show_title, season_title, avg_runtime_hrs) %>%
   summarise(
     `Total Weekly Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
@@ -997,19 +990,17 @@ totals <- g_global %>%
     `Approx Global Views`
   )
 
-# 4) Add TOTAL row
 tot_row <- tibble(
   Category               = "TOTAL",
   `Show Title`           = "—",
   `Season Title`         = "—",
-  `Total Weekly Hours Viewed` = sum(totals$`Total Weekly Hours Viewed`, na.rm = TRUE),
+  `Total Weekly Hours Viewed` = sum(TOTALS_GLOBAL$`Total Weekly Hours Viewed`, na.rm = TRUE),
   `Avg Runtime (hrs)`    = NA_real_,
-  `Approx Global Views`  = sum(totals$`Approx Global Views`, na.rm = TRUE)
+  `Approx Global Views`  = sum(TOTALS_GLOBAL$`Approx Global Views`, na.rm = TRUE)
 )
 
-final_tbl <- bind_rows(totals, tot_row)
+final_tbl <- bind_rows(TOTALS_GLOBAL, tot_row)
 
-# 5) Display as interactive datatable
 datatable(
   final_tbl,
   caption = "Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)",
@@ -1022,15 +1013,18 @@ datatable(
   ) %>%
   formatRound("Avg Runtime (hrs)", digits = 2)
 
-# 6) Print grand totals to console too
-grand_total_hours <- sum(totals$`Total Weekly Hours Viewed`, na.rm = TRUE)
-grand_total_views <- sum(totals$`Approx Global Views`, na.rm = TRUE)
+grand_total_hours <- sum(TOTALS_GLOBAL$`Total Weekly Hours Viewed`, na.rm = TRUE)
+grand_total_views <- sum(TOTALS_GLOBAL$`Approx Global Views`, na.rm = TRUE)
 
 cat("Grand Total Weekly Hours Viewed:", comma(grand_total_hours), "\n")
 cat("Grand Total Approx Global Views:", comma(grand_total_views), "\n")
 ```
 
 Hours are global for the listed titles as the country TSV does not contain this information.
+
+<br>
+
+*Note, average runtime values are approximations. The sources below provide details highlighting program runtime across episodes and seasons.
 
 *[Netflix’s Average Episode Runtime for Pablo Escobar: El Patrón del Mal](https://www.netflix.com/title/80035684?utm_source=chatgpt.com)*
 
