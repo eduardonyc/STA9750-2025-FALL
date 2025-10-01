@@ -496,6 +496,105 @@ options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = lis
 
 <br>
 
+```{r}
+
+# 1) Average episode runtimes (minutes)
+#    Sources you provided:
+#    - Stranger Things: 63.5 (avg of 47, 60, 60, 87 from your table screenshot)
+#    - Wednesday: 45 (Addams Family Fandom)
+#    - The Witcher: 60 (epguides)
+#    - The Sandman: 51 (TVMaze)
+#    - Locke & Key: 50 (Fandom range ~40–56 → midpoint 50)
+#    - Shadow and Bone: 60 (epguides)
+# ---------------------------
+RUNTIME_REF <- tribble(
+  ~show_title,        ~avg_episode_minutes,
+  "Stranger Things",  63.5,
+  "Wednesday",        45,
+  "The Witcher",      60,
+  "The Sandman",      51,
+  "Locke & Key",      50,
+  "Shadow and Bone",  60
+)
+
+# Keep only these six shows (English-language Netflix Originals)
+TARGET_SHOWS <- RUNTIME_REF$show_title
+
+# ---------------------------
+# 2) Summarize global performance across ALL seasons
+# ---------------------------
+SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
+  filter(
+    category == "TV (English)",
+    show_title %in% TARGET_SHOWS
+  ) %>%
+  mutate(
+    # prevent blanks from inflating season counts
+    season_title = na_if(season_title, "")
+  ) %>%
+  group_by(show_title) %>%
+  summarise(
+    `Number of Seasons`  = n_distinct(season_title, na.rm = TRUE),
+    `Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # join average runtimes (minutes)
+  left_join(RUNTIME_REF, by = "show_title") %>%
+  # runtime-adjusted approximate viewership
+  mutate(
+    `Approximate Viewership` = round(`Total Hours Viewed` / (avg_episode_minutes / 60))
+  ) %>%
+  # pretty formatting for large numbers
+  mutate(
+    `Total Hours Viewed`     = comma(`Total Hours Viewed`),
+    `Approximate Viewership` = comma(`Approximate Viewership`)
+  ) %>%
+  # final columns / headers
+  select(
+    `Show Title` = show_title,
+    `Number of Seasons`,
+    `Total Hours Viewed`,
+    `*Average Episode Minutes` = avg_episode_minutes,
+    `Approximate Viewership`
+  ) %>%
+  # sort by (numeric) total hours
+  arrange(desc(parse_number(`Total Hours Viewed`)))
+
+# ---------------------------
+# 3) Display
+# ---------------------------
+datatable(
+  SHOW_SUMMARY,
+  caption = "Global Performance of Selected English Netflix Originals (Sci-Fi/Fantasy/Supernatural, All Seasons)",
+  options = list(
+    pageLength = 10,
+    searching = FALSE,
+    paging = FALSE,
+    info = FALSE,
+    columnDefs = list(list(className = 'dt-left', targets = "_all")) # <-- left justify all text
+  ),
+  rownames = FALSE
+) %>%
+  formatRound("*Average Episode Minutes", digits = 1)
+
+```
+
+*Note, Stranger Things average runtime caculated from the values presented in an earlier table.
+
+The following links contain sources justifying these average per episode runtimes.
+
+*[Wednesday Average Runtime](https://addamsfamily.fandom.com/wiki/Wednesday_(series))*
+
+*[The Witcher Average Runtime](https://epguides.com/Witcher/)*
+
+*[The Sandman](https://www.tvmaze.com/shows/42827/the-sandman)*
+
+*[Locke & Key Average Runtime](https://lockekey.fandom.com/wiki/Season_One)*
+
+*[Shadow and Bone](https://epguides.com/ShadowandBone/)*
+
+<br>
+
 ## Task 6:
 ## Press Release 2: Commercial Success in India
 
