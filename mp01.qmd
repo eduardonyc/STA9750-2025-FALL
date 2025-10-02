@@ -502,6 +502,75 @@ options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = lis
 
 ```{r}
 
+# --- Standardize season labels in both tables ---
+COUNTRY_ST <- COUNTRY_TOP_10 %>%
+  filter(show_title == "Stranger Things") %>%
+  mutate(
+    # pull the first number seen in season_title; default to 1 if missing
+    season_num = if_else(is.na(season_title) | season_title == "",
+                         1L,
+                         suppressWarnings(as.integer(str_extract(season_title, "\\d+")))),
+    season_num = pmin(pmax(season_num, 1L), 4L),  # clamp to 1..4 just in case
+    season_label = paste0("Stranger Things: S", season_num)
+  )
+
+GLOBAL_ST <- GLOBAL_TOP_10 %>%
+  filter(show_title == "Stranger Things") %>%
+  mutate(
+    season_num = if_else(is.na(season_title) | season_title == "",
+                         1L,
+                         suppressWarnings(as.integer(str_extract(season_title, "\\d+")))),
+    season_num = pmin(pmax(season_num, 1L), 4L),
+    season_label = paste0("Stranger Things: S", season_num)
+  )
+
+# --- Countries reached & country-weeks per season (from COUNTRY TSV) ---
+ST_COUNTRIES_BY_SEASON <- COUNTRY_ST %>%
+  group_by(season_num, season_label, country_name) %>%
+  summarise(weeks_in_top10 = n_distinct(week), .groups = "drop_last") %>%
+  summarise(
+    `Countries Reached` = n_distinct(country_name),
+    `Country-Weeks in Top 10` = sum(weeks_in_top10, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# --- Global weeks & hours per season (from GLOBAL TSV) ---
+ST_GLOBAL_BY_SEASON <- GLOBAL_ST %>%
+  group_by(season_num, season_label) %>%
+  summarise(
+    `Global Weeks in Top 10` = n_distinct(week),
+    `Total Global Hours` = sum(weekly_hours_viewed, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# --- Combine + order S1 -> S4 ---
+ST_SEASON_IMPACT <- ST_COUNTRIES_BY_SEASON %>%
+  left_join(ST_GLOBAL_BY_SEASON, by = c("season_num", "season_label")) %>%
+  mutate(`Total Global Hours` = comma(`Total Global Hours`)) %>%
+  arrange(season_num) %>%
+  select(
+    Season = season_label,
+    `Countries Reached`,
+    `Country-Weeks in Top 10`,
+    `Global Weeks in Top 10`,
+    `Total Global Hours`
+  )
+
+datatable(
+  ST_SEASON_IMPACT,
+  caption = "Stranger Things – Multinational Appeal by Season (Ascending Order)",
+  options = list(
+    searching = FALSE, paging = FALSE, info = FALSE,
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))
+  ),
+  rownames = FALSE
+)
+
+```
+<br>
+
+```{r}
+
 # 1) Average episode runtimes (minutes)
 #    Sources you provided:
 #    - Stranger Things: 63.5 (avg of 47, 60, 60, 87 from your table screenshot)
