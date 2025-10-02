@@ -383,7 +383,7 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 ## Task 5: 
 ## Press Release 1: The Perks of Being a Stranger
 
-Netflix's foray into original programming is yielding massive dividends, with unafraid viewers willingly spending their time (and money) with billions of "Strangers" year after year since 2016. For Netflix, this translates into viewership that has surpassed the billion mark. The Stranger Things series has garnered 2.5 billion viewers since its premiere. During its fourth season, it stayed a remarkable 19 weeks in Netflix's Global Top 10 list, with seven of those weeks resting comfortably at number one. Moreover, the series averaged about 13 weeks in the global top 10 across 93 countries, with Pakistan and Ukraine leading the charge at 24 total weeks in the Global top 10.
+Netflix's foray into original programming is yielding massive dividends, as unafraid viewers willingly spend their time (and money) alongside billions of "Strangers" year after year. For Netflix, this translates into viewership that has surpassed the billion mark. The Stranger Things series has garnered 2.5 billion viewers since its premiere in 2016. During its fourth season, it stayed a remarkable 19 weeks in Netflix's Global Top 10 list, spending seven of those weeks resting comfortably at number one. Moreover, the series averaged about 13 weeks in the global top 10 across 93 countries, while Pakistan and Ukraine led the charge at 24 total weeks in the Global top 10.
 
 Compared to other original Netflix titles, Stranger Things dominates in total global hours viewed at nearly 3 billion hours. One contender, Wednesday, has a solid stronghold in approximate viewership at close to 3.8 billion; however, Stranger Things still reigns supreme in total hours viewed, leaving other rivals, such as The Witcher, The Sandman, Locke & Key, and Shadow and Bone, with dust in their viewers' eyes.
 
@@ -401,7 +401,7 @@ With the upcoming release of its fifth and final season, Stranger Things is on a
 # - defaults to 1 if none
 # - clamps to 1..4
 extract_season_num <- function(x) {
-  n <- readr::parse_number(dplyr::coalesce(x, ""))
+  n <- parse_number(coalesce(x, ""))
   n <- ifelse(is.na(n), 1L, as.integer(n))
   pmin(pmax(n, 1L), 4L)
 }
@@ -540,9 +540,7 @@ datatable(
 
 ```{r}
 
-# =========================
-# 1) Summary artifact for caption
-# =========================
+# 1) Summary for bottom caption
 summary_artifact <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
@@ -553,59 +551,46 @@ summary_artifact <- COUNTRY_TOP_10 %>%
     .groups = "drop"
   )
 
-# =========================
-# 2) Build leaderboard (Top N)
-#    - Adds Share of Global Peak (n = 50)
-#    - Prepare up to Top 20 for exploration
-# =========================
+# 2) Leaderboard (Top 20 available; Top 5 shown by default)
 ST_TOP_COUNTRIES_WEEKS <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
   summarise(`Weeks in Top 10` = n_distinct(week), .groups = "drop") %>%
   arrange(desc(`Weeks in Top 10`)) %>%
-  slice_head(n = 20) %>%  # keep top 20 available
-  mutate(
-    `Share of Global Peak (n = 50)` = paste0(round((`Weeks in Top 10` / 50) * 100), "%")
-  ) %>%
-  rename(Country = country_name)
+  slice_head(n = 20) %>%
+  mutate(Rank = row_number()) %>%
+  select(Rank, Country = country_name, `Weeks in Top 10`)
 
-# =========================
-# 3) Caption (title + subtitle)
-# =========================
-cap <- htmltools::tags$caption(
-  style = "caption-side: top; text-align:left;",
-  htmltools::tags$div(
-    style = "font-weight:700; font-size:1.05em; margin-bottom:2px;",
-    "Top Countries by Total Weeks in Netflix Top 10 (Stranger Things)"
-  ),
-  htmltools::tags$div(
-    style = "color:#666; font-size:0.9em;",
-    htmltools::HTML(
-      sprintf(
-        "Global reach: <b>%s</b> countries &nbsp;&middot;&nbsp; Avg per-country Top-10 weeks: <b>%s</b> &nbsp;&middot;&nbsp; Peak baseline: <b>n = 50</b>",
-        summary_artifact$total_countries,
-        summary_artifact$avg_weeks
-      )
-    )
-  )
+top3 <- ST_TOP_COUNTRIES_WEEKS$Country[ST_TOP_COUNTRIES_WEEKS$Rank <= 3]
+
+# 3) Bottom caption (footnote-style)
+cap_bottom <- htmltools::tags$caption(
+  style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:6px;",
+  htmltools::HTML(sprintf(
+    "Global reach: <b>%s</b> countries &nbsp;&middot;&nbsp; Avg per-country Top-10 weeks: <b>%s</b>",
+    summary_artifact$total_countries, summary_artifact$avg_weeks
+  ))
 )
 
-# =========================
-# 4) Render (Top 5 default; expandable)
-# =========================
+# 4) Render table (no in-cell bar; bold Top 3)
 DT::datatable(
   ST_TOP_COUNTRIES_WEEKS,
-  caption = cap,
-  escape = FALSE,  # allow HTML in caption
-  options = list(
-    pageLength = 5,  # show Top 5 initially
-    lengthMenu = list(c(5, 10, 15, 20), c('Top 5', 'Top 10', 'Top 15', 'Top 20')),
-    searching = TRUE,  # quick look-up
-    info = FALSE,
+  caption   = cap_bottom,
+  escape    = FALSE,
+  rownames  = FALSE,
+  options   = list(
+    pageLength = 5,
+    lengthMenu = list(c(5,10,15,20), c('Top 5','Top 10','Top 15','Top 20')),
+    searching  = TRUE,
+    info       = FALSE,
+    order      = list(list(0, 'asc')),
     columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  ),
-  rownames = FALSE
-)
+  )
+) %>%
+  DT::formatStyle(
+    'Country',
+    fontWeight = DT::styleEqual(top3, rep('bold', length(top3)))
+  )
 
 ```
 
