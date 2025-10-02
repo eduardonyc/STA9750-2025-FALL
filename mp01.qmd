@@ -379,9 +379,13 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 <br>
 
 ## Task 5: 
-## Press Release 1: Stranger Things
+## Press Release 1: The Perks of Being a Stranger
 
-The following task involves creating a "Press Release" for the upcoming release of the final season of Stranger Things.  
+Netflix's foray into original programming is yielding massive dividends, with unafraid viewers willingly spending their time (and money) with billions of "Strangers" year after year since 2016. For Netflix, this translates into viewership that has surpassed the billion mark. The Stranger Things series has garnered 2.5 billion viewers since its premiere. During its fourth season, it stayed a remarkable 19 weeks in Netflix's Global Top 10 list, with seven of those weeks resting comfortably at number one. Moreover, the series averaged about 13 weeks in the global top 10 across 93 countries, with Pakistan and Ukraine leading the charge at 24 total weeks in the Global top 10.
+
+Compared to other original Netflix titles, Stranger Things dominates in total global hours viewed at nearly 3 billion hours. One contender, Wednesday, has a solid stronghold in approximate viewership at close to 3.8 billion; however, Stranger Things still reigns supreme in total hours viewed, leaving other rivals, such as The Witcher, The Sandman, Locke & Key, and Shadow and Bone, with dust in their viewers' eyes.
+
+With the upcoming release of its fifth and final season, Stranger Things is on a trajectory to continue shattering global records for Netflix. As a solid revenue machine, it is unlikely this season will mark the end of the series. As consummate content consumers, it's highly probable that Netflix will continue to feed the insatiable appetite of its subscribers. If time has taught us anything, we should not be surprised to expect Netflix to conjure spinoffs, prequels, and movie adaptations of this series, as the last thing it would want, is for its subscribers to become strangers to the platform.
 
 <br>
 
