@@ -25,9 +25,11 @@ library(janitor)
 
 <br>
 
-```{r}
+## Tasks 1,2, and 3
 
-```
+Work for these tasks can be found directly in the mp01.qmd document. Feel free to click on the link below to see the necessary code needed to interact with the datasets. ADD LINK!
+
+<br>
 
 ```{r}
 #| include: false 
