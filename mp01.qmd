@@ -29,6 +29,10 @@ library(janitor)
 
 Work for these tasks can be found directly in the mp01.qmd document. Feel free to click on the link below to see the necessary code needed to interact with the datasets. ADD LINK!
 
+```{r}
+
+```
+
 <br>
 
 ```{r}
@@ -251,13 +255,6 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
 
 ```{r}
-
-library(dplyr)
-library(lubridate)
-library(scales)
-library(DT)
-library(tibble)
-
 Q8_ROWS <- GLOBAL_TOP_10 %>%
   mutate(week = as.Date(week)) %>%
   filter(show_title == "Red Notice", year(week) == 2021)
@@ -407,129 +404,83 @@ Season 5 is poised to be one of 2025's most anticipated series finales, with a g
 
 ```{r}
 
-# =========================
-# Helper(s)
-# =========================
-# Robust season-number extraction:
-# - pulls any number from season_title
-# - defaults to 1 if none
-# - clamps to 1..4
-extract_season_num <- function(x) {
-  n <- parse_number(coalesce(x, ""))
-  n <- ifelse(is.na(n), 1L, as.integer(n))
-  pmin(pmax(n, 1L), 4L)
-}
+# ============================================
+# TABLE 1: Season-by-Season Breakdown
+# ============================================
 
-# Average episode minutes by season (edit if needed)
+# Average episode minutes by season
 episode_minutes <- tibble(
   season_num = 1:4,
-  `*Average Episode Minutes` = c(47, 60, 60, 87)
+  avg_minutes = c(47, 60, 60, 87)
 )
 
-# =========================
-# Normalize seasons
-# =========================
-COUNTRY_ST <- COUNTRY_TOP_10 %>%
+# Get global metrics by season
+ST_GLOBAL <- GLOBAL_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
-  mutate(
-    season_num   = extract_season_num(season_title),
-    season_label = paste0("Stranger Things: S", season_num)
-  )
-
-GLOBAL_ST <- GLOBAL_TOP_10 %>%
-  filter(show_title == "Stranger Things") %>%
-  mutate(
-    season_num   = extract_season_num(season_title),
-    season_label = paste0("Stranger Things: S", season_num)
-  )
-
-# =========================
-# Season-level metrics
-# =========================
-# From COUNTRY: Countries Reached, Country-Weeks
-ST_COUNTRIES_BY_SEASON <- COUNTRY_ST %>%
-  group_by(season_num, season_label, country_name) %>%
-  summarise(weeks_in_top10 = n_distinct(week), .groups = "drop_last") %>%
+  mutate(season_num = parse_number(coalesce(season_title, "1"))) %>%
+  filter(season_num %in% 1:4) %>%
+  group_by(season_num) %>%
   summarise(
-    `Countries Reached`       = n_distinct(country_name),
-    `Country-Weeks in Top 10` = sum(weeks_in_top10, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-# From GLOBAL: Global Weeks, Total Global Hours
-ST_GLOBAL_BY_SEASON <- GLOBAL_ST %>%
-  group_by(season_num, season_label) %>%
-  summarise(
+    `Total Global Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
     `Global Weeks in Top 10` = n_distinct(week),
-    `Total Global Hours`     = sum(weekly_hours_viewed, na.rm = TRUE),
+    `Global Weeks at #1` = sum(weekly_rank == 1, na.rm = TRUE),
     .groups = "drop"
   )
 
-# From GLOBAL: Global Weeks at #1
-ST_GLOBAL_NUM1 <- GLOBAL_ST %>%
-  filter(weekly_rank == 1) %>%
-  group_by(season_num, season_label) %>%
-  summarise(`Global Weeks at #1` = n_distinct(week), .groups = "drop")
+# Get country metrics by season
+ST_COUNTRY <- COUNTRY_TOP_10 %>%
+  filter(show_title == "Stranger Things") %>%
+  mutate(season_num = parse_number(coalesce(season_title, "1"))) %>%
+  filter(season_num %in% 1:4) %>%
+  group_by(season_num) %>%
+  summarise(
+    `Countries Reached` = n_distinct(country_name),
+    `Country-Weeks in Top 10` = n(),
+    .groups = "drop"
+  )
 
-# =========================
-# Combine + compute approx. viewership
-# =========================
-ST_IMPACT_COMBINED <- ST_GLOBAL_BY_SEASON %>%
-  left_join(ST_COUNTRIES_BY_SEASON, by = c("season_num", "season_label")) %>%
-  left_join(ST_GLOBAL_NUM1,        by = c("season_num", "season_label")) %>%
-  left_join(episode_minutes,       by = "season_num") %>%
+# Combine all metrics
+ST_IMPACT <- ST_GLOBAL %>%
+  left_join(ST_COUNTRY, by = "season_num") %>%
+  left_join(episode_minutes, by = "season_num") %>%
   mutate(
-    approx_views = `Total Global Hours` / (`*Average Episode Minutes` / 60),
-    season_label = factor(season_label, levels = paste0("Stranger Things: S", 1:4))
+    Season = paste0("Stranger Things: S", season_num),
+    `Approx. Viewership` = `Total Global Hours Viewed` / (avg_minutes / 60)
   ) %>%
-  arrange(season_num) %>%
-  transmute(
-    Season = season_label,
-    `Total Global Hours Viewed` = `Total Global Hours`,
-    `Approx. Viewership`        = approx_views,
-    `*Average Episode Minutes`  = `*Average Episode Minutes`,
+  select(
+    Season,
+    `Total Global Hours Viewed`,
+    `Approx. Viewership`,
+    `*Average Episode Minutes` = avg_minutes,
     `Global Weeks in Top 10`,
     `Global Weeks at #1`,
     `Countries Reached`,
     `Country-Weeks in Top 10`
   )
 
-# =========================
-# Totals row (sum weeks, incl. #1), max for Countries Reached
-# =========================
-totals_row <- ST_IMPACT_COMBINED %>%
+# Add totals row
+totals <- ST_IMPACT %>%
   summarise(
-    Season                      = "Totals",
-    `Total Global Hours Viewed` = sum(`Total Global Hours Viewed`, na.rm = TRUE),
-    `Approx. Viewership`        = sum(`Approx. Viewership`, na.rm = TRUE),
-    `*Average Episode Minutes`  = NA_real_,
-    `Global Weeks in Top 10`    = sum(`Global Weeks in Top 10`, na.rm = TRUE),
-    `Global Weeks at #1`        = sum(`Global Weeks at #1`, na.rm = TRUE),
-    `Countries Reached`         = max(`Countries Reached`, na.rm = TRUE),
-    `Country-Weeks in Top 10`   = sum(`Country-Weeks in Top 10`, na.rm = TRUE)
+    Season = "Totals",
+    `Total Global Hours Viewed` = sum(`Total Global Hours Viewed`),
+    `Approx. Viewership` = sum(`Approx. Viewership`),
+    `*Average Episode Minutes` = 0,
+    `Global Weeks in Top 10` = sum(`Global Weeks in Top 10`),
+    `Global Weeks at #1` = sum(`Global Weeks at #1`),
+    `Countries Reached` = max(`Countries Reached`),
+    `Country-Weeks in Top 10` = sum(`Country-Weeks in Top 10`)
   )
 
-ST_IMPACT_FINAL <- bind_rows(ST_IMPACT_COMBINED, totals_row) %>%
+ST_IMPACT_FINAL <- bind_rows(ST_IMPACT, totals) %>%
   mutate(
-    across(
-      c(`*Average Episode Minutes`,
-        `Global Weeks in Top 10`,
-        `Global Weeks at #1`,
-        `Countries Reached`,
-        `Country-Weeks in Top 10`),
-      ~ replace_na(., 0)
-    ),
     `Total Global Hours Viewed` = comma(`Total Global Hours Viewed`),
-    `Approx. Viewership`        = comma(round(`Approx. Viewership`)),
-    `Global Weeks in Top 10`    = comma(`Global Weeks in Top 10`),
-    `Global Weeks at #1`        = comma(`Global Weeks at #1`),
-    `Countries Reached`         = comma(`Countries Reached`),
-    `Country-Weeks in Top 10`   = comma(`Country-Weeks in Top 10`)
+    `Approx. Viewership` = comma(round(`Approx. Viewership`)),
+    `Global Weeks in Top 10` = comma(`Global Weeks in Top 10`),
+    `Global Weeks at #1` = comma(`Global Weeks at #1`),
+    `Countries Reached` = comma(`Countries Reached`),
+    `Country-Weeks in Top 10` = comma(`Country-Weeks in Top 10`)
   )
 
-# =========================
-# Display
-# =========================
 datatable(
   ST_IMPACT_FINAL,
   caption = "Stranger Things — Combined Global Impact by Season (Scale • Longevity • Multinational Reach • #1 Weeks)",
@@ -554,18 +505,21 @@ datatable(
 
 ```{r}
 
-# 1) Summary for bottom caption
+# ============================================
+# TABLE 2: Top Countries by Weeks
+# ============================================
+
+# Summary stats for caption
 summary_artifact <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
   summarise(total_weeks_in_top_10 = n_distinct(week), .groups = "drop") %>%
   summarise(
     total_countries = n(),
-    avg_weeks = round(mean(total_weeks_in_top_10), 1),
-    .groups = "drop"
+    avg_weeks = round(mean(total_weeks_in_top_10), 1)
   )
 
-# 2) Leaderboard (Top 20 available; Top 5 shown by default)
+# Top 20 countries leaderboard
 ST_TOP_COUNTRIES_WEEKS <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
@@ -577,7 +531,7 @@ ST_TOP_COUNTRIES_WEEKS <- COUNTRY_TOP_10 %>%
 
 top3 <- ST_TOP_COUNTRIES_WEEKS$Country[ST_TOP_COUNTRIES_WEEKS$Rank <= 3]
 
-# 3) Bottom caption (footnote-style)
+# Bottom caption
 cap_bottom <- htmltools::tags$caption(
   style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:6px;",
   htmltools::HTML(sprintf(
@@ -586,90 +540,66 @@ cap_bottom <- htmltools::tags$caption(
   ))
 )
 
-# 4) Render table (no in-cell bar; bold Top 3)
-DT::datatable(
+# Display table
+datatable(
   ST_TOP_COUNTRIES_WEEKS,
-  caption   = cap_bottom,
-  escape    = FALSE,
-  rownames  = FALSE,
-  options   = list(
+  caption = cap_bottom,
+  escape = FALSE,
+  rownames = FALSE,
+  options = list(
     pageLength = 5,
     lengthMenu = list(c(5,10,15,20), c('Top 5','Top 10','Top 15','Top 20')),
-    searching  = TRUE,
-    info       = FALSE,
-    order      = list(list(0, 'asc')),
+    searching = TRUE,
+    info = FALSE,
+    order = list(list(0, 'asc')),
     columnDefs = list(list(className = 'dt-left', targets = "_all"))
   )
 ) %>%
-  DT::formatStyle(
-    'Country',
-    fontWeight = DT::styleEqual(top3, rep('bold', length(top3)))
-  )
+  formatStyle('Country', fontWeight = styleEqual(top3, rep('bold', length(top3))))
 
 ```
-
 <br>
 
 ```{r}
 
-# 1) Average episode runtimes (minutes)
+# ============================================
+# TABLE 3: Comparison to Other Shows
+# ============================================
+
+# Average episode runtimes (minutes)
 RUNTIME_REF <- tribble(
-  ~show_title,        ~avg_episode_minutes,
-  "Stranger Things",  63.5,
-  "Wednesday",        45,
-  "The Witcher",      60,
-  "The Sandman",      51,
-  "Locke & Key",      50,
-  "Shadow and Bone",  60
+  ~show_title,        ~num_seasons, ~avg_episode_minutes,
+  "Stranger Things",  4,            63.5,
+  "Wednesday",        2,            45,
+  "The Witcher",      3,            60,
+  "The Sandman",      2,            51,
+  "Locke & Key",      3,            50,
+  "Shadow and Bone",  2,            60
 )
 
-TARGET_SHOWS <- RUNTIME_REF$show_title
-
-# ---------------------------
-# 2) Summarize global performance across ALL seasons
-# ---------------------------
+# Summarize global performance
 SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
   filter(
     category == "TV (English)",
-    show_title %in% TARGET_SHOWS
-  ) %>%
-  mutate(
-    # Clean up season titles - remove blanks but keep NAs as valid seasons
-    season_title = trimws(season_title),
-    season_title = na_if(season_title, "")
+    show_title %in% RUNTIME_REF$show_title
   ) %>%
   group_by(show_title) %>%
-  summarise(
-    # Count distinct season titles, treating NA as a valid season
-    `Number of Seasons`  = n_distinct(season_title, na.rm = FALSE),
-    `Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  # Join average runtimes
+  summarise(`Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
   left_join(RUNTIME_REF, by = "show_title") %>%
-  # Calculate approximate viewership
+  mutate(`Approximate Viewership` = round(`Total Hours Viewed` / (avg_episode_minutes / 60))) %>%
+  arrange(desc(`Total Hours Viewed`)) %>%
   mutate(
-    `Approximate Viewership` = round(`Total Hours Viewed` / (avg_episode_minutes / 60))
-  ) %>%
-  # Format large numbers
-  mutate(
-    `Total Hours Viewed`     = comma(`Total Hours Viewed`),
+    `Total Hours Viewed` = comma(`Total Hours Viewed`),
     `Approximate Viewership` = comma(`Approximate Viewership`)
   ) %>%
-  # Final column selection
   select(
     `Show Title` = show_title,
-    `Number of Seasons`,
+    `Number of Seasons` = num_seasons,
     `Total Hours Viewed`,
     `*Average Episode Minutes` = avg_episode_minutes,
     `Approximate Viewership`
-  ) %>%
-  # Sort by total hours (convert back to numeric for sorting)
-  arrange(desc(parse_number(`Total Hours Viewed`)))
+  )
 
-# ---------------------------
-# 3) Display
-# ---------------------------
 datatable(
   SHOW_SUMMARY,
   caption = "Global Performance of Selected English Netflix Originals (Sci-Fi/Fantasy/Supernatural, All Seasons)",
@@ -685,6 +615,8 @@ datatable(
   formatRound("*Average Episode Minutes", digits = 1)
 
 ```
+
+<br>
 
 *Note, Stranger Things average runtime caculated from the values presented in an earlier table.
 
