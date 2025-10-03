@@ -944,7 +944,7 @@ Netflix's content portfolio strikes a balance between classic content and origin
 
 With 670 million Spanish speakers across Latin America, Netflix's combination of archival and original content positions the platform to serve diverse generational tastes while expanding its regional subscriber base.
 
-<br>
+---
 
 ```{r}
 
@@ -1085,62 +1085,6 @@ GLOBAL_TOP_10 %>%
 
 ```
 
-```{r}
-
-# --- Config: runtime assumption for Elite (TVMaze avg ~50 min) ---
-elite_runtime <- 50/60  # hours
-
-# --- Spanish-speaking LATAM (exclude Brazil) ---
-latam_spanish <- c(
-  "Argentina","Bolivia","Chile","Colombia","Costa Rica","Dominican Republic",
-  "Ecuador","El Salvador","Guatemala","Honduras","Mexico","Nicaragua",
-  "Panama","Paraguay","Peru","Uruguay","Venezuela"
-)
-
-# --- Count distinct LATAM countries where Elite charted (from COUNTRY_TOP_10) ---
-elite_latam_country_count <- COUNTRY_TOP_10 %>%
-  mutate(show_title = coalesce(show_title, "")) %>%
-  filter(show_title == "Elite", country_name %in% latam_spanish) %>%
-  summarise(n_countries = n_distinct(country_name), .groups = "drop") %>%
-  pull(n_countries) %>%
-  { if (length(.) == 0 || is.na(.)) 0 else . }  # safety if no rows
-
-# --- Global totals + runtime-adjusted views (from GLOBAL_TOP_10) ---
-elite_total <- GLOBAL_TOP_10 %>%
-  mutate(show_title = coalesce(show_title, "")) %>%
-  filter(show_title == "Elite") %>%
-  summarise(
-    `Total Weekly Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    Category                          = "TV (Non-English)",
-    `Show Title`                      = "Elite",
-    `Season Title`                    = "All Seasons (8)",
-    `Avg Runtime (hrs)`               = elite_runtime,
-    `Approx Global Views`             = round(`Total Weekly Hours Viewed` / elite_runtime),
-    `Number of LATAM Countries Reached` = elite_latam_country_count,
-    `Total Weekly Hours Viewed`       = comma(`Total Weekly Hours Viewed`),
-    `Approx Global Views`             = comma(`Approx Global Views`)
-  ) %>%
-  select(
-    Category, `Show Title`, `Season Title`,
-    `Total Weekly Hours Viewed`, `Avg Runtime (hrs)`, `Approx Global Views`,
-    `Number of LATAM Countries Reached`
-  )
-
-# --- Render ---
-datatable(
-  elite_total,
-  caption = "Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)",
-  options = list(searching = FALSE, paging = FALSE, info = FALSE),
-  rownames = FALSE
-) %>%
-  formatRound("Avg Runtime (hrs)", digits = 2)
-
-```
+*[TVMaze's Average Episode Runtime for Elite](https://www.tvmaze.com/shows/37854/elite?utm_source=chatgpt.com)*
 
 <br>
-
-
-*[TVMaze's Average Episode Runtime for Elite](https://www.tvmaze.com/shows/37854/elite?utm_source=chatgpt.com)*
