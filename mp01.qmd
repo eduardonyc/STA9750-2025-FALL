@@ -400,7 +400,7 @@ Among Netflix's English-language sci-fi, fantasy, and supernatural genre origina
 
 Season 5 is poised to be one of 2025's most anticipated series finales, with a global fan base that has invested nine years in waiting to see how Eleven and the Upside Down’s story concludes. 
 
-<br>
+---
 
 ```{r}
 
@@ -493,15 +493,11 @@ datatable(
 
 ```
 
-<br>
-
 *Average minutes derived from the following sources:
 
 *[Wikipedia's List of Stranger Things Episodes](https://en.wikipedia.org/wiki/List_of_Stranger_Things_episodes)*
 
 *[Netflix's Official Tudum Blog](https://www.netflix.com/tudum/articles/stranger-things-season-4-episode-length)*
-
-<br>
 
 ```{r}
 
@@ -558,7 +554,6 @@ datatable(
   formatStyle('Country', fontWeight = styleEqual(top3, rep('bold', length(top3))))
 
 ```
-<br>
 
 ```{r}
 
@@ -616,8 +611,6 @@ datatable(
 
 ```
 
-<br>
-
 *Note, Stranger Things average runtime caculated from the values presented in an earlier table.
 
 The following links contain sources justifying these average per episode runtimes.
@@ -649,30 +642,37 @@ Given the global appeal of South Asian content, Netflix is well-positioned to ex
 
 Netflix's established presence across South Asia, including its strong performance in Hindi content and expanding regional offerings, positions the platform to seize the momentum in streaming growth while continuing to engage its global audiences with rich, South Asian storytelling.
 
-<br>
+---
 
 ```{r}
 
+# ============================================
+# CORE DATA: India-exclusive content (not in US, excluding Telugu/Tamil)
+# ============================================
+
+india_exclusive <- COUNTRY_TOP_10 %>%
+  group_by(show_title, season_title) %>%
+  summarise(
+    appears_in_india = any(country_name == "India"),
+    appears_in_us = any(country_name == "United States"),
+    .groups = "drop"
+  ) %>%
+  filter(appears_in_india, !appears_in_us) %>%
+  filter(!str_detect(tolower(show_title), "telugu|tamil"))
+
+# ============================================
+# TABLE 1: Requested Titles Summary (Films vs TV Shows)
+# ============================================
+
 requested_titles <- c(
-  "Haseen Dillruba",
-  "Sooryavanshi",
-  "Animal",
-  "Laapataa Ladies",
-  "Mimi",
-  "Bhool Bhulaiyaa 2",
-  "The Railway Men - The Untold Story Of Bhopal 1984",
-  "Khakee: The Bihar Chapter",
-  "Maamla Legal Hai",
-  "The Great Indian Kapil Show",
-  "Heeramandi: The Diamond Bazaar",
-  "Tribhuvan Mishra CA Topper",
-  "IC 814: The Kandahar Hijack",
-  "Mismatched",
-  "Dabba Cartel"
+  "Haseen Dillruba", "Sooryavanshi", "Animal", "Laapataa Ladies", "Mimi",
+  "Bhool Bhulaiyaa 2", "The Railway Men - The Untold Story Of Bhopal 1984",
+  "Khakee: The Bihar Chapter", "Maamla Legal Hai", "The Great Indian Kapil Show",
+  "Heeramandi: The Diamond Bazaar", "Tribhuvan Mishra CA Topper",
+  "IC 814: The Kandahar Hijack", "Mismatched", "Dabba Cartel"
 )
 
-# ---- Create a table for manually provided runtimes ----
-manual_runtimes <- tibble::tribble(
+manual_runtimes <- tribble(
   ~show_title,                   ~manual_runtime_hr,
   "Haseen Dillruba",             136 / 60,
   "Sooryavanshi",                145 / 60,
@@ -681,456 +681,174 @@ manual_runtimes <- tibble::tribble(
   "Khakee: The Bihar Chapter",   357 / 60
 )
 
-# ---- Data Processing ----
-
-# All of the following calculations are still required to create the summary table
-india_titles <- COUNTRY_TOP_10 %>%
-  filter(country_name == "India") %>%
-  distinct(show_title, category)
-
-us_titles <- COUNTRY_TOP_10 %>%
-  filter(country_name == "United States") %>%
-  distinct(show_title)
-
-india_not_us <- india_titles %>%
-  anti_join(us_titles, by = "show_title")
-
-charted_globally <- GLOBAL_TOP_10 %>% distinct(show_title)
-
-target_pool <- india_not_us %>%
-  semi_join(charted_globally, by = "show_title") %>%
-  filter(show_title %in% requested_titles)
-
-season_counts <- bind_rows(
-  COUNTRY_TOP_10 %>% select(show_title, season_title),
-  GLOBAL_TOP_10  %>% select(show_title, season_title)
-) %>%
-  filter(show_title %in% target_pool$show_title) %>%
-  mutate(
-    season_title = trimws(season_title),
-    season_title = dplyr::na_if(season_title, "")
-  ) %>%
-  group_by(show_title) %>%
-  summarise(distinct_seasons = dplyr::n_distinct(season_title, na.rm = TRUE), .groups = "drop")
-
-india_metric <- COUNTRY_TOP_10 %>%
-  filter(country_name == "India", show_title %in% target_pool$show_title) %>%
-  group_by(show_title) %>%
-  summarise(
-    india_max_cum_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
-    category_mode = {
-      cats <- na.omit(category)
-      if (length(cats) == 0) NA_character_ else names(sort(table(cats), decreasing = TRUE))[1]
-    },
-    .groups = "drop"
-  )
-
-global_metrics <- GLOBAL_TOP_10 %>%
-  filter(show_title %in% target_pool$show_title) %>%
+summary_tbl <- GLOBAL_TOP_10 %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
+  filter(show_title %in% requested_titles) %>%
   left_join(manual_runtimes, by = "show_title") %>%
   mutate(
-    runtime = coalesce(runtime, manual_runtime_hr)
+    runtime = coalesce(runtime, manual_runtime_hr),
+    content_type = if_else(str_detect(category, "Film"), "Film", "TV Show"),
+    views_est = if_else(!is.na(weekly_views) & weekly_views > 0,
+                        weekly_views,
+                        weekly_hours_viewed / runtime)
   ) %>%
-  group_by(show_title) %>%
-  summarise(
-    total_hours_viewed = sum(weekly_hours_viewed, na.rm = TRUE),
-    total_weekly_views = sum(weekly_views, na.rm = TRUE),
-    avg_runtime        = mean(runtime, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    total_views_est = case_when(
-      !is.na(total_weekly_views) & total_weekly_views > 0 ~ total_weekly_views,
-      is.finite(avg_runtime) & !is.na(avg_runtime) & avg_runtime > 0 ~ total_hours_viewed / avg_runtime,
-      TRUE ~ NA_real_
-    )
-  )
-
-final_raw <- india_metric %>%
-  left_join(global_metrics, by = "show_title") %>%
-  left_join(season_counts,  by = "show_title") %>%
-  mutate(
-    content_type = case_when(
-      str_detect(ifelse(is.na(category_mode), "", category_mode), regex("^TV",   ignore_case = TRUE)) ~ "TV Show",
-      str_detect(ifelse(is.na(category_mode), "", category_mode), regex("^Film", ignore_case = TRUE)) ~ "Film",
-      TRUE ~ ifelse(is.na(category_mode), "Unknown", category_mode)
-    ),
-    distinct_seasons = ifelse(is.na(distinct_seasons), 0L, distinct_seasons),
-    avg_runtime_min  = ifelse(!is.na(avg_runtime) & is.finite(avg_runtime), round(avg_runtime * 60, 0), NA_real_)
-  )
-
-# ---- The detailed table is no longer displayed ----
-# print("--- Detailed Analysis Table ---")
-# datatable(
-#   final_tbl %>%
-#     mutate(
-#       `Global: Total Hours Viewed` = ifelse(!is.na(`Global: Total Hours Viewed`), comma(round(`Global: Total Hours Viewed`, -4)), "N/A"),
-#       `Global: Total Views (Est.)` = ifelse(!is.na(`Global: Total Views (Est.)`),  comma(round(`Global: Total Views (Est.)`, -4)),  "N/A")
-#     ),
-#   options = list(
-#     searching = FALSE,
-#     paging = TRUE,
-#     info = TRUE,
-#     pageLength = 3,
-#     columnDefs = list(
-#       list(className = 'dt-left',   targets = 0),
-#       list(className = 'dt-center', targets = 1:6)
-#     )
-#   ),
-#   caption = "Requested Titles - India-not-US, but Global Top 10"
-# )
-
-
-# ===================================================================
-# Part 2: Summary Table (Final Output)
-# ===================================================================
-
-# ---- Create the summary table using the 'final_raw' object ----
-summary_tbl <- final_raw %>%
-  filter(content_type %in% c("Film", "TV Show")) %>%
   group_by(content_type) %>%
   summarise(
-    total_hours_viewed = sum(total_hours_viewed, na.rm = TRUE),
-    total_views_est = sum(total_views_est, na.rm = TRUE),
+    `Global: Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
+    `Global: Total Views (Est.)` = sum(views_est, na.rm = TRUE),
     .groups = "drop"
   ) %>%
   adorn_totals("row") %>%
-  rename(
-    `Content Type` = content_type,
-    `Global: Total Hours Viewed` = total_hours_viewed,
-    `Global: Total Views (Est.)` = total_views_est
+  rename(`Content Type` = content_type) %>%
+  mutate(
+    `Global: Total Hours Viewed` = comma(round(`Global: Total Hours Viewed`, -4)),
+    `Global: Total Views (Est.)` = comma(round(`Global: Total Views (Est.)`, -4))
   )
 
-# ---- Display the final summary table ----
 datatable(
-  summary_tbl %>%
-    mutate(
-      `Global: Total Hours Viewed` = ifelse(!is.na(`Global: Total Hours Viewed`), comma(round(`Global: Total Hours Viewed`, -4)), "N/A"),
-      `Global: Total Views (Est.)` = ifelse(!is.na(`Global: Total Views (Est.)`),  comma(round(`Global: Total Views (Est.)`, -4)),  "N/A")
-    ),
-  options = list(
-    searching = FALSE,
-    paging = FALSE,
-    info = FALSE
-  ),
-  caption = "Summary by Total Hours Viewed and Estimated Total Views, Hindi-Only Programs"
+  summary_tbl,
+  options = list(searching = FALSE, paging = FALSE, info = FALSE),
+  caption = "Summary by Total Hours Viewed and Estimated Total Views, Hindi-Only Programs",
+  rownames = FALSE
 )
 
 ```
 
-<br>
+
 
 ```{r}
 
-# ---- Requested titles only ----
-requested_titles <- c(
-  "Haseen Dillruba",
-  "Sooryavanshi",
-  "Animal",
-  "Laapataa Ladies",
-  "Mimi",
-  "Bhool Bhulaiyaa 2",
-  "The Railway Men - The Untold Story Of Bhopal 1984",
-  "Khakee: The Bihar Chapter",
-  "Maamla Legal Hai",
-  "The Great Indian Kapil Show",
-  "Heeramandi: The Diamond Bazaar",
-  "Tribhuvan Mishra CA Topper",
-  "IC 814: The Kandahar Hijack",
-  "Mismatched",
-  "Dabba Cartel"
-)
+# ============================================
+# TABLE 2: Detailed Requested Titles (optional - if you want the detail table)
+# ============================================
 
-# ---- Create a table for manually provided runtimes ----
-# Runtimes are converted from minutes to hours (as required for the calculation)
-manual_runtimes <- tibble::tribble(
-  ~show_title,                   ~manual_runtime_hr,
-  "Haseen Dillruba",             136 / 60,
-  "Sooryavanshi",                145 / 60,
-  "Mimi",                        132 / 60,
-  "Bhool Bhulaiyaa 2",           143 / 60,
-  "Khakee: The Bihar Chapter",   357 / 60
-)
-
-# ---- Data Processing ----
-
-# 1. Get titles that appeared in India but NOT in the US
-india_titles <- COUNTRY_TOP_10 %>%
-  filter(country_name == "India") %>%
-  distinct(show_title, category)
-
-us_titles <- COUNTRY_TOP_10 %>%
-  filter(country_name == "United States") %>%
-  distinct(show_title)
-
-india_not_us <- india_titles %>%
-  anti_join(us_titles, by = "show_title")
-
-# 2. Filter for titles that also charted globally from the requested list
-charted_globally <- GLOBAL_TOP_10 %>% distinct(show_title)
-
-target_pool <- india_not_us %>%
-  semi_join(charted_globally, by = "show_title") %>%
-  filter(show_title %in% requested_titles)
-
-# 3. Get distinct season counts for the target shows
-season_counts <- bind_rows(
-  COUNTRY_TOP_10 %>% select(show_title, season_title),
-  GLOBAL_TOP_10  %>% select(show_title, season_title)
-) %>%
-  filter(show_title %in% target_pool$show_title) %>%
-  mutate(
-    season_title = trimws(season_title),
-    season_title = dplyr::na_if(season_title, "")
-  ) %>%
-  group_by(show_title) %>%
-  summarise(distinct_seasons = dplyr::n_distinct(season_title, na.rm = TRUE), .groups = "drop")
-
-# 4. Get India-specific metrics
-india_metric <- COUNTRY_TOP_10 %>%
-  filter(country_name == "India", show_title %in% target_pool$show_title) %>%
-  group_by(show_title) %>%
-  summarise(
-    india_max_cum_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
-    category_mode = {
-      cats <- na.omit(category)
-      if (length(cats) == 0) NA_character_ else names(sort(table(cats), decreasing = TRUE))[1]
-    },
-    .groups = "drop"
-  )
-
-# 5. Global metrics
-global_metrics <- GLOBAL_TOP_10 %>%
-  filter(show_title %in% target_pool$show_title) %>%
+detailed_tbl <- GLOBAL_TOP_10 %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
+  filter(show_title %in% requested_titles) %>%
   left_join(manual_runtimes, by = "show_title") %>%
-  mutate(
-    runtime = coalesce(runtime, manual_runtime_hr)
-  ) %>%
+  mutate(runtime = coalesce(runtime, manual_runtime_hr)) %>%
   group_by(show_title) %>%
   summarise(
-    total_hours_viewed = sum(weekly_hours_viewed, na.rm = TRUE),
-    total_weekly_views = sum(weekly_views, na.rm = TRUE),
-    avg_runtime        = mean(runtime, na.rm = TRUE),
+    content_type = if_else(str_detect(first(category), "Film"), "Film", "TV Show"),
+    india_max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE),
+    total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
+    total_views = sum(if_else(!is.na(weekly_views) & weekly_views > 0,
+                              weekly_views,
+                              weekly_hours_viewed / runtime), na.rm = TRUE),
+    avg_runtime_min = round(mean(runtime, na.rm = TRUE) * 60),
     .groups = "drop"
   ) %>%
-  mutate(
-    total_views_est = case_when(
-      !is.na(total_weekly_views) & total_weekly_views > 0 ~ total_weekly_views,
-      is.finite(avg_runtime) & !is.na(avg_runtime) & avg_runtime > 0 ~ total_hours_viewed / avg_runtime,
-      TRUE ~ NA_real_
-    )
-  )
-
-# 6. Combine all metrics into a final raw table
-final_raw <- india_metric %>%
-  left_join(global_metrics, by = "show_title") %>%
-  left_join(season_counts,  by = "show_title") %>%
-  mutate(
-    content_type = case_when(
-      str_detect(ifelse(is.na(category_mode), "", category_mode), regex("^TV",   ignore_case = TRUE)) ~ "TV Show",
-      str_detect(ifelse(is.na(category_mode), "", category_mode), regex("^Film", ignore_case = TRUE)) ~ "Film",
-      TRUE ~ ifelse(is.na(category_mode), "Unknown", category_mode)
-    ),
-    distinct_seasons = ifelse(is.na(distinct_seasons), 0L, distinct_seasons),
-    avg_runtime_min  = ifelse(!is.na(avg_runtime) & is.finite(avg_runtime), round(avg_runtime * 60, 0), NA_real_)
-  )
-
-# 7. Final selection, renaming, and sorting
-final_tbl <- final_raw %>%
-  arrange(desc(total_hours_viewed), desc(total_views_est), desc(india_max_cum_weeks)) %>%
-  select(
+  arrange(desc(total_hours)) %>%
+  rename(
     `Show Title` = show_title,
     `Content Type` = content_type,
-    `Distinct Seasons` = distinct_seasons,
-    `India: Max Cumulative Weeks` = india_max_cum_weeks,
-    `Global: Total Hours Viewed` = total_hours_viewed,
-    `Global: Total Views (Est.)` = total_views_est,
-    `Global: Avg Runtime (min)` = avg_runtime_min
+    `India: Max Weeks` = india_max_weeks,
+    `Global: Total Hours` = total_hours,
+    `Global: Total Views (Est.)` = total_views,
+    `Avg Runtime (min)` = avg_runtime_min
+  ) %>%
+  mutate(
+    `Global: Total Hours` = comma(round(`Global: Total Hours`, -4)),
+    `Global: Total Views (Est.)` = comma(round(`Global: Total Views (Est.)`, -4))
   )
 
-# ---- Display the final table (MODIFIED SECTION) ----
 datatable(
-  final_tbl %>%
-    mutate(
-      `Global: Total Hours Viewed` = ifelse(!is.na(`Global: Total Hours Viewed`), comma(round(`Global: Total Hours Viewed`, -4)), "N/A"),
-      `Global: Total Views (Est.)` = ifelse(!is.na(`Global: Total Views (Est.)`),  comma(round(`Global: Total Views (Est.)`, -4)),  "N/A")
-    ),
-  options = list(
-    # --- THESE OPTIONS HAVE BEEN CHANGED ---
-    searching = FALSE,
-    paging = TRUE,      # Enable paging
-    info = TRUE,        # Show the "Showing X of Y" text
-    pageLength = 3,     # Set the initial page length to 3
-    # ---
-    columnDefs = list(
-      list(className = 'dt-left',   targets = 0),
-      list(className = 'dt-center', targets = 1:6)
-    )
-  ),
-  caption = "Selected Programs, India-Only (Not US), in Global Top 10"
+  detailed_tbl,
+  options = list(searching = FALSE, paging = TRUE, info = TRUE, pageLength = 3),
+  caption = "Selected Programs, India-Only (Not US), in Global Top 10",
+  rownames = FALSE
 )
 
 ```
 
-<br>
-
 ```{r}
 
-india_exclusive_from_us <- COUNTRY_TOP_10 %>%
-  group_by(show_title, season_title) %>%
-  summarise(
-    appears_in_india = any(country_name == "India"),
-    appears_in_us = any(country_name == "United States"),
-    .groups = "drop"
-  ) %>%
-  filter(appears_in_india == TRUE & appears_in_us == FALSE)
+# ============================================
+# TABLE 3: India-exclusive breakdown (Films vs TV Shows)
+# ============================================
 
-india_only_list <- COUNTRY_TOP_10 %>%
+india_breakdown <- COUNTRY_TOP_10 %>%
   filter(country_name == "India") %>%
-  semi_join(india_exclusive_from_us, by = c("show_title", "season_title")) %>%
-  filter(!str_detect(tolower(show_title), "telugu|tamil")) %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
   distinct(show_title, season_title, category) %>%
-  mutate(content_type = case_when(
-    str_detect(category, "Films") ~ "Films",
-    str_detect(category, "TV") ~ "TV Shows",
-    TRUE ~ "Other"
-  )) %>%
-  arrange(content_type, show_title, season_title)
-
-india_only_breakdown <- india_only_list %>%
+  mutate(content_type = if_else(str_detect(category, "Films"), "Films", "TV Shows")) %>%
   count(content_type, name = "distinct_shows") %>%
-  mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1))
+  mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1)) %>%
+  rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, Percentage = percentage)
 
-india_only_breakdown %>%
-  rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
-  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+total_shows <- sum(india_breakdown$`Number of Shows`)
 
-total_india_only <- sum(india_only_breakdown$distinct_shows)
-cat("Total distinct viewing options in India that do NOT 
-  appear in US (excluding Telugu/Tamil language viewing options):", total_india_only)
-
+datatable(
+  india_breakdown,
+  options = list(searching = FALSE, info = FALSE, paging = FALSE),
+  caption = htmltools::tags$caption(
+    style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+    htmltools::HTML(sprintf(
+      "Total distinct viewing options in India that do NOT appear in US (excluding Telugu/Tamil): <b>%s</b>",
+      total_shows
+    ))
+  ),
+  rownames = FALSE
+)
 ```
 
-<br>
 
 ```{r}
 
 # ============================================
-# EXISTING CODE (unchanged)
+# TABLE 4: Global metrics summary with subscriber estimate
 # ============================================
 
-india_exclusive_combinations <- COUNTRY_TOP_10 %>%
-  group_by(show_title, season_title) %>%
-  summarise(
-    appears_in_india = any(country_name == "India"),
-    appears_in_us = any(country_name == "United States"),
-    .groups = "drop"
-  ) %>%
-  filter(appears_in_india == TRUE & appears_in_us == FALSE) %>%
-  filter(!str_detect(tolower(show_title), "telugu|tamil"))
-
-global_appearing_breakdown <- GLOBAL_TOP_10 %>%
+# Calculate metrics
+global_metrics <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
-  distinct(show_title, season_title, category) %>%
-  mutate(content_type = case_when(
-    str_detect(category, "Films") ~ "Films",
-    str_detect(category, "TV") ~ "TV Shows",
-    TRUE ~ "Other"
-  )) %>%
-  count(content_type, name = "distinct_shows") %>%
-  mutate(percentage = round(distinct_shows / sum(distinct_shows) * 100, 1))
-
-films_metrics <- GLOBAL_TOP_10 %>%
-  filter(category == "Films (Non-English)") %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
-  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE))
-
-tv_metrics <- GLOBAL_TOP_10 %>%
-  filter(category == "TV (Non-English)") %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
-  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE))
-
-shows_in_global_count <- sum(global_appearing_breakdown$distinct_shows)
-total_combinations <- nrow(india_exclusive_combinations)
-global_penetration <- round((shows_in_global_count / total_combinations) * 100, 1)
-
-INDIA_EXCLUSIVE_SUMMARY <- GLOBAL_TOP_10 %>%
-  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
-  summarise(
-    total_hours_viewed = sum(weekly_hours_viewed, na.rm = TRUE),
-    avg_weeks_in_top_10 = mean(cumulative_weeks_in_top_10, na.rm = TRUE),
-    max_weeks_in_top_10 = max(cumulative_weeks_in_top_10, na.rm = TRUE)
-  ) %>%
-  mutate(
-    total_hours_formatted = comma(total_hours_viewed),
-    avg_weeks_formatted = round(avg_weeks_in_top_10, 1)
-  )
-
-# ============================================
-# NEW CODE: SUBSCRIBER ESTIMATION
-# ============================================
-
-# Step 1: Calculate runtime and views
-runtime_and_views <- GLOBAL_TOP_10 %>%
-  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
-  semi_join(india_exclusive_combinations, by = c("show_title", "season_title")) %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
   group_by(category) %>%
   summarise(
     total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
     avg_runtime = mean(runtime, na.rm = TRUE),
     .groups = "drop"
-  ) %>%
-  mutate(
-    total_views = total_hours / avg_runtime
   )
 
-# Step 2: Get number of weeks in dataset
-num_weeks <- GLOBAL_TOP_10 %>% distinct(week) %>% nrow()
+films_hours <- global_metrics$total_hours[global_metrics$category == "Films (Non-English)"]
+tv_hours <- global_metrics$total_hours[global_metrics$category == "TV (Non-English)"]
+combined_hours <- sum(global_metrics$total_hours)
 
-# Step 3: Calculate total views and views per week
-total_views <- sum(runtime_and_views$total_views)
-views_per_week_global <- total_views / num_weeks
+total_views <- sum(global_metrics$total_hours / global_metrics$avg_runtime)
+num_weeks <- n_distinct(GLOBAL_TOP_10$week)
+views_per_week <- total_views / num_weeks
 
-# Step 4: KEY ASSUMPTIONS - Document these clearly!
-INDIA_SHARE_OF_GLOBAL <- 0.25  # 25% of global Non-English views come from India
-VIEWS_PER_SUBSCRIBER_PER_WEEK <- 2.0  # Hindi top 10 shows per subscriber per week
+# Subscriber estimate
+INDIA_SHARE <- 0.25
+VIEWS_PER_SUB_PER_WEEK <- 2.0
+estimated_subscribers <- (views_per_week * INDIA_SHARE) / VIEWS_PER_SUB_PER_WEEK
 
-# Rationale for assumptions:
-# - India share: Based on India's population, Netflix penetration, and content engagement
-# - Views per subscriber: These are GLOBAL hit shows, higher than typical Hindi content
-#   (Industry avg: 3-4 top 10 shows/week total; Hindi ~28% of catalog; but these are hits)
+# Summary stats
+total_combinations <- nrow(india_exclusive)
+global_count <- GLOBAL_TOP_10 %>%
+  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
+  distinct(show_title, season_title) %>%
+  nrow()
 
-# Step 5: Calculate estimated subscribers
-india_views_per_week <- views_per_week_global * INDIA_SHARE_OF_GLOBAL
-estimated_hindi_subscribers <- india_views_per_week / VIEWS_PER_SUBSCRIBER_PER_WEEK
-
-# Step 6: Create sensitivity scenarios
-sensitivity_scenarios <- data.frame(
-  Scenario = c("Conservative", "Moderate", "Aggressive"),
-  India_Share = c(0.20, 0.25, 0.30),
-  Views_Per_Sub = c(1.5, 2.0, 2.5)
-) %>%
-  mutate(
-    India_Views_Per_Week = views_per_week_global * India_Share,
-    Estimated_Subscribers = India_Views_Per_Week / Views_Per_Sub,
-    Formatted_Subscribers = comma(round(Estimated_Subscribers))
+global_summary <- GLOBAL_TOP_10 %>%
+  filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
+  semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
+  summarise(
+    avg_weeks = round(mean(cumulative_weeks_in_top_10, na.rm = TRUE), 1),
+    max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE)
   )
 
-# ============================================
-# UPDATED SUMMARY TABLE WITH SUBSCRIBER ROW
-# ============================================
-
-GLOBAL_REACH_SUMMARY <- data.frame(
+# Build summary table
+GLOBAL_REACH_SUMMARY <- tibble(
   Metric = c(
-    "Total Show and Season Combinations", 
-    "Total Hours Viewed - Non-English Films", 
+    "Total Show and Season Combinations",
+    "Total Hours Viewed - Non-English Films",
     "Total Hours Viewed - Non-English TV",
-    "Combined Hours Viewed (Non-English)", 
-    "Average Weeks in Global Top 10", 
-    "Maximum Weeks in Global Top 10", 
-    "Non-English Combinations in Global Charts", 
+    "Combined Hours Viewed (Non-English)",
+    "Average Weeks in Global Top 10",
+    "Maximum Weeks in Global Top 10",
+    "Non-English Combinations in Global Charts",
     "Non-English Global Chart Penetration Rate",
     "Estimated Hindi-Engaged Subscribers",
     "  Assumption: India Share of Global Views",
@@ -1138,105 +856,75 @@ GLOBAL_REACH_SUMMARY <- data.frame(
   ),
   Value = c(
     total_combinations,
-    comma(films_metrics$total_hours), 
-    comma(tv_metrics$total_hours),
-    INDIA_EXCLUSIVE_SUMMARY$total_hours_formatted,
-    paste0(INDIA_EXCLUSIVE_SUMMARY$avg_weeks_formatted, " weeks"),
-    paste0(INDIA_EXCLUSIVE_SUMMARY$max_weeks_in_top_10, " weeks"),
-    paste0(shows_in_global_count, " of ", total_combinations, " combinations"),
-    paste0(global_penetration, "%"),
-    comma(round(estimated_hindi_subscribers)),
-    paste0(INDIA_SHARE_OF_GLOBAL * 100, "%"),
-    paste0(VIEWS_PER_SUBSCRIBER_PER_WEEK, " shows")
+    comma(films_hours),
+    comma(tv_hours),
+    comma(combined_hours),
+    paste0(global_summary$avg_weeks, " weeks"),
+    paste0(global_summary$max_weeks, " weeks"),
+    paste0(global_count, " of ", total_combinations, " combinations"),
+    paste0(round((global_count / total_combinations) * 100, 1), "%"),
+    comma(round(estimated_subscribers)),
+    paste0(INDIA_SHARE * 100, "%"),
+    paste0(VIEWS_PER_SUB_PER_WEEK, " shows")
   )
 )
 
-# ============================================
-# DISPLAY RESULTS
-# ============================================
-
-cat("India-exclusive NON-ENGLISH, (proxy for Hindi; excludes Telugu/Tamil) 
-    that achieved global top 10 status:\n\n")
-
-global_appearing_breakdown %>%
-  rename(`Content Type` = content_type, `Number of Shows` = distinct_shows, `Percentage` = percentage) %>%
-  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
-
-cat("\nTotal NON-ENGLISH (proxy for Hindi; excludes Telugu/Tamil) 
-program offerings appearing in global charts:", shows_in_global_count, "of", total_combinations, "\n\n")
-
-GLOBAL_REACH_SUMMARY %>%
-  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE))
+datatable(
+  GLOBAL_REACH_SUMMARY,
+  options = list(searching = FALSE, info = FALSE, paging = FALSE),
+  caption = htmltools::tags$caption(
+    style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+    htmltools::HTML("India-exclusive NON-ENGLISH content (proxy for Hindi; excludes Telugu/Tamil) 
+                    with global Top 10 status")
+  ),
+  rownames = FALSE
+)
 
 ```
 
-<br>
 
 ```{r}
 
-# Define South Asian countries
+# ============================================
+# TABLE 5: South Asia growth (unchanged - already efficient)
+# ============================================
+
 south_asian_countries <- c("India", "Pakistan", "Bangladesh", "Sri Lanka")
 
-# Calculate unique programs by year for each country
 yearly_unique_programs <- COUNTRY_TOP_10 %>%
   filter(country_name %in% south_asian_countries) %>%
   mutate(
     year_period = case_when(
       week >= as.Date("2021-07-04") & week < as.Date("2022-07-04") ~ "2021-2022",
-      week >= as.Date("2022-07-04") & week < as.Date("2023-07-04") ~ "2022-2023", 
+      week >= as.Date("2022-07-04") & week < as.Date("2023-07-04") ~ "2022-2023",
       week >= as.Date("2023-07-04") & week < as.Date("2024-07-04") ~ "2023-2024",
-      week >= as.Date("2024-07-04") & week <= as.Date("2025-07-05") ~ "2024-2025",
-      TRUE ~ "Outside Period"
+      week >= as.Date("2024-07-04") & week <= as.Date("2025-07-05") ~ "2024-2025"
     )
   ) %>%
-  filter(year_period != "Outside Period") %>%
-  mutate(unique_program = paste(show_title, ifelse(is.na(season_title), "NA_SEASON", season_title), sep = " || ")) %>%
+  filter(!is.na(year_period)) %>%
+  mutate(unique_program = paste(show_title, coalesce(season_title, "NA_SEASON"), sep = " || ")) %>%
   group_by(country_name, year_period) %>%
-  summarise(unique_programs_count = n_distinct(unique_program), .groups = "drop") %>%
-  arrange(country_name, year_period)
+  summarise(unique_programs_count = n_distinct(unique_program), .groups = "drop")
 
-# Calculate total growth (first year to last year)
 growth_summary <- yearly_unique_programs %>%
   group_by(country_name) %>%
   arrange(year_period) %>%
   summarise(
-    first_year = first(unique_programs_count),
-    last_year = last(unique_programs_count),
-    total_growth = round(((last_year - first_year) / first_year) * 100, 1),
+    total_growth = round(((last(unique_programs_count) - first(unique_programs_count)) / first(unique_programs_count)) * 100, 1),
     .groups = "drop"
   ) %>%
-  mutate(total_growth_formatted = paste0(ifelse(total_growth > 0, "+", ""), total_growth, "%"))
+  mutate(total_growth = paste0(if_else(total_growth > 0, "+", ""), total_growth, "%"))
 
-# Create the presentation table
-SOUTH_ASIA_GROWTH_TABLE <- yearly_unique_programs %>%
-  select(country_name, year_period, unique_programs_count) %>%
-  pivot_wider(
-    names_from = year_period,
-    values_from = unique_programs_count
-  ) %>%
-  left_join(growth_summary %>% select(country_name, total_growth_formatted), by = "country_name") %>%
-  rename(
-    Country = country_name,
-    `2021-22` = `2021-2022`,
-    `2022-23` = `2022-2023`,
-    `2023-24` = `2023-2024`,
-    `2024-25` = `2024-2025`,
-    `Total Growth` = total_growth_formatted
-  )
-
-# Display only the interactive table
-SOUTH_ASIA_GROWTH_TABLE %>%
+yearly_unique_programs %>%
+  pivot_wider(names_from = year_period, values_from = unique_programs_count) %>%
+  left_join(growth_summary, by = "country_name") %>%
+  rename(Country = country_name, `Total Growth` = total_growth,
+         `2021-22` = `2021-2022`, `2022-23` = `2022-2023`,
+         `2023-24` = `2023-2024`, `2024-25` = `2024-2025`) %>%
   datatable(
-    options = list(
-      searching = FALSE, 
-      info = FALSE, 
-      paging = FALSE,
-      columnDefs = list(
-        list(className = 'dt-center', targets = 1:5),
-        list(className = 'dt-left', targets = 0)
-      )
-    ),
-    caption = "Netflix Top 10 Program Growth in South Asia (2021-2025)"
+    options = list(searching = FALSE, info = FALSE, paging = FALSE),
+    caption = "Netflix Top 10 Program Growth in South Asia (2021-2025)",
+    rownames = FALSE
   )
 
 ```
