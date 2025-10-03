@@ -390,13 +390,18 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 <br>
 
 ## Task 5: 
-## Press Release 1: The Perks of Being a Stranger
+## Press Release 1: Nine Years Later: 93 Countries Await Stranger Things' Epic Finale
 
-Netflix's foray into original programming is yielding massive dividends, as unafraid viewers willingly spend their time (and money) alongside billions of "Strangers" year after year. For Netflix, this translates into viewership that has surpassed the billion mark. The Stranger Things series has garnered 2.5 billion viewers since its premiere in 2016. During its fourth season, it stayed a remarkable 19 weeks in Netflix's Global Top 10 list, spending seven of those weeks resting comfortably at number one. Moreover, the series averaged about 13 weeks in the global top 10 across 93 countries, while Pakistan and Ukraine led the charge at 24 total weeks in the Global top 10.
 
-Compared to other original Netflix titles, Stranger Things dominates in total global hours viewed at nearly 3 billion hours. One contender, Wednesday, has a solid stronghold in approximate viewership at close to 3.8 billion; however, Stranger Things still reigns supreme in total hours viewed, leaving other rivals, such as The Witcher, The Sandman, Locke & Key, and Shadow and Bone, with dust in their viewers' eyes.
+Netflix will release the fifth and final season of Stranger Things in late November 2025, concluding a global phenomenon that has generated nearly 3 billion viewing hours across 93 countries since its 2016 debut.
 
-With the upcoming release of its fifth and final season, Stranger Things is on a trajectory to continue shattering global records for Netflix. As a solid revenue machine, it is unlikely this season will mark the end of the series. As consummate content consumers, it's highly probable that Netflix will continue to feed the insatiable appetite of its subscribers. If time has taught us anything, we should not be surprised to expect Netflix to conjure spinoffs, prequels, and movie adaptations of this series, as the last thing it would want, is for its subscribers to become strangers to the platform.
+Across four seasons, Stranger Things has accumulated 2.97 billion global viewing hours, reaching an estimated 2.49 billion viewers worldwide. The series has spent an average of 13.4 weeks in Netflix’s Country Top 10 charts, with Pakistan and Ukraine leading at 24 weeks each, demonstrating sustained engagement well beyond initial release windows.
+
+Season 4 delivered an unprecedented performance, accounting for 1.89 billion viewing hours, which represents 64% of the series' total. The season maintained a 19-week presence in Netflix's Global Top 10, including seven consecutive weeks at #1, cementing Stranger Things as Netflix's most-watched English-language genre series by total hours viewed.
+
+Among Netflix's English-language sci-fi, fantasy, and supernatural genre originals, Stranger Things leads in cumulative viewing hours. Wednesday (2.84 billion hours across 2 seasons) demonstrates strong per-season averages, while The Witcher (1.12 billion hours, 3 seasons) and The Sandman (571 million hours, 2 seasons) round out the genre's top performers. Stranger Things maintains its position as the platform's premier franchise in the genre by total global hours.
+
+Season 5 is poised to be one of 2025's most anticipated series finales, with a global fan base that has invested nine years in waiting to see how Eleven and the Upside Down’s story concludes. 
 
 <br>
 
@@ -608,14 +613,6 @@ DT::datatable(
 ```{r}
 
 # 1) Average episode runtimes (minutes)
-#    Sources you provided:
-#    - Stranger Things: 63.5 (avg of 47, 60, 60, 87 from your table screenshot)
-#    - Wednesday: 45 (Addams Family Fandom)
-#    - The Witcher: 60 (epguides)
-#    - The Sandman: 51 (TVMaze)
-#    - Locke & Key: 50 (Fandom range ~40–56 → midpoint 50)
-#    - Shadow and Bone: 60 (epguides)
-# ---------------------------
 RUNTIME_REF <- tribble(
   ~show_title,        ~avg_episode_minutes,
   "Stranger Things",  63.5,
@@ -626,7 +623,6 @@ RUNTIME_REF <- tribble(
   "Shadow and Bone",  60
 )
 
-# Keep only these six shows (English-language Netflix Originals)
 TARGET_SHOWS <- RUNTIME_REF$show_title
 
 # ---------------------------
@@ -638,27 +634,29 @@ SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
     show_title %in% TARGET_SHOWS
   ) %>%
   mutate(
-    # prevent blanks from inflating season counts
+    # Clean up season titles - remove blanks but keep NAs as valid seasons
+    season_title = trimws(season_title),
     season_title = na_if(season_title, "")
   ) %>%
   group_by(show_title) %>%
   summarise(
-    `Number of Seasons`  = n_distinct(season_title, na.rm = TRUE),
+    # Count distinct season titles, treating NA as a valid season
+    `Number of Seasons`  = n_distinct(season_title, na.rm = FALSE),
     `Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  # join average runtimes (minutes)
+  # Join average runtimes
   left_join(RUNTIME_REF, by = "show_title") %>%
-  # runtime-adjusted approximate viewership
+  # Calculate approximate viewership
   mutate(
     `Approximate Viewership` = round(`Total Hours Viewed` / (avg_episode_minutes / 60))
   ) %>%
-  # pretty formatting for large numbers
+  # Format large numbers
   mutate(
     `Total Hours Viewed`     = comma(`Total Hours Viewed`),
     `Approximate Viewership` = comma(`Approximate Viewership`)
   ) %>%
-  # final columns / headers
+  # Final column selection
   select(
     `Show Title` = show_title,
     `Number of Seasons`,
@@ -666,7 +664,7 @@ SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
     `*Average Episode Minutes` = avg_episode_minutes,
     `Approximate Viewership`
   ) %>%
-  # sort by (numeric) total hours
+  # Sort by total hours (convert back to numeric for sorting)
   arrange(desc(parse_number(`Total Hours Viewed`)))
 
 # ---------------------------
@@ -680,7 +678,7 @@ datatable(
     searching = FALSE,
     paging = FALSE,
     info = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all")) # <-- left justify all text
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))
   ),
   rownames = FALSE
 ) %>%
