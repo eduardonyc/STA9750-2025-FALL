@@ -386,7 +386,7 @@ Q9_RESULT_PT2 %>%
 
 <br>
 
-**Answer:** **Answer:** The most recent film to accomplish this was ```r most_recent_film```, which reached Number 1 during the week of ```r format(date_reached_number1, "%B %d, %Y")```.
+**Answer:** The most recent film to accomplish this was ```r most_recent_film```, which reached Number 1 during the week of ```r format(date_reached_number1, "%B %d, %Y")```.
 
 
 <br>
@@ -446,11 +446,9 @@ The final season is poised to be one of 2025's most anticipated series finales, 
 
 </div>
 
-<br>
+---
 
 *Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
-
----
 
 ```{r}
 
@@ -530,9 +528,10 @@ datatable(
 
 *Average minutes derived from the following sources:
 
-*[Wikipedia's List of Stranger Things Episodes](https://en.wikipedia.org/wiki/List_of_Stranger_Things_episodes)*
+*<a href="https://en.wikipedia.org/wiki/List_of_Stranger_Things_episodes" target="_blank">Wikipedia's List of Stranger Things Episodes</a>*
 
-*[Netflix's Official Tudum Blog](https://www.netflix.com/tudum/articles/stranger-things-season-4-episode-length)*
+*<a href="https://www.netflix.com/tudum/articles/stranger-things-season-4-episode-length" target="_blank">Netflix's Official Tudum Blog</a>*
+
 
 ```{r}
 
@@ -584,13 +583,13 @@ datatable(
 # TABLE 3: Comparison to Other Shows
 
 RUNTIME_REF <- tribble(
-  ~show_title,        ~num_seasons, ~avg_episode_minutes,
-  "Stranger Things",  4,            63.5,
-  "Wednesday",        2,            45,
-  "The Witcher",      3,            60,
-  "The Sandman",      2,            51,
-  "Locke & Key",      3,            50,
-  "Shadow and Bone",  2,            60)
+  ~show_title,        ~num_seasons, ~avg_episode_hrs,   
+  "Stranger Things",  4,            63.5/60,            
+  "Wednesday",        2,            45/60,              
+  "The Witcher",      3,            60/60,              
+  "The Sandman",      2,            51/60,              
+  "Locke & Key",      3,            50/60,              
+  "Shadow and Bone",  2,            60/60)              
 
 SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
   filter(
@@ -599,7 +598,7 @@ SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
   group_by(show_title) %>%
   summarise(`Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
   left_join(RUNTIME_REF, by = "show_title") %>%
-  mutate(`Approximate Viewership` = round(`Total Hours Viewed` / (avg_episode_minutes / 60))) %>%
+  mutate(`Approximate Viewership` = round(`Total Hours Viewed` / avg_episode_hrs)) %>%  
   arrange(desc(`Total Hours Viewed`)) %>%
   mutate(
     `Total Hours Viewed` = comma(`Total Hours Viewed`),
@@ -608,7 +607,7 @@ SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
     `Show Title` = show_title,
     `Number of Seasons` = num_seasons,
     `Total Hours Viewed`,
-    `*Average Episode Minutes` = avg_episode_minutes,
+    `*Average Episode Hours` = avg_episode_hrs,  
     `Approximate Viewership`)
 
 datatable(
@@ -621,26 +620,25 @@ datatable(
     info = FALSE,
     columnDefs = list(list(className = 'dt-left', targets = "_all"))),
   rownames = FALSE) %>%
-  formatRound("*Average Episode Minutes", digits = 1)
+  formatRound("*Average Episode Hours", digits = 2)
 
 ```
 
 *Note: 
 
-*Stranger Things* average runtime calculated from the values presented in an earlier table.
+*Stranger Things'* average runtime calculated from the values presented in an earlier table.
 
 The following links contain sources that justify the average episode runtimes.
 
+*<a href="https://addamsfamily.fandom.com/wiki/Wednesday_(series)" target="_blank">Wednesday Average Runtime</a>*
 
-*[Wednesday Average Runtime](https://addamsfamily.fandom.com/wiki/Wednesday_(series))*
+*<a href="https://epguides.com/Witcher/" target="_blank">The Witcher Average Runtime</a>*
 
-*[The Witcher Average Runtime](https://epguides.com/Witcher/)*
+*<a href="https://www.tvmaze.com/shows/42827/the-sandman" target="_blank">The Sandman</a>*
 
-*[The Sandman](https://www.tvmaze.com/shows/42827/the-sandman)*
+*<a href="https://lockekey.fandom.com/wiki/Season_One" target="_blank">Locke & Key Average Runtime</a>*
 
-*[Locke & Key Average Runtime](https://lockekey.fandom.com/wiki/Season_One)*
-
-*[Shadow and Bone](https://epguides.com/ShadowandBone/)*
+*<a href="https://epguides.com/ShadowandBone/" target="_blank">Shadow and Bone</a>*
 
 <br>
 
@@ -663,11 +661,9 @@ Netflix has an established presence across South Asia. With a strong performance
 
 </div>
 
-<br>
+---
 
 *Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
-
----
 
 ```{r}
 
@@ -733,7 +729,6 @@ datatable(
 ```
 
 
-
 ```{r}
 
 # TABLE 2: Detailed Requested Titles
@@ -751,7 +746,7 @@ detailed_tbl <- GLOBAL_TOP_10 %>%
     total_views = sum(if_else(!is.na(weekly_views) & weekly_views > 0,
                               weekly_views,
                               weekly_hours_viewed / runtime), na.rm = TRUE),
-    avg_runtime_min = round(mean(runtime, na.rm = TRUE) * 60),
+    avg_runtime_hrs = mean(runtime, na.rm = TRUE),   
     .groups = "drop") %>%
   arrange(desc(total_hours)) %>%
   rename(
@@ -760,7 +755,7 @@ detailed_tbl <- GLOBAL_TOP_10 %>%
     `India: Max Weeks` = india_max_weeks,
     `Global: Total Hours` = total_hours,
     `Global: Total Views (Est.)` = total_views,
-    `*Avg Runtime (min)` = avg_runtime_min) %>%
+    `*Avg Runtime (hrs)` = avg_runtime_hrs) %>%   
   mutate(
     `Global: Total Hours` = comma(round(`Global: Total Hours`, -4)),
     `Global: Total Views (Est.)` = comma(round(`Global: Total Views (Est.)`, -4)))
@@ -770,7 +765,8 @@ datatable(
   options = list(searching = FALSE, paging = TRUE, info = TRUE, pageLength = 3,
   columnDefs = list(list(className = 'dt-left', targets = "_all"))),
   caption = "Selected Programs, India-Only (Not US), in Global Top 10",
-  rownames = FALSE)
+  rownames = FALSE) %>%
+  formatRound("*Avg Runtime (hrs)", digits = 2)
 
 ```
 
@@ -778,15 +774,15 @@ datatable(
 
 The links below contain sources that justify the average runtime per film and/or TV show, which were initially omitted from Netflix's Global Top 10 dataset.
 
-*[IMDB's Runtime for Haseen Dillruba](https://www.imdb.com/title/tt12015202/technical/)*
+*<a href="https://www.imdb.com/title/tt12015202/technical/" target="_blank">IMDB's Runtime for Haseen Dillruba</a>*
 
-*[The Movie Database (TMDB)'s Runtime for Sooryavanshi](https://www.themoviedb.org/movie/579051-sooryavanshi)*
+*<a href="https://www.themoviedb.org/movie/579051-sooryavanshi" target="_blank">The Movie Database (TMDB)'s Runtime for Sooryavanshi</a>*
 
-*[Netflix's Official Runtime for Mimi](https://www.netflix.com/title/81250218)*
+*<a href="https://www.netflix.com/title/81250218" target="_blank">Netflix's Official Runtime for Mimi</a>*
 
-*[Rotten Tomatoes' Movie Runtime for Bhool Bhulaiyaa 2](https://www.rottentomatoes.com/m/bhool_bhulaiyaa_2)*
+*<a href="https://www.rottentomatoes.com/m/bhool_bhulaiyaa_2" target="_blank">Rotten Tomatoes' Movie Runtime for Bhool Bhulaiyaa 2</a>*
 
-*[IMDB's Episode Runtime for Khakee: The Bihar Chapter](https://www.imdb.com/title/tt23924974/episodes/)*
+*<a href="https://www.imdb.com/title/tt23924974/episodes/" target="_blank">IMDB's Episode Runtime for Khakee: The Bihar Chapter</a>*
 
 ```{r}
 
@@ -956,11 +952,9 @@ For the region's For the region's <a href="https://en.wikipedia.org/wiki/List_of
 
 </div>
 
-<br>
+---
 
 *Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
-
----
 
 ```{r}
 
@@ -1063,11 +1057,12 @@ datatable(
 
 Average runtime values are approximations. The sources below provide details highlighting program runtime across episodes and seasons.
 
-*[Netflix’s Average Episode Runtime for Pablo Escobar: El Patrón del Mal](https://www.netflix.com/title/80035684?utm_source=chatgpt.com)*
+*<a href="https://www.netflix.com/title/80035684" target="_blank">Netflix's Average Episode Runtime for Pablo Escobar: El Patrón del Mal</a>*
 
-*[tvdb’s Average Episode Runtime for Café con Aroma de Mujer](https://thetvdb.com/series/cafe-con-aroma-de-mujer-2021#general)*
+*<a href="https://thetvdb.com/series/cafe-con-aroma-de-mujer-2021#general" target="_blank">tvdb's Average Episode Runtime for Café con Aroma de Mujer</a>*
 
-*[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
+*<a href="https://www.imdb.com/title/tt0233127/" target="_blank">IMDB's Average Episode Runtime for Yo Soy Betty, La Fea</a>*
+And for Elite:
 
 Additionally, the hours listed in the table are global for the titles, as the country TSV does not contain this information.
 
@@ -1110,6 +1105,6 @@ GLOBAL_TOP_10 %>%
 
 Average runtime values are approximations. The source below provides details highlighting program runtime across episodes and seasons.
 
-*[TVMaze's Average Episode Runtime for Elite](https://www.tvmaze.com/shows/37854/elite?utm_source=chatgpt.com)*
+*<a href="https://www.tvmaze.com/shows/37854/elite" target="_blank">TVMaze's Average Episode Runtime for Elite</a>*
 
 <br>
