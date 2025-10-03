@@ -10,7 +10,18 @@ execute:
   warning: false
 ---
 
-```{r setup}
+## Tasks 1,2, and 3
+
+Following the guidance for Mini Project #01, the code below includes all the necessary content that addresses Tasks 1, 2, and 3. Additionally, this section is essential for completing the rest of the project, specifically Tasks 4, 5, 6, and 7. 
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+#| echo: true
+#| results: 'hide'
+#| message: false
+#| warning: false
+
 library(dplyr)
 library(lubridate)
 library(readr)
@@ -21,22 +32,6 @@ library(ggplot2)
 library(tibble)
 library(htmltools)
 library(janitor)
-```
-
-<br>
-
-## Tasks 1,2, and 3
-
-Work for these tasks can be found directly in the mp01.qmd document. Feel free to click on the link below to see the necessary code needed to interact with the datasets. ADD LINK!
-
-```{r}
-
-```
-
-<br>
-
-```{r}
-#| include: false 
 
 if(!dir.exists(file.path("data", "mp01"))){ dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE) }
 GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
@@ -87,6 +82,8 @@ formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
 
 ```
 
+<br>
+
 ## Task 4
 
 The following questions address Task 4. Please click on the "Show Code" for an detailed approach on how I obtained my results.
@@ -124,7 +121,7 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 
 <br>
 
-**Answer:** The non-English-language film `r film_name_2` spent the most cumulative weeks in the Global Top 10, with `r weeks_count_2` weeks.
+**Answer:** The non-English-language film ```r film_name_2``` spent the most cumulative weeks in the Global Top 10, with ```r weeks_count_2``` weeks.
 
 <br>
 
@@ -151,7 +148,7 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 
 <br>
 
-**Answer:** The longest English or non-English film to have ever topped in the Netflix Global Top 10 is `r film_name_3`, with a length of `r run_time_3` minutes.
+**Answer:** The longest English or non-English film to have ever topped in the Netflix Global Top 10 is ```r film_name_3```, with a length of ```r run_time_3``` minutes.
 
 <br>
 
@@ -159,21 +156,26 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 
 ```{r}
 Q4_RESULT <- GLOBAL_TOP_10 %>%
-group_by(category, show_title) %>%
-summarise(total_hours_global_viewership = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
-group_by(category) %>%
-slice_max(total_hours_global_viewership, n = 1) %>%
-arrange(desc(total_hours_global_viewership)) %>%
-mutate(total_hours_global_viewership = comma(total_hours_global_viewership))
+  group_by(category, show_title) %>%
+  summarise(total_hours_global_viewership = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
+  group_by(category) %>%
+  slice_max(total_hours_global_viewership, n = 1) %>%
+  arrange(desc(total_hours_global_viewership))
+
+top_program <- Q4_RESULT$show_title[1]
+top_category <- Q4_RESULT$category[1]
+top_hours <- comma(Q4_RESULT$total_hours_global_viewership[1])
 
 Q4_RESULT %>%
-format_titles() %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  mutate(total_hours_global_viewership = comma(total_hours_global_viewership)) %>%
+  format_titles() %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                          columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 ```
 
 <br>
 
-**Answer:** The above table highlights calculations that sum all seasons together (i.e.,franchise-level data). In other words, Stranger Things and Squid Game reflect the combined global viewership across all of their respective seasons.
+**Answer:** The table above highlights the top program in each of the four categories, with all seasons combined. The program with the most total hours of global viewership is ```r top_program``` (```r top_category```), amassing ```r top_hours``` hours. 
 
 <br>
 
@@ -182,21 +184,26 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 ```{r}
 
 Q5_RESULT <- COUNTRY_TOP_10 %>%
-filter(category == "TV") %>%
-filter(!is.na(season_title)) %>%
-group_by(country_name, show_title) %>%
-summarise(max_cumulative_weeks = max(cumulative_weeks_in_top_10), .groups = "drop") %>%
-arrange(desc(max_cumulative_weeks)) %>%
-slice(1)
+  filter(category == "TV") %>%
+  filter(!is.na(season_title)) %>%
+  group_by(country_name, show_title) %>%
+  summarise(max_cumulative_weeks = max(cumulative_weeks_in_top_10), .groups = "drop") %>%
+  arrange(desc(max_cumulative_weeks)) %>%
+  slice(1)
+
+top_show <- Q5_RESULT$show_title
+top_country <- Q5_RESULT$country_name
+top_weeks <- Q5_RESULT$max_cumulative_weeks
 
 Q5_RESULT %>%
-format_titles() %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  format_titles() %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                          columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 ```
 
 <br>
 
-**Answer:** Money Heist had the longest run in Pakistan, with 127 weeks in Netflix's Country Top 10 list. 
+**Answer:** ```r top_show``` had the longest run in a country's Top 10, with ```r top_weeks``` weeks in ```r top_country```.
 
 <br>
 
@@ -205,56 +212,66 @@ datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, column
 ```{r}
 
 Q6_RESULT <- COUNTRY_TOP_10 %>%
-group_by(country_name) %>%
-summarise(total_weeks_of_data = n_distinct(week),final_week = max(week, na.rm = TRUE)) %>%
-filter(total_weeks_of_data < 200) %>%
-arrange(total_weeks_of_data)
+  group_by(country_name) %>%
+  summarise(total_weeks_of_data = n_distinct(week), final_week = max(week, na.rm = TRUE)) %>%
+  filter(total_weeks_of_data < 200) %>%
+  arrange(total_weeks_of_data)
+
+country_with_less_data <- Q6_RESULT$country_name[1]
+total_weeks <- Q6_RESULT$total_weeks_of_data[1]
+cessation_date <- Q6_RESULT$final_week[1]
 
 Q6_RESULT %>%
-format_titles() %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  format_titles() %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                          columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 ```
 
 <br>
 
-**Answer:** Netflix could not provide over 200 weeks of service for Russia, as it ceased operations during the week of February 27, 2022, resulting in 35 weeks of data in the Country Top 10 list.
+**Answer:** Netflix could not provide over 200 weeks of service for ```r country_with_less_data```, as it ceased operations during the week of ```r format(cessation_date, "%B %d, %Y")```, resulting in ```r total_weeks``` weeks of data in the Country Top 10 list.
 
 <br>
 
 7. What is the total viewership of the TV show Squid Game? Note that there are three seasons total and we are looking for the total number of hours watched across all seasons.
 
 ```{r}
+
 Q7_RESULT_SEASONS <- GLOBAL_TOP_10 %>%
-filter(show_title == "Squid Game") %>%
-filter(!is.na(season_title)) %>%
-group_by(season_title) %>%
-summarise(sum_hours = sum(weekly_hours_viewed, na.rm = TRUE)) %>%
-mutate(hours_watched = comma(sum_hours))
+  filter(show_title == "Squid Game") %>%
+  filter(!is.na(season_title)) %>%
+  group_by(season_title) %>%
+  summarise(sum_hours = sum(weekly_hours_viewed, na.rm = TRUE)) %>%
+  mutate(hours_watched = comma(sum_hours))
 
 Q7_RESULT_SEASONS_SUM <- Q7_RESULT_SEASONS %>%
-summarise(
-season_title = "Total Hours Watched Across All Seasons",
-sum_hours_1 = sum(sum_hours),
-hours_watched = comma(sum_hours_1))
+  summarise(
+    season_title = "Total Hours Watched Across All Seasons",
+    sum_hours_1 = sum(sum_hours),
+    hours_watched = comma(sum_hours_1))
+
+total_squid_game_hours <- comma(sum(Q7_RESULT_SEASONS$sum_hours))
 
 Q7_RESULT_FINAL <- bind_rows(Q7_RESULT_SEASONS, Q7_RESULT_SEASONS_SUM) %>%
-select(season_title, hours_watched)
+  select(season_title, hours_watched)
 
 Q7_RESULT_FINAL %>%
-format_titles() %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  format_titles() %>%
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                          columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 ```
 
 <br>
 
-**Answer:** Across all three seasons, Squid Game had a total of 5,048,300,000 hours of global viewership. 
+**Answer:** Across all three seasons, Squid Game had a total of ```r total_squid_game_hours``` hours of global viewership. 
 
 <br>
 
 8. The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021?
 
 ```{r}
+
 Q8_ROWS <- GLOBAL_TOP_10 %>%
   mutate(week = as.Date(week)) %>%
   filter(show_title == "Red Notice", year(week) == 2021)
@@ -264,25 +281,36 @@ if (nrow(Q8_ROWS) == 0) {
     `Total Hours Viewed (2021)` = "N/A",
     `Approximate Views` = "N/A"
   )
+  red_notice_views <- "N/A"
+  red_notice_hours <- "N/A"
 } else {
-Q8_RESULT <- Q8_ROWS %>%
-summarise(
-total_hours_2021 = sum(weekly_hours_viewed, na.rm = TRUE),
-runtime_hours = 1 + 58/60,  # 1h 58m
-approximate_views = total_hours_2021 / runtime_hours) %>%
-mutate(`Total Hours Viewed (2021)` = comma(total_hours_2021), `Approximate Views` = comma(round(approximate_views))) %>%
-select(`Total Hours Viewed (2021)`, `Approximate Views`)
+  Q8_RESULT <- Q8_ROWS %>%
+    summarise(
+      total_hours_2021 = sum(weekly_hours_viewed, na.rm = TRUE),
+      runtime_hours = 1 + 58/60,  # 1h 58m
+      approximate_views = total_hours_2021 / runtime_hours) %>%
+    mutate(
+      `Total Hours Viewed (2021)` = comma(total_hours_2021), 
+      `Approximate Views` = comma(round(approximate_views))
+    ) %>%
+    select(`Total Hours Viewed (2021)`, `Approximate Views`)
+  red_notice_views <- Q8_RESULT$`Approximate Views`
+  red_notice_hours <- Q8_RESULT$`Total Hours Viewed (2021)`
 }
 
 Q8_RESULT %>%
-datatable(options = list( searching = FALSE, info = FALSE, paging = FALSE,
-columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  datatable(options = list(
+    searching = FALSE, 
+    info = FALSE, 
+    paging = FALSE,
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))
+  ))
 
 ```
 
 <br>
 
-**Answer:** Based on the total number of hours viewed in 2021, Red Notice has approximately, 201,732,203 global views.
+**Answer:** Based on the total number of hours viewed in 2021, Red Notice received approximately ```r red_notice_views``` global views.
 
 <br>
 
@@ -325,33 +353,37 @@ Q9_RESULT_PT1 <- US_FILMS_REACH1 %>%
 ```{r}
 
 Q9_RESULT_PT2 <- COUNTRY_TOP_10 %>%
-filter(country_iso2 == "US", category == "Films") %>%
-mutate(week = as.Date(week)) %>%
-group_by(show_title) %>%
-summarise(
-debut_week = min(week),
-debut_rank = weekly_rank[which.min(week)],
-best_rank  = min(weekly_rank, na.rm = TRUE),
-.groups = "drop") %>%
-filter(best_rank == 1, debut_rank > 1) %>%
-inner_join(COUNTRY_TOP_10 %>%
-filter(country_iso2 == "US", category == "Films") %>%
-mutate(week = as.Date(week)) %>%
-select(show_title, week, weekly_rank), by = "show_title") %>%
-filter(weekly_rank == 1) %>%
-slice_max(order_by = week, n = 1, with_ties = FALSE) %>%
-transmute(`Most Recent Film` = show_title, `Date Reached #1` = week)
+  filter(country_iso2 == "US", category == "Films") %>%
+  mutate(week = as.Date(week)) %>%
+  group_by(show_title) %>%
+  summarise(
+    debut_week = min(week),
+    debut_rank = weekly_rank[which.min(week)],
+    best_rank  = min(weekly_rank, na.rm = TRUE),
+    .groups = "drop") %>%
+  filter(best_rank == 1, debut_rank > 1) %>%
+  inner_join(COUNTRY_TOP_10 %>%
+    filter(country_iso2 == "US", category == "Films") %>%
+    mutate(week = as.Date(week)) %>%
+    select(show_title, week, weekly_rank), by = "show_title") %>%
+  filter(weekly_rank == 1) %>%
+  slice_max(order_by = week, n = 1, with_ties = FALSE) %>%
+  transmute(`Most Recent Film` = show_title, `Date Reached #1` = week)
 
+most_recent_film <- Q9_RESULT_PT2$`Most Recent Film`
+date_reached_number1 <- Q9_RESULT_PT2$`Date Reached #1`
 
 Q9_RESULT_PT2 %>%
-datatable(
-  options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  datatable(
+    options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                   columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 ```
 
 <br>
 
-**Answer:** The most recent film to accomplish this was KPop Demon Hunters, which reached Number 1 during the week of September 14, 2025. 
+**Answer:** **Answer:** The most recent film to accomplish this was ```r most_recent_film```, which reached Number 1 during the week of ```r format(date_reached_number1, "%B %d, %Y")```.
+
 
 <br>
 
@@ -360,29 +392,36 @@ datatable(
 ```{r}
 
 COUNTRY_TOP_10_DEBUT <- COUNTRY_TOP_10 %>%
-filter(category == "TV") %>%
-group_by(show_title, season_title, country_name) %>%
-summarise(
-debut_week = min(week, na.rm = TRUE),
-debut_rank = weekly_rank[which.min(week)][1],
-.groups = "drop"
-) %>%
-arrange(debut_week)
+  filter(category == "TV") %>%
+  group_by(show_title, season_title, country_name) %>%
+  summarise(
+    debut_week = min(week, na.rm = TRUE),
+    debut_rank = weekly_rank[which.min(week)][1],
+    .groups = "drop"
+  ) %>%
+  arrange(debut_week)
 
 Q10_RESULT <- COUNTRY_TOP_10_DEBUT %>% 
-group_by(show_title, season_title, debut_week) %>% 
-summarise(country_appearance = n_distinct(country_name), .groups = "drop") %>% 
-arrange(desc(country_appearance)) %>% 
-slice(1) %>%
-rename(`Show Title` = show_title, `Season Title` = season_title, `Debut Week` = debut_week, `Number of Countries Charted` = country_appearance)
+  group_by(show_title, season_title, debut_week) %>% 
+  summarise(country_appearance = n_distinct(country_name), .groups = "drop") %>% 
+  arrange(desc(country_appearance)) %>% 
+  slice(1) %>%
+  rename(`Show Title` = show_title, `Season Title` = season_title, `Debut Week` = debut_week, `Number of Countries Charted` = country_appearance)
+
+top_debut_show <- Q10_RESULT$`Show Title`
+top_debut_season <- Q10_RESULT$`Season Title`
+countries_charted <- Q10_RESULT$`Number of Countries Charted`
+debut_date <- Q10_RESULT$`Debut Week`
 
 Q10_RESULT %>%
-datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+  datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
+                          columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+
 ```
 
 <br>
 
-**Answer:** Emily in Paris (Season 2) charted in 94 countries during its debut week in December 26, 2021. 
+**Answer:** ```r top_debut_show``` (```r top_debut_season```) charted in ```r countries_charted``` countries during its debut week on ```r format(debut_date, "%B %d, %Y")```.
 
 <br>
 
@@ -402,6 +441,10 @@ Among Netflix's English-language sci-fi and fantasy originals, *Stranger Things*
 The final season is poised to be one of 2025's most anticipated series finales, with a global fan base that has followed the story for nine years, eagerly awaiting the conclusion of the saga of Eleven and the Upside Down.
 
 </div>
+
+<br>
+
+*Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
 
 ---
 
@@ -612,6 +655,10 @@ As South Asia's content continues to attract global traction, Netflix is well-po
 Netflix has an established presence across South Asia. With a strong performance in Hindi content and growing regional offerings, it can seize this streaming momentum to continue engaging its global audiences with rich, South Asian programming.
 
 </div>
+
+<br>
+
+*Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
 
 ---
 
@@ -901,6 +948,10 @@ The success of these classics is in conjunction with a strong lineup of Netflix'
 For the region's For the region's <a href="https://en.wikipedia.org/wiki/List_of_Latin_American_countries_by_population" target="_blank">420 million Spanish speakers</a>, Netflix's strategy has led to increased engagement across Latin America. By reviving timeless stories and creating new ones, Netflix is building a platform that sparks the interest of a diverse range of viewers across generations.
 
 </div>
+
+<br>
+
+*Supporting data and references are included below to provide context and transparency for the information shared in this press release.*
 
 ---
 
