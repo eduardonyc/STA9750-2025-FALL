@@ -12,7 +12,7 @@ execute:
 
 ## Tasks 1,2, and 3
 
-Following the guidance for Mini Project #01, the code below includes all the necessary content that addresses Tasks 1, 2, and 3. Additionally, this section is essential for completing the rest of the project, specifically Tasks 4, 5, 6, and 7. 
+Following the guidelines for Mini Project #01, the code below contains all the essential content that addresses Tasks 1, 2, and 3. Moreover, this section is crucial for completing the remaining parts of the project, specifically Tasks 4, 5, 6, and 7.
 
 ```{r}
 #| code-fold: true
@@ -84,9 +84,9 @@ formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
 
 <br>
 
-## Task 4
+## Task 4: Exploratory Questions
 
-The following questions address Task 4. Please click on the "Show Code" for an detailed approach on how I obtained my results.
+The following questions relate to Task 4. Please click on "Show Code" for a detailed explanation of how I achieved my results.
 
 <br>
 
@@ -621,9 +621,12 @@ datatable(
 
 ```
 
-*Note, Stranger Things average runtime caculated from the values presented in an earlier table.
+*Note: 
 
-The following links contain sources justifying these average per episode runtimes.
+*Stranger Things* average runtime calculated from the values presented in an earlier table.
+
+The following links contain sources that justify the average episode runtimes.
+
 
 *[Wednesday Average Runtime](https://addamsfamily.fandom.com/wiki/Wednesday_(series))*
 
@@ -769,7 +772,9 @@ datatable(
 
 ```
 
-*Note, the following links contain sources justifying average runtime per film and/or TV show originally omitted from Netflix's Global Top 10 dataset. 
+*Note:
+
+The links below contain sources that justify the average runtime per film and/or TV show, which were initially omitted from Netflix's Global Top 10 dataset.
 
 *[IMDB's Runtime for Haseen Dillruba](https://www.imdb.com/title/tt12015202/technical/)*
 
@@ -1052,9 +1057,9 @@ datatable(
 
 ```
 
-Hours are global for the listed titles as the country TSV does not contain this information.
+*Note: 
 
-*Note, average runtime values are approximations. The sources below provide details highlighting program runtime across episodes and seasons.
+Average runtime values are approximations. The sources below provide details highlighting program runtime across episodes and seasons.
 
 *[Netflix’s Average Episode Runtime for Pablo Escobar: El Patrón del Mal](https://www.netflix.com/title/80035684?utm_source=chatgpt.com)*
 
@@ -1062,11 +1067,13 @@ Hours are global for the listed titles as the country TSV does not contain this 
 
 *[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
 
+Additionally, the hours listed in the table are global for the titles, as the country TSV does not contain this information.
+
 ```{r}
 
 # TABLE 3: Elite - Global Performance
 
-elite_runtime <- 50/60  # hours (from TVMaze)
+elite_runtime <- 50/60
 
 GLOBAL_TOP_10 %>%
   filter(show_title == "Elite") %>%
@@ -1096,6 +1103,10 @@ GLOBAL_TOP_10 %>%
   formatRound("*Avg Runtime (hrs)", digits = 2)
 
 ```
+
+*Note: 
+
+Average runtime values are approximations. The source below provides details highlighting program runtime across episodes and seasons.
 
 *[TVMaze's Average Episode Runtime for Elite](https://www.tvmaze.com/shows/37854/elite?utm_source=chatgpt.com)*
 
