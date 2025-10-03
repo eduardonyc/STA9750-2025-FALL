@@ -404,17 +404,12 @@ Season 5 is poised to be one of 2025's most anticipated series finales, with a g
 
 ```{r}
 
-# ============================================
 # TABLE 1: Season-by-Season Breakdown
-# ============================================
 
-# Average episode minutes by season
 episode_minutes <- tibble(
   season_num = 1:4,
-  avg_minutes = c(47, 60, 60, 87)
-)
+  avg_minutes = c(47, 60, 60, 87))
 
-# Get global metrics by season
 ST_GLOBAL <- GLOBAL_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   mutate(season_num = parse_number(coalesce(season_title, "1"))) %>%
@@ -424,10 +419,8 @@ ST_GLOBAL <- GLOBAL_TOP_10 %>%
     `Total Global Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
     `Global Weeks in Top 10` = n_distinct(week),
     `Global Weeks at #1` = sum(weekly_rank == 1, na.rm = TRUE),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
-# Get country metrics by season
 ST_COUNTRY <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   mutate(season_num = parse_number(coalesce(season_title, "1"))) %>%
@@ -436,10 +429,8 @@ ST_COUNTRY <- COUNTRY_TOP_10 %>%
   summarise(
     `Countries Reached` = n_distinct(country_name),
     `Country-Weeks in Top 10` = n(),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
-# Combine all metrics
 ST_IMPACT <- ST_GLOBAL %>%
   left_join(ST_COUNTRY, by = "season_num") %>%
   left_join(episode_minutes, by = "season_num") %>%
@@ -455,10 +446,8 @@ ST_IMPACT <- ST_GLOBAL %>%
     `Global Weeks in Top 10`,
     `Global Weeks at #1`,
     `Countries Reached`,
-    `Country-Weeks in Top 10`
-  )
+    `Country-Weeks in Top 10`)
 
-# Add totals row
 totals <- ST_IMPACT %>%
   summarise(
     Season = "Totals",
@@ -468,8 +457,7 @@ totals <- ST_IMPACT %>%
     `Global Weeks in Top 10` = sum(`Global Weeks in Top 10`),
     `Global Weeks at #1` = sum(`Global Weeks at #1`),
     `Countries Reached` = max(`Countries Reached`),
-    `Country-Weeks in Top 10` = sum(`Country-Weeks in Top 10`)
-  )
+    `Country-Weeks in Top 10` = sum(`Country-Weeks in Top 10`))
 
 ST_IMPACT_FINAL <- bind_rows(ST_IMPACT, totals) %>%
   mutate(
@@ -478,18 +466,15 @@ ST_IMPACT_FINAL <- bind_rows(ST_IMPACT, totals) %>%
     `Global Weeks in Top 10` = comma(`Global Weeks in Top 10`),
     `Global Weeks at #1` = comma(`Global Weeks at #1`),
     `Countries Reached` = comma(`Countries Reached`),
-    `Country-Weeks in Top 10` = comma(`Country-Weeks in Top 10`)
-  )
+    `Country-Weeks in Top 10` = comma(`Country-Weeks in Top 10`))
 
 datatable(
   ST_IMPACT_FINAL,
   caption = "Stranger Things — Combined Global Impact by Season (Scale • Longevity • Multinational Reach • #1 Weeks)",
   options = list(
     searching = FALSE, paging = FALSE, info = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  ),
-  rownames = FALSE
-)
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+  rownames = FALSE)
 
 ```
 
@@ -501,21 +486,16 @@ datatable(
 
 ```{r}
 
-# ============================================
 # TABLE 2: Top Countries by Weeks
-# ============================================
 
-# Summary stats for caption
 summary_artifact <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
   summarise(total_weeks_in_top_10 = n_distinct(week), .groups = "drop") %>%
   summarise(
     total_countries = n(),
-    avg_weeks = round(mean(total_weeks_in_top_10), 1)
-  )
+    avg_weeks = round(mean(total_weeks_in_top_10), 1))
 
-# Top 20 countries leaderboard
 ST_TOP_COUNTRIES_WEEKS <- COUNTRY_TOP_10 %>%
   filter(show_title == "Stranger Things") %>%
   group_by(country_name) %>%
@@ -527,16 +507,12 @@ ST_TOP_COUNTRIES_WEEKS <- COUNTRY_TOP_10 %>%
 
 top3 <- ST_TOP_COUNTRIES_WEEKS$Country[ST_TOP_COUNTRIES_WEEKS$Rank <= 3]
 
-# Bottom caption
-cap_bottom <- htmltools::tags$caption(
+cap_bottom <- tags$caption(
   style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:6px;",
-  htmltools::HTML(sprintf(
+  HTML(sprintf(
     "Global reach: <b>%s</b> countries &nbsp;&middot;&nbsp; Avg per-country Top-10 weeks: <b>%s</b>",
-    summary_artifact$total_countries, summary_artifact$avg_weeks
-  ))
-)
+    summary_artifact$total_countries, summary_artifact$avg_weeks)))
 
-# Display table
 datatable(
   ST_TOP_COUNTRIES_WEEKS,
   caption = cap_bottom,
@@ -548,20 +524,15 @@ datatable(
     searching = TRUE,
     info = FALSE,
     order = list(list(0, 'asc')),
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  )
-) %>%
+    columnDefs = list(list(className = 'dt-left', targets = "_all")))) %>%
   formatStyle('Country', fontWeight = styleEqual(top3, rep('bold', length(top3))))
 
 ```
 
 ```{r}
 
-# ============================================
 # TABLE 3: Comparison to Other Shows
-# ============================================
 
-# Average episode runtimes (minutes)
 RUNTIME_REF <- tribble(
   ~show_title,        ~num_seasons, ~avg_episode_minutes,
   "Stranger Things",  4,            63.5,
@@ -569,15 +540,12 @@ RUNTIME_REF <- tribble(
   "The Witcher",      3,            60,
   "The Sandman",      2,            51,
   "Locke & Key",      3,            50,
-  "Shadow and Bone",  2,            60
-)
+  "Shadow and Bone",  2,            60)
 
-# Summarize global performance
 SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
   filter(
     category == "TV (English)",
-    show_title %in% RUNTIME_REF$show_title
-  ) %>%
+    show_title %in% RUNTIME_REF$show_title) %>%
   group_by(show_title) %>%
   summarise(`Total Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
   left_join(RUNTIME_REF, by = "show_title") %>%
@@ -585,15 +553,13 @@ SHOW_SUMMARY <- GLOBAL_TOP_10 %>%
   arrange(desc(`Total Hours Viewed`)) %>%
   mutate(
     `Total Hours Viewed` = comma(`Total Hours Viewed`),
-    `Approximate Viewership` = comma(`Approximate Viewership`)
-  ) %>%
+    `Approximate Viewership` = comma(`Approximate Viewership`)) %>%
   select(
     `Show Title` = show_title,
     `Number of Seasons` = num_seasons,
     `Total Hours Viewed`,
     `*Average Episode Minutes` = avg_episode_minutes,
-    `Approximate Viewership`
-  )
+    `Approximate Viewership`)
 
 datatable(
   SHOW_SUMMARY,
@@ -603,10 +569,8 @@ datatable(
     searching = FALSE,
     paging = FALSE,
     info = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  ),
-  rownames = FALSE
-) %>%
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+  rownames = FALSE) %>%
   formatRound("*Average Episode Minutes", digits = 1)
 
 ```
@@ -646,25 +610,20 @@ Netflix's established presence across South Asia, including its strong performan
 
 ```{r}
 
-# ============================================
-# CORE DATA: India-exclusive content (not in US, excluding Telugu/Tamil)
-# ============================================
+# TABLE 1: CORE DATA: India-exclusive content (not in US, excluding Telugu/Tamil)
 
 india_exclusive <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
   summarise(
     appears_in_india = any(country_name == "India"),
     appears_in_us = any(country_name == "United States"),
-    .groups = "drop"
-  ) %>%
+    .groups = "drop") %>%
   filter(appears_in_india, !appears_in_us) %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
 
-# ============================================
-# TABLE 1: Requested Titles Summary (Films vs TV Shows)
-# ============================================
+# TABLE 1: Hindi Titles Summary (Films vs TV Shows)
 
-requested_titles <- c(
+hindi_titles <- c(
   "Haseen Dillruba", "Sooryavanshi", "Animal", "Laapataa Ladies", "Mimi",
   "Bhool Bhulaiyaa 2", "The Railway Men - The Untold Story Of Bhopal 1984",
   "Khakee: The Bihar Chapter", "Maamla Legal Hai", "The Great Indian Kapil Show",
@@ -683,7 +642,7 @@ manual_runtimes <- tribble(
 
 summary_tbl <- GLOBAL_TOP_10 %>%
   semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
-  filter(show_title %in% requested_titles) %>%
+  filter(show_title %in% hindi_titles) %>%
   left_join(manual_runtimes, by = "show_title") %>%
   mutate(
     runtime = coalesce(runtime, manual_runtime_hr),
@@ -718,13 +677,11 @@ datatable(
 
 ```{r}
 
-# ============================================
-# TABLE 2: Detailed Requested Titles (optional - if you want the detail table)
-# ============================================
+# TABLE 2: Detailed Requested Titles
 
 detailed_tbl <- GLOBAL_TOP_10 %>%
   semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
-  filter(show_title %in% requested_titles) %>%
+  filter(show_title %in% hindi_titles) %>%
   left_join(manual_runtimes, by = "show_title") %>%
   mutate(runtime = coalesce(runtime, manual_runtime_hr)) %>%
   group_by(show_title) %>%
@@ -736,8 +693,7 @@ detailed_tbl <- GLOBAL_TOP_10 %>%
                               weekly_views,
                               weekly_hours_viewed / runtime), na.rm = TRUE),
     avg_runtime_min = round(mean(runtime, na.rm = TRUE) * 60),
-    .groups = "drop"
-  ) %>%
+    .groups = "drop") %>%
   arrange(desc(total_hours)) %>%
   rename(
     `Show Title` = show_title,
@@ -745,27 +701,35 @@ detailed_tbl <- GLOBAL_TOP_10 %>%
     `India: Max Weeks` = india_max_weeks,
     `Global: Total Hours` = total_hours,
     `Global: Total Views (Est.)` = total_views,
-    `Avg Runtime (min)` = avg_runtime_min
-  ) %>%
+    `*Avg Runtime (min)` = avg_runtime_min) %>%
   mutate(
     `Global: Total Hours` = comma(round(`Global: Total Hours`, -4)),
-    `Global: Total Views (Est.)` = comma(round(`Global: Total Views (Est.)`, -4))
-  )
+    `Global: Total Views (Est.)` = comma(round(`Global: Total Views (Est.)`, -4)))
 
 datatable(
   detailed_tbl,
-  options = list(searching = FALSE, paging = TRUE, info = TRUE, pageLength = 3),
+  options = list(searching = FALSE, paging = TRUE, info = TRUE, pageLength = 3,
+  columnDefs = list(list(className = 'dt-left', targets = "_all"))),
   caption = "Selected Programs, India-Only (Not US), in Global Top 10",
-  rownames = FALSE
-)
+  rownames = FALSE)
 
 ```
 
+*Note, the following links contain sources justifying average runtime per film and/or TV show originally omitted from Netflix's Global Top 10 dataset. 
+
+*[IMDB's Runtime for Haseen Dillruba](https://www.imdb.com/title/tt12015202/technical/)*
+
+*[The Movie Database (TMDB)'s Runtime for Sooryavanshi](https://www.themoviedb.org/movie/579051-sooryavanshi)*
+
+*[Netflix's Official Runtime for Mimi](https://www.netflix.com/title/81250218)*
+
+*[Rotten Tomatoes' Movie Runtime for Bhool Bhulaiyaa 2](https://www.rottentomatoes.com/m/bhool_bhulaiyaa_2)*
+
+*[IMDB's Episode Runtime for Khakee: The Bihar Chapter](https://www.imdb.com/title/tt23924974/episodes/)*
+
 ```{r}
 
-# ============================================
 # TABLE 3: India-exclusive breakdown (Films vs TV Shows)
-# ============================================
 
 india_breakdown <- COUNTRY_TOP_10 %>%
   filter(country_name == "India") %>%
@@ -778,28 +742,20 @@ india_breakdown <- COUNTRY_TOP_10 %>%
 
 total_shows <- sum(india_breakdown$`Number of Shows`)
 
-datatable(
-  india_breakdown,
-  options = list(searching = FALSE, info = FALSE, paging = FALSE),
-  caption = htmltools::tags$caption(
-    style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
-    htmltools::HTML(sprintf(
-      "Total distinct viewing options in India that do NOT appear in US (excluding Telugu/Tamil): <b>%s</b>",
-      total_shows
-    ))
-  ),
-  rownames = FALSE
-)
+datatable(india_breakdown,
+  options = list(searching = FALSE, info = FALSE, paging = FALSE,
+  columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+  caption = tags$caption(style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+  HTML(sprintf("Total distinct viewing options in India that do NOT appear in US (excluding Telugu/Tamil): <b>%s</b>", total_shows))),
+  rownames = FALSE)
+
 ```
 
 
 ```{r}
 
-# ============================================
 # TABLE 4: Global metrics summary with subscriber estimate
-# ============================================
 
-# Calculate metrics
 global_metrics <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
   semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
@@ -807,8 +763,7 @@ global_metrics <- GLOBAL_TOP_10 %>%
   summarise(
     total_hours = sum(weekly_hours_viewed, na.rm = TRUE),
     avg_runtime = mean(runtime, na.rm = TRUE),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
 films_hours <- global_metrics$total_hours[global_metrics$category == "Films (Non-English)"]
 tv_hours <- global_metrics$total_hours[global_metrics$category == "TV (Non-English)"]
@@ -818,12 +773,11 @@ total_views <- sum(global_metrics$total_hours / global_metrics$avg_runtime)
 num_weeks <- n_distinct(GLOBAL_TOP_10$week)
 views_per_week <- total_views / num_weeks
 
-# Subscriber estimate
+# Subscriber estimate (rough figure to extrapolate subscribers with limited data)
 INDIA_SHARE <- 0.25
 VIEWS_PER_SUB_PER_WEEK <- 2.0
 estimated_subscribers <- (views_per_week * INDIA_SHARE) / VIEWS_PER_SUB_PER_WEEK
 
-# Summary stats
 total_combinations <- nrow(india_exclusive)
 global_count <- GLOBAL_TOP_10 %>%
   filter(category %in% c("Films (Non-English)", "TV (Non-English)")) %>%
@@ -836,10 +790,8 @@ global_summary <- GLOBAL_TOP_10 %>%
   semi_join(india_exclusive, by = c("show_title", "season_title")) %>%
   summarise(
     avg_weeks = round(mean(cumulative_weeks_in_top_10, na.rm = TRUE), 1),
-    max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE)
-  )
+    max_weeks = max(cumulative_weeks_in_top_10, na.rm = TRUE))
 
-# Build summary table
 GLOBAL_REACH_SUMMARY <- tibble(
   Metric = c(
     "Total Show and Season Combinations",
@@ -852,8 +804,7 @@ GLOBAL_REACH_SUMMARY <- tibble(
     "Non-English Global Chart Penetration Rate",
     "Estimated Hindi-Engaged Subscribers",
     "  Assumption: India Share of Global Views",
-    "  Assumption: Views per Subscriber per Week"
-  ),
+    "  Assumption: Views per Subscriber per Week"),
   Value = c(
     total_combinations,
     comma(films_hours),
@@ -865,29 +816,27 @@ GLOBAL_REACH_SUMMARY <- tibble(
     paste0(round((global_count / total_combinations) * 100, 1), "%"),
     comma(round(estimated_subscribers)),
     paste0(INDIA_SHARE * 100, "%"),
-    paste0(VIEWS_PER_SUB_PER_WEEK, " shows")
-  )
-)
+    paste0(VIEWS_PER_SUB_PER_WEEK, " shows")))
 
 datatable(
   GLOBAL_REACH_SUMMARY,
-  options = list(searching = FALSE, info = FALSE, paging = FALSE),
-  caption = htmltools::tags$caption(
+  options = list(
+    searching = FALSE, 
+    info = FALSE, 
+    paging = FALSE,
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+  caption = tags$caption(
     style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
-    htmltools::HTML("India-exclusive NON-ENGLISH content (proxy for Hindi; excludes Telugu/Tamil) 
-                    with global Top 10 status")
-  ),
-  rownames = FALSE
-)
+    HTML("India-exclusive NON-ENGLISH content (proxy for Hindi; excludes Telugu/Tamil) 
+                    with global Top 10 status")),
+  rownames = FALSE)
 
 ```
 
 
 ```{r}
 
-# ============================================
-# TABLE 5: South Asia growth (unchanged - already efficient)
-# ============================================
+# TABLE 5: South Asia Growth
 
 south_asian_countries <- c("India", "Pakistan", "Bangladesh", "Sri Lanka")
 
@@ -898,9 +847,7 @@ yearly_unique_programs <- COUNTRY_TOP_10 %>%
       week >= as.Date("2021-07-04") & week < as.Date("2022-07-04") ~ "2021-2022",
       week >= as.Date("2022-07-04") & week < as.Date("2023-07-04") ~ "2022-2023",
       week >= as.Date("2023-07-04") & week < as.Date("2024-07-04") ~ "2023-2024",
-      week >= as.Date("2024-07-04") & week <= as.Date("2025-07-05") ~ "2024-2025"
-    )
-  ) %>%
+      week >= as.Date("2024-07-04") & week <= as.Date("2025-07-05") ~ "2024-2025")) %>%
   filter(!is.na(year_period)) %>%
   mutate(unique_program = paste(show_title, coalesce(season_title, "NA_SEASON"), sep = " || ")) %>%
   group_by(country_name, year_period) %>%
@@ -911,8 +858,7 @@ growth_summary <- yearly_unique_programs %>%
   arrange(year_period) %>%
   summarise(
     total_growth = round(((last(unique_programs_count) - first(unique_programs_count)) / first(unique_programs_count)) * 100, 1),
-    .groups = "drop"
-  ) %>%
+    .groups = "drop") %>%
   mutate(total_growth = paste0(if_else(total_growth > 0, "+", ""), total_growth, "%"))
 
 yearly_unique_programs %>%
@@ -922,10 +868,13 @@ yearly_unique_programs %>%
          `2021-22` = `2021-2022`, `2022-23` = `2022-2023`,
          `2023-24` = `2023-2024`, `2024-25` = `2024-2025`) %>%
   datatable(
-    options = list(searching = FALSE, info = FALSE, paging = FALSE),
+    options = list(
+      searching = FALSE, 
+      info = FALSE, 
+      paging = FALSE,
+      columnDefs = list(list(className = 'dt-left', targets = "_all"))),
     caption = "Netflix Top 10 Program Growth in South Asia (2021-2025)",
-    rownames = FALSE
-  )
+    rownames = FALSE)
 
 ```
 
@@ -948,18 +897,16 @@ With 670 million Spanish speakers across Latin America, Netflix's combination of
 
 ```{r}
 
-# ============================================
-# TABLE 1: Top Show/Season by Country (with pagination)
-# ============================================
+# TABLE 1: Top Show/Season by Country (excludes Brazil)
 
 SPANISH_LATAMER <- c(
   "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Dominican Republic",
   "Ecuador", "El Salvador", "Guatemala", "Honduras", "Mexico", "Nicaragua",
-  "Panama", "Paraguay", "Peru", "Uruguay", "Venezuela"
-)
+  "Panama", "Paraguay", "Peru", "Uruguay", "Venezuela")
 
 COUNTRY_TOP_10 %>%
   filter(country_name %in% SPANISH_LATAMER) %>%
+  filter(show_title != "Pasión de Gavilanes") %>%  # Exclude Pasión de Gavilanes
   group_by(country_name, show_title, season_title) %>%
   summarise(max_cumulative = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = "drop") %>%
   group_by(country_name) %>%
@@ -969,38 +916,31 @@ COUNTRY_TOP_10 %>%
     Country = country_name,
     `Show Title` = show_title,
     `Season Title` = season_title,
-    `Cumulative Weeks in Top 10` = max_cumulative
-  ) %>%
+    `Cumulative Weeks in Top 10` = max_cumulative) %>%
   datatable(
-    options = list(
-      searching = FALSE,
-      paging = TRUE,        # Enable pagination
-      info = TRUE,          # Show "Showing X to Y of Z entries"
-      pageLength = 3,       # Default to 3 entries per page
-      lengthMenu = list(c(3, 5, 10, 17), c('3', '5', '10', 'All'))  # Dropdown options
-    ),
-    caption = htmltools::tags$caption(
-      style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
-      htmltools::HTML("Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10")
-    ),
-    rownames = FALSE
-  )
+     options = list(
+       searching = FALSE, 
+       paging = TRUE, 
+       info = TRUE, 
+       pageLength = 3,
+       lengthMenu = list(c(3, 5, 10, 17), c('3', '5', '10', 'All')),
+       columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+     caption = tags$caption(
+       style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+       HTML("Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10")),
+     rownames = FALSE)
 
 ```
 
 ```{r}
 
-# ============================================
-# TABLE 2: Four Classic Telenovelas - Global Performance
-# ============================================
+# TABLE 2: Top Three Classic Telenovelas - Global Performance
 
 TOP_PROGRAMS <- tribble(
   ~show_title,                         ~season_title,                              ~avg_runtime_hrs,
-  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",        43/60,
+  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",          43/60,
   "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60,
-  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",            44/60,
-  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",           30/60
-)
+  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",             30/60)
 
 telenovela_metrics <- GLOBAL_TOP_10 %>%
   inner_join(TOP_PROGRAMS, by = c("show_title", "season_title")) %>%
@@ -1008,25 +948,32 @@ telenovela_metrics <- GLOBAL_TOP_10 %>%
   summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
   mutate(approx_views = round(total_hours / avg_runtime_hrs))
 
-# Create display table with totals
+totals_row <- telenovela_metrics %>%
+  summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+  mutate(
+    category = "TOTAL",
+    show_title = "—",
+    season_title = "—",
+    avg_runtime_hrs = NA_real_)
+
 telenovela_display <- telenovela_metrics %>%
+  arrange(total_hours) %>%
   select(
     Category = category,
     `Show Title` = show_title,
     `Season Title` = season_title,
     `Total Weekly Hours Viewed` = total_hours,
     `*Avg Runtime (hrs)` = avg_runtime_hrs,
-    `Approx Global Views` = approx_views
-  ) %>%
+    `Approx Global Views` = approx_views) %>%
   bind_rows(
-    summarise(., across(where(is.numeric), sum, na.rm = TRUE)) %>%
-      mutate(
-        Category = "TOTAL",
-        `Show Title` = "—",
-        `Season Title` = "—",
-        `*Avg Runtime (hrs)` = NA_real_  # Set to NA instead of 0
-      )
-  )
+    totals_row %>%
+      select(
+        Category = category,
+        `Show Title` = show_title,
+        `Season Title` = season_title,
+        `Total Weekly Hours Viewed` = total_hours,
+        `*Avg Runtime (hrs)` = avg_runtime_hrs,
+        `Approx Global Views` = approx_views))
 
 datatable(
   telenovela_display,
@@ -1034,14 +981,11 @@ datatable(
     searching = FALSE, 
     paging = FALSE, 
     info = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))  # Left justify all columns
-  ),
-  caption = htmltools::tags$caption(
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+  caption = tags$caption(
     style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
-    htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
-  ),
-  rownames = FALSE
-) %>%
+    HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")),
+  rownames = FALSE) %>%
   formatCurrency(c("Total Weekly Hours Viewed", "Approx Global Views"), 
                  currency = "", digits = 0, mark = ",") %>%
   formatRound("*Avg Runtime (hrs)", digits = 2)
@@ -1054,17 +998,13 @@ Hours are global for the listed titles as the country TSV does not contain this 
 
 *[Netflix’s Average Episode Runtime for Pablo Escobar: El Patrón del Mal](https://www.netflix.com/title/80035684?utm_source=chatgpt.com)*
 
-*[Wikipedia’s Average Episode Runtime for Pasión de Gavilanes](https://en.wikipedia.org/wiki/Pasi%C3%B3n_de_Gavilanes?utm_source=chatgpt.com)*
-
 *[tvdb’s Average Episode Runtime for Café con Aroma de Mujer](https://thetvdb.com/series/cafe-con-aroma-de-mujer-2021#general)*
 
 *[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
 
 ```{r}
 
-# ============================================
 # TABLE 3: Elite - Global Performance
-# ============================================
 
 elite_runtime <- 50/60  # hours (from TVMaze)
 
@@ -1081,22 +1021,18 @@ GLOBAL_TOP_10 %>%
     `Number of LATAM Countries Reached` = COUNTRY_TOP_10 %>%
       filter(show_title == "Elite", country_name %in% SPANISH_LATAMER) %>%
       summarise(n = n_distinct(country_name)) %>%
-      pull(n)
-  ) %>%
+      pull(n)) %>%
   select(-total_hours) %>%
   datatable(
     options = list(
       searching = FALSE, 
       paging = FALSE, 
       info = FALSE,
-      columnDefs = list(list(className = 'dt-left', targets = "_all"))
-    ),
-    caption = htmltools::tags$caption(
+      columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+    caption = tags$caption(
       style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
-      htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
-    ),
-    rownames = FALSE
-  ) %>%
+      HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")),
+    rownames = FALSE) %>%
   formatRound("*Avg Runtime (hrs)", digits = 2)
 
 ```
