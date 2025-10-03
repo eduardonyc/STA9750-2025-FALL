@@ -949,7 +949,7 @@ With 670 million Spanish speakers across Latin America, Netflix's combination of
 ```{r}
 
 # ============================================
-# TABLE 1: Top Show/Season by Country
+# TABLE 1: Top Show/Season by Country (with pagination)
 # ============================================
 
 SPANISH_LATAMER <- c(
@@ -972,7 +972,13 @@ COUNTRY_TOP_10 %>%
     `Cumulative Weeks in Top 10` = max_cumulative
   ) %>%
   datatable(
-    options = list(searching = FALSE, paging = FALSE, info = FALSE),
+    options = list(
+      searching = FALSE,
+      paging = TRUE,        # Enable pagination
+      info = TRUE,          # Show "Showing X to Y of Z entries"
+      pageLength = 3,       # Default to 3 entries per page
+      lengthMenu = list(c(3, 5, 10, 17), c('3', '5', '10', 'All'))  # Dropdown options
+    ),
     caption = htmltools::tags$caption(
       style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
       htmltools::HTML("Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10")
@@ -1009,7 +1015,7 @@ telenovela_display <- telenovela_metrics %>%
     `Show Title` = show_title,
     `Season Title` = season_title,
     `Total Weekly Hours Viewed` = total_hours,
-    `Avg Runtime (hrs)` = avg_runtime_hrs,
+    `*Avg Runtime (hrs)` = avg_runtime_hrs,
     `Approx Global Views` = approx_views
   ) %>%
   bind_rows(
@@ -1018,13 +1024,18 @@ telenovela_display <- telenovela_metrics %>%
         Category = "TOTAL",
         `Show Title` = "—",
         `Season Title` = "—",
-        `Avg Runtime (hrs)` = 0
+        `*Avg Runtime (hrs)` = NA_real_  # Set to NA instead of 0
       )
   )
 
 datatable(
   telenovela_display,
-  options = list(searching = FALSE, paging = FALSE, info = FALSE),
+  options = list(
+    searching = FALSE, 
+    paging = FALSE, 
+    info = FALSE,
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))  # Left justify all columns
+  ),
   caption = htmltools::tags$caption(
     style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
     htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
@@ -1033,7 +1044,7 @@ datatable(
 ) %>%
   formatCurrency(c("Total Weekly Hours Viewed", "Approx Global Views"), 
                  currency = "", digits = 0, mark = ",") %>%
-  formatRound("Avg Runtime (hrs)", digits = 2)
+  formatRound("*Avg Runtime (hrs)", digits = 2)
 
 ```
 
@@ -1065,7 +1076,7 @@ GLOBAL_TOP_10 %>%
     `Show Title` = "Elite",
     `Season Title` = "All Seasons (8)",
     `Total Weekly Hours Viewed` = comma(total_hours),
-    `Avg Runtime (hrs)` = elite_runtime,
+    `*Avg Runtime (hrs)` = elite_runtime,
     `Approx Global Views` = comma(round(total_hours / elite_runtime)),
     `Number of LATAM Countries Reached` = COUNTRY_TOP_10 %>%
       filter(show_title == "Elite", country_name %in% SPANISH_LATAMER) %>%
@@ -1074,14 +1085,19 @@ GLOBAL_TOP_10 %>%
   ) %>%
   select(-total_hours) %>%
   datatable(
-    options = list(searching = FALSE, paging = FALSE, info = FALSE),
+    options = list(
+      searching = FALSE, 
+      paging = FALSE, 
+      info = FALSE,
+      columnDefs = list(list(className = 'dt-left', targets = "_all"))
+    ),
     caption = htmltools::tags$caption(
       style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
       htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
     ),
     rownames = FALSE
   ) %>%
-  formatRound("Avg Runtime (hrs)", digits = 2)
+  formatRound("*Avg Runtime (hrs)", digits = 2)
 
 ```
 
