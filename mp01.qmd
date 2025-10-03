@@ -948,111 +948,96 @@ With 670 million Spanish speakers across Latin America, Netflix's combination of
 
 ```{r}
 
+# ============================================
+# TABLE 1: Top Show/Season by Country
+# ============================================
+
 SPANISH_LATAMER <- c(
-  "Argentina","Bolivia","Chile","Colombia","Costa Rica","Dominican Republic",
-  "Ecuador","El Salvador","Guatemala","Honduras","Mexico","Nicaragua",
-  "Panama","Paraguay","Peru","Uruguay","Venezuela"
+  "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Dominican Republic",
+  "Ecuador", "El Salvador", "Guatemala", "Honduras", "Mexico", "Nicaragua",
+  "Panama", "Paraguay", "Peru", "Uruguay", "Venezuela"
 )
 
-COUNTRY_TOP_10 <- COUNTRY_TOP_10 %>%
-  mutate(
-    show_title = coalesce(show_title, "N/A"),
-    season_title = coalesce(season_title, "N/A"))
-
-LATAMER_TOP <- COUNTRY_TOP_10 %>%
+COUNTRY_TOP_10 %>%
   filter(country_name %in% SPANISH_LATAMER) %>%
   group_by(country_name, show_title, season_title) %>%
   summarise(max_cumulative = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = "drop") %>%
   group_by(country_name) %>%
-  slice_max(order_by = max_cumulative, n = 1, with_ties = FALSE) %>%
+  slice_max(max_cumulative, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
-  arrange(country_name) %>%
   rename(
     Country = country_name,
     `Show Title` = show_title,
     `Season Title` = season_title,
     `Cumulative Weeks in Top 10` = max_cumulative
+  ) %>%
+  datatable(
+    options = list(searching = FALSE, paging = FALSE, info = FALSE),
+    caption = htmltools::tags$caption(
+      style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+      htmltools::HTML("Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10")
+    ),
+    rownames = FALSE
   )
 
-datatable(
-LATAMER_TOP,
-caption = "Spanish-speaking Latin American Countries: Top Show/Season by Cumulative Weeks in Top 10",
-  options = list(pageLength = 20, searching = FALSE, paging = FALSE, info = FALSE),
-  rownames = FALSE
-)
-
 ```
-
-<br>
 
 ```{r}
 
+# ============================================
+# TABLE 2: Four Classic Telenovelas - Global Performance
+# ============================================
+
 TOP_PROGRAMS <- tribble(
   ~show_title,                         ~season_title,                              ~avg_runtime_hrs,
-  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",          43/60,  
-  "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60, 
-  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",              44/60,  
-  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",             30/60   
+  "Café con aroma de mujer",           "Café con aroma de mujer: Season 1",        43/60,
+  "Pablo Escobar, el patrón del mal",  "Pablo Escobar, el patrón del mal: Season 1", 45/60,
+  "Pasión de Gavilanes",               "Pasión de Gavilanes: Season 1",            44/60,
+  "Yo soy Betty, la fea",              "Yo soy Betty, la fea: Season 1",           30/60
 )
 
-GLOBAL_CLEAN <- GLOBAL_TOP_10 %>%
-  mutate(
-    show_title   = coalesce(show_title, ""),
-    season_title = coalesce(season_title, "")
-  )
-
-TOTALS_GLOBAL <- GLOBAL_CLEAN %>%
+telenovela_metrics <- GLOBAL_TOP_10 %>%
   inner_join(TOP_PROGRAMS, by = c("show_title", "season_title")) %>%
   group_by(category, show_title, season_title, avg_runtime_hrs) %>%
-  summarise(
-    `Total Weekly Hours Viewed` = sum(weekly_hours_viewed, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    `Approx Global Views` = round(`Total Weekly Hours Viewed` / avg_runtime_hrs)
-  ) %>%
-  transmute(
-    Category        = category,
-    `Show Title`    = show_title,
-    `Season Title`  = season_title,
-    `Total Weekly Hours Viewed`,
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
+  mutate(approx_views = round(total_hours / avg_runtime_hrs))
+
+# Create display table with totals
+telenovela_display <- telenovela_metrics %>%
+  select(
+    Category = category,
+    `Show Title` = show_title,
+    `Season Title` = season_title,
+    `Total Weekly Hours Viewed` = total_hours,
     `Avg Runtime (hrs)` = avg_runtime_hrs,
-    `Approx Global Views`
+    `Approx Global Views` = approx_views
+  ) %>%
+  bind_rows(
+    summarise(., across(where(is.numeric), sum, na.rm = TRUE)) %>%
+      mutate(
+        Category = "TOTAL",
+        `Show Title` = "—",
+        `Season Title` = "—",
+        `Avg Runtime (hrs)` = 0
+      )
   )
 
-tot_row <- tibble(
-  Category               = "TOTAL",
-  `Show Title`           = "—",
-  `Season Title`         = "—",
-  `Total Weekly Hours Viewed` = sum(TOTALS_GLOBAL$`Total Weekly Hours Viewed`, na.rm = TRUE),
-  `Avg Runtime (hrs)`    = NA_real_,
-  `Approx Global Views`  = sum(TOTALS_GLOBAL$`Approx Global Views`, na.rm = TRUE)
-)
-
-final_tbl <- bind_rows(TOTALS_GLOBAL, tot_row)
-
 datatable(
-  final_tbl,
-  caption = "Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)",
-  options = list(pageLength = 10, searching = FALSE, paging = FALSE, info = FALSE),
+  telenovela_display,
+  options = list(searching = FALSE, paging = FALSE, info = FALSE),
+  caption = htmltools::tags$caption(
+    style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+    htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
+  ),
   rownames = FALSE
 ) %>%
-  formatCurrency(
-    c("Total Weekly Hours Viewed", "Approx Global Views"),
-    currency = "", digits = 0, mark = ","
-  ) %>%
+  formatCurrency(c("Total Weekly Hours Viewed", "Approx Global Views"), 
+                 currency = "", digits = 0, mark = ",") %>%
   formatRound("Avg Runtime (hrs)", digits = 2)
 
-grand_total_hours <- sum(TOTALS_GLOBAL$`Total Weekly Hours Viewed`, na.rm = TRUE)
-grand_total_views <- sum(TOTALS_GLOBAL$`Approx Global Views`, na.rm = TRUE)
-
-cat("Grand Total Weekly Hours Viewed:", comma(grand_total_hours), "\n")
-cat("Grand Total Approx Global Views:", comma(grand_total_views), "\n")
 ```
 
 Hours are global for the listed titles as the country TSV does not contain this information.
-
-<br>
 
 *Note, average runtime values are approximations. The sources below provide details highlighting program runtime across episodes and seasons.
 
@@ -1064,7 +1049,41 @@ Hours are global for the listed titles as the country TSV does not contain this 
 
 *[IMDB’s Average Episode Runtime for Yo Soy Betty, La Fea](https://www.imdb.com/title/tt0233127/?utm_source=chatgpt.com)*
 
-<br>
+```{r}
+
+# ============================================
+# TABLE 3: Elite - Global Performance
+# ============================================
+
+elite_runtime <- 50/60  # hours (from TVMaze)
+
+GLOBAL_TOP_10 %>%
+  filter(show_title == "Elite") %>%
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") %>%
+  mutate(
+    Category = "TV (Non-English)",
+    `Show Title` = "Elite",
+    `Season Title` = "All Seasons (8)",
+    `Total Weekly Hours Viewed` = comma(total_hours),
+    `Avg Runtime (hrs)` = elite_runtime,
+    `Approx Global Views` = comma(round(total_hours / elite_runtime)),
+    `Number of LATAM Countries Reached` = COUNTRY_TOP_10 %>%
+      filter(show_title == "Elite", country_name %in% SPANISH_LATAMER) %>%
+      summarise(n = n_distinct(country_name)) %>%
+      pull(n)
+  ) %>%
+  select(-total_hours) %>%
+  datatable(
+    options = list(searching = FALSE, paging = FALSE, info = FALSE),
+    caption = htmltools::tags$caption(
+      style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
+      htmltools::HTML("Global Hours & Runtime-Adjusted Approximate Views (Cross-referenced from TSVs)")
+    ),
+    rownames = FALSE
+  ) %>%
+  formatRound("Avg Runtime (hrs)", digits = 2)
+
+```
 
 ```{r}
 
