@@ -93,8 +93,10 @@ The following questions relate to Task 4. Please click on "Show Code" for a deta
 1. How many different countries does Netflix operate in? (You can use the viewing history as a proxy for countries in which Netflix operates.)
 
 ```{r}
+
 #| output: false
 n_distinct(COUNTRY_TOP_10$country_name)
+
 ``` 
 **Answer:** Netflix operates in ```r n_distinct(COUNTRY_TOP_10$country_name)``` different countries based on the viewing history data.
 
@@ -103,6 +105,7 @@ n_distinct(COUNTRY_TOP_10$country_name)
 2. Which non-English-language film has spent the most cumulative weeks in the global top 10? How many weeks did it spend?
 
 ```{r}
+
 Q2_RESULT <- GLOBAL_TOP_10 %>%
 filter(category == "Films (Non-English)") %>%
 group_by(show_title) %>%
@@ -171,6 +174,7 @@ Q4_RESULT %>%
   format_titles() %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
                           columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+
 ```
 
 <br>
@@ -260,6 +264,7 @@ Q7_RESULT_FINAL %>%
   format_titles() %>%
   datatable(options = list(searching = FALSE, info = FALSE, paging = FALSE, 
                           columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+
 ```
 
 <br>
@@ -303,8 +308,7 @@ Q8_RESULT %>%
     searching = FALSE, 
     info = FALSE, 
     paging = FALSE,
-    columnDefs = list(list(className = 'dt-left', targets = "_all"))
-  ))
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))))
 
 ```
 
@@ -667,7 +671,7 @@ Netflix has an established presence across South Asia. With a strong performance
 
 ```{r}
 
-# TABLE 1: CORE DATA: India-exclusive content (not in US, excluding Telugu/Tamil)
+# TABLE 1: Core Data: India-exclusive content (not in US, excluding Telugu/Tamil)
 
 india_exclusive <- COUNTRY_TOP_10 %>%
   group_by(show_title, season_title) %>%
@@ -677,8 +681,6 @@ india_exclusive <- COUNTRY_TOP_10 %>%
     .groups = "drop") %>%
   filter(appears_in_india, !appears_in_us) %>%
   filter(!str_detect(tolower(show_title), "telugu|tamil"))
-
-# TABLE 1: Hindi Titles Summary (Films vs TV Shows)
 
 hindi_titles <- c(
   "Haseen Dillruba", "Sooryavanshi", "Animal", "Laapataa Ladies", "Mimi",
@@ -971,7 +973,7 @@ SPANISH_LATAMER <- c(
 
 COUNTRY_TOP_10 %>%
   filter(country_name %in% SPANISH_LATAMER) %>%
-  filter(show_title != "Pasión de Gavilanes") %>%  # Exclude Pasión de Gavilanes
+  filter(show_title != "Pasión de Gavilanes") %>% 
   group_by(country_name, show_title, season_title) %>%
   summarise(max_cumulative = max(cumulative_weeks_in_top_10, na.rm = TRUE), .groups = "drop") %>%
   group_by(country_name) %>%
