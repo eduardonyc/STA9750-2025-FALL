@@ -292,7 +292,7 @@ if (nrow(Q8_ROWS) == 0) {
   Q8_RESULT <- Q8_ROWS %>%
     summarise(
       total_hours_2021 = sum(weekly_hours_viewed, na.rm = TRUE),
-      runtime_hours = 1 + 58/60,  # 1h 58m
+      runtime_hours = 1 + 58/60,
       approximate_views = total_hours_2021 / runtime_hours) %>%
     mutate(
       `Total Hours Viewed (2021)` = comma(total_hours_2021), 
@@ -442,7 +442,7 @@ Season 4 delivered a record-breaking performance, pulling in 1.89 billion viewin
 
 Among Netflix's English-language sci-fi and fantasy originals, *Stranger Things* has a significant lead in cumulative viewing hours over other series in the genre. For comparison, other top performers include *Wednesday*, with 2.84 billion hours across two seasons, and *The Witcher*, with 1.12 billion hours over three seasons. However, *Stranger Things* holds its top position as the platform's premier franchise in the genre.
 
-The final season is poised to be one of 2025's most anticipated series finales, with a global fan base that has followed the story for nine years, eagerly awaiting the conclusion of the saga of Eleven and the Upside Down.
+The final season is poised to be one of 2025's most anticipated series finales. After nine years of following the franchise, the global fan base stands ready to witness the resolution of Eleven's epic battle against the Upside Down.
 
 </div>
 
@@ -948,7 +948,7 @@ Leading these views is *Café con Aroma de Mujer* (1994), which has amassed an a
 
 The success of these classics is in conjunction with a strong lineup of Netflix's original programming. One example is *Elite*, an original series which has accumulated 568 million hours across its eight seasons, reaching all 17 Latin American markets (a feat matched only by *Pablo Escobar*). Offering nostalgic favorites and brand-new content enables Netflix to satisfy a diverse range of tastes across Latin America and beyond.
 
-For the region's <a href="https://en.wikipedia.org/wiki/List_of_Latin_American_countries_by_population" target="_blank">420 million Spanish speakers</a>, Netflix's strategy has led to increased engagement across Latin America. By reviving timeless stories and creating new ones, Netflix is building a platform that sparks the interest of a diverse range of viewers across generations.
+For the region's <a href="https://en.wikipedia.org/wiki/List_of_Latin_American_countries_by_population" target="_blank">427 million Spanish speakers</a>, Netflix's strategy has led to increased engagement across Latin America. By reviving timeless stories and creating new ones, Netflix is building a platform that sparks the interest of a diverse range of viewers across generations.
 
 </div>
 
