@@ -434,7 +434,7 @@ Q10_RESULT %>%
 
 <div style="text-align: justify;">
 
-Netflix is gearing up to release the fifth season of the *Stranger Things* series in late November 2025. This final season will bring to a close the global phenomenon that has earned record setting viewing hours throughout 93 countries since its 2016 debut.
+Netflix is gearing up to release the fifth season of the *Stranger Things* series in late November 2025. This final season will bring to a close the global phenomenon that has earned record-setting viewing hours spanning 93 countries since its 2016 debut.
 
 Over its four seasons, *Stranger Things* has accumulated 2.97 billion viewing hours globally. The series has averaged 13.4 weeks in Netflix's Country Top 10 charts, demonstrating its enduring appeal across various markets. Notably, Pakistan and Ukraine kept the show in their top ten for 24 weeks each, highlighting its incredible staying power well beyond its initial release. 
 
@@ -563,7 +563,7 @@ datatable(
   caption = tags$caption(
     style = "caption-side: bottom; text-align:center; color:#666; font-size:0.9em; padding-top:8px;",
     HTML(sprintf(
-      "Stranger Things, Charting in <b>%s countries</b>, Averaging <b>%s Weeks</b> Per Country",
+      "Stranger Things charted in <b>%s countries</b>, averaging <b>%s Weeks</b> per country.",
       all_countries_avg$total_countries, 
       all_countries_avg$avg_weeks
     ))
@@ -654,13 +654,13 @@ The following links contain sources that justify the average episode runtimes.
 
 The global demand for Hindi-language programming is thriving on Netflix. With a portfolio of titles that have generated over 463 million hours of streamed content worldwide, Netflix has become the destination for Hindi entertainment, catering to audiences across India and beyond.
 
-Standout titles such as *Heeramandi: The Diamond Bazaar*, *Animal*, and *The Great Indian Kapil Show* have collectively drawn substantial views from global audiences, highlighting their success on Netflix's Global Top 10 weekly charts. Among its broader catalog, Netflix's offers Indian viewers 363 titles unavailable in the US that have achieved global Top 10 status. These titles represent nearly 50% of India's available streaming content, which demonstrates high levels of demand for region-specific programming from international audiences.
+Standout titles such as *Heeramandi: The Diamond Bazaar*, *Animal*, and *The Great Indian Kapil Show* have collectively drawn substantial views from global audiences, highlighting their success on Netflix's Global Top 10 weekly charts. Among its broader catalog, Netflix offers Indian viewers 363 titles unavailable in the US that have achieved global Top 10 status. These titles represent nearly 50% of India's available streaming content, which demonstrates high levels of demand for region-specific programming from international audiences.
 
 Based on audience viewing patterns and global engagement data, Netflix estimates approximately 2 million subscribers actively engage with Hindi content. These viewers regularly consume top-performing regional titles that have achieved worldwide recognition, highlighting India's significant presence in global streaming.
 
 Beyond India, the broader South Asian market has exhibited dynamic streaming growth since 2021. Pakistan leads in this regional expansion, achieving 10.3% year-over-year growth in unique Top 10 programming. Bangladesh and Sri Lanka show positive growth trends. India has maintained steady engagement, reaching a 1.5% growth rate. Collectively, these four countries offer over 1,400 programs, indicating a well-established, regional presence.
 
-As South Asia's content continues to attract global audiences, Netflix can deepen its regional presence by expanding Urdu-language programming. Widely spoken across India and Pakistan, Urdu offers a strategic opportunity to create culturally connected content that bridges borders while uniting diverse audiences. 
+As South Asia's content continues to attract global audiences, Netflix can deepen its regional presence by expanding Urdu-language programming. Widely spoken across India and Pakistan, Urdu offers a strategic opportunity to create culturally resonating content that bridges borders. 
 
 Netflix has an established presence across South Asia. With a strong performance in Hindi content and growing regional offerings, it can seize this streaming momentum to continue engaging its global audiences with rich, South Asian programming.
 
@@ -960,13 +960,13 @@ yearly_unique_programs %>%
 
 <div style="text-align: justify;">
 
-Telenovelas are leading the surge in streaming on Netflix. The influence of three classic titles has led to over 1.2 billion global viewing hours. Audiences have succumbed to the telenovela, with its compelling and rich storytelling, showcasing the impact and universal appeal of stories highlighting the Spanish-language and Latin American culture.
+Telenovelas are leading the surge in streaming on Netflix. The influence of four titles, three class series and one Netflix original, has generated over 1.2 billion global viewing hours. Audiences have succumbed to the telenovela, with its compelling and rich storytelling, showcasing the impact and universal appeal of stories highlighting the Spanish-language and Latin American culture.
 
 Leading these views is *Café con Aroma de Mujer* (1994), which has amassed an astounding 813 million viewing hours. Also sharing a large portion of viewership is the classic 1999 series *Yo Soy Betty, La Fea*, with 297 million hours of viewing time. The 2012 drama *Pablo Escobar, el Patrón del Mal* also boasts remarkable longevity, having appeared in multiple Country Top 10 lists for a total of 102 weeks. These numbers demonstrate that high-quality, archival content sustains and endures, continually finding new ways to capture new audiences.
 
 The success of these classics is in conjunction with a strong lineup of Netflix's original programming. One example is *Elite*, an original series which has accumulated 568 million hours across its eight seasons, reaching all 17 Latin American markets (a feat matched only by *Pablo Escobar*). Offering nostalgic favorites and brand-new content enables Netflix to satisfy a diverse range of tastes across Latin America and beyond.
 
-For the region's <a href="https://en.wikipedia.org/wiki/List_of_Latin_American_countries_by_population" target="_blank">427 million Spanish speakers</a>, Netflix's strategy has led to increased engagement across Latin America. By reviving timeless stories and creating new ones, Netflix is building a platform that sparks the interest of a diverse range of viewers across generations.
+For the region's approximately <a href="https://en.wikipedia.org/wiki/List_of_Latin_American_countries_by_population" target="_blank">427 million Spanish speakers</a>, Netflix's strategy has led to increased engagement across Latin America. By reviving timeless stories and creating new ones, Netflix is building a platform that sparks the interest of a diverse range of viewers across generations.
 
 </div>
 
