@@ -960,7 +960,7 @@ yearly_unique_programs %>%
 
 <div style="text-align: justify;">
 
-Telenovelas are leading the surge in streaming on Netflix. The influence of four titles, three class series and one Netflix original, has generated over 1.2 billion global viewing hours. Audiences have succumbed to the telenovela, with its compelling and rich storytelling, showcasing the impact and universal appeal of stories highlighting the Spanish-language and Latin American culture.
+Telenovelas are leading the surge in streaming on Netflix. The influence of four titles, three classic series and one Netflix original, has generated over 1.2 billion global viewing hours. Audiences have succumbed to the telenovela, with its compelling and rich storytelling, showcasing the impact and universal appeal of stories highlighting the Spanish-language and Latin American culture.
 
 Leading these views is *Café con Aroma de Mujer* (1994), which has amassed an astounding 813 million viewing hours. Also sharing a large portion of viewership is the classic 1999 series *Yo Soy Betty, La Fea*, with 297 million hours of viewing time. The 2012 drama *Pablo Escobar, el Patrón del Mal* also boasts remarkable longevity, having appeared in multiple Country Top 10 lists for a total of 102 weeks. These numbers demonstrate that high-quality, archival content sustains and endures, continually finding new ways to capture new audiences.
 
