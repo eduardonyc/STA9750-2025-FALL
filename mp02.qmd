@@ -1,0 +1,13 @@
+---
+title: "STA 9750 Mini-Project #02: Making Backyards Affordable for All"
+author: "Eduardo Alarcon"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+execute:
+  message: false
+  warning: false
+---
+
+
