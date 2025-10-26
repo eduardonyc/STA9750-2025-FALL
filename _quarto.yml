@@ -19,7 +19,7 @@ website:
 
 format:
   html:
-    theme: lux
+    theme: cosmo
     toc: false
 
 editor:

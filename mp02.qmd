@@ -10,6 +10,13 @@ execute:
   warning: false
 ---
 
+<style>
+strong, b {
+  font-weight: bold !important;
+}
+</style>
+
+
 ```{r}
 #| label: setup
 #| message: false
