@@ -10,10 +10,33 @@ execute:
   warning: false
 ---
 
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+# Load all required packages
+library(tidyverse)   # includes dplyr, purrr, ggplot2, readr, etc.
+library(glue)
+library(readxl)
+library(tidycensus)
+library(httr2)
+library(rvest)
+library(DiagrammeR)
+```
+
+# Test Section
+
+This is regular text. **This should be bold.** This is regular again.
+
+## Another Test
+
+More text with **bold words** in the middle.
+
 ## Data Acquisition
 
 ### Task 1: Data Import
-```{r setup}
+```{r}
 if(!dir.exists(file.path("data", "mp02"))){
     dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
 }
@@ -46,7 +69,7 @@ get_acs_all_years <- function(variable, geography="cbsa",
             tidycensus::get_acs(geography, variable, year=yy, survey="acs1") |>
                 mutate(year=yy) |>
                 select(-moe, -variable) |>
-                rename(!!sym(variable) := estimate)  # FIXED: Added sym()
+                rename(!!variable := estimate)
         }) |> bind_rows()
         
         write_csv(ALL_DATA, fname)
@@ -57,21 +80,23 @@ get_acs_all_years <- function(variable, geography="cbsa",
 
 # Household income (12 month)
 INCOME <- get_acs_all_years("B19013_001") |>
-    rename(household_income = `B19013_001`)  # FIXED: Added backticks
+    rename(household_income = B19013_001)
 
 # Monthly rent
 RENT <- get_acs_all_years("B25064_001") |>
-    rename(monthly_rent = `B25064_001`)  # FIXED: Added backticks
+    rename(monthly_rent = B25064_001)
 
 # Total population
 POPULATION <- get_acs_all_years("B01003_001") |>
-    rename(population = `B01003_001`)  # FIXED: Added backticks
+    rename(population = B01003_001)
 
 # Total number of households
 HOUSEHOLDS <- get_acs_all_years("B11001_001") |>
-    rename(households = `B11001_001`)  # FIXED: Added backticks
+    rename(households = B11001_001)
 ```
-```{r building-permits}
+
+
+```{r}
 get_building_permits <- function(start_year = 2009, end_year = 2023){
     fname <- glue("housing_units_{start_year}_{end_year}.csv")
     fname <- file.path("data", "mp02", fname)
@@ -90,9 +115,9 @@ get_building_permits <- function(start_year = 2009, end_year = 2023){
             PERMIT_LINES <- str_detect(str_sub(LINES, 48, 53), "[[:digit:]]")
             PERMITS <- as.integer(str_sub(LINES[PERMIT_LINES], 48, 53))
             
-            tibble(CBSA = CBSA,  # FIXED: Changed data_frame to tibble
-                   new_housing_units_permitted = PERMITS, 
-                   year = yy)
+            data_frame(CBSA = CBSA,
+                       new_housing_units_permitted = PERMITS, 
+                       year = yy)
         }) |> bind_rows()
         
         CURRENT_YEARS <- seq(2019, end_year)
@@ -133,6 +158,7 @@ PERMITS <- get_building_permits()
 ```
 
 
+```{r}
 library(httr2)
 library(rvest)
 get_bls_industry_codes <- function(){
@@ -181,10 +207,13 @@ get_bls_industry_codes <- function(){
 }
 
 INDUSTRY_CODES <- get_bls_industry_codes()
+```
+
 
 ```{r}
 library(httr2)
 library(rvest)
+library(glue)
 get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
     fname <- glue("bls_qcew_{start_year}_{end_year}.csv.gz")
     fname <- file.path("data", "mp02", fname)
@@ -252,3 +281,85 @@ get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
 
 WAGES <- get_bls_qcew_annual_averages()
 ```
+
+## Data Integration Structure
+
+This analysis integrates data from three federal agencies—the Census Bureau's American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each employing distinct identification systems for Core-Based Statistical Areas (CBSAs). 
+
+The primary analytical challenge lies in reconciling three incompatible geographic identification formats across these authoritative data sources.
+
+```{r}
+
+#| label: fig-relationship-diagram
+#| fig-cap: "Data Integration Architecture: Entity Relationships & Transformation Logic Across Federal Data Sources"
+#| out-width: "100%"
+#| results: 'asis'
+
+library(DiagrammeR)
+grViz("
+digraph MP02_ERD {
+  
+  graph [rankdir=TB, fontname=Arial, bgcolor=white, splines=polyline, nodesep=2, ranksep=3.5, margin='1.5,0.5',
+         label='Data Integration Architecture:\\nEntity Relationships & Transformation Logic Across Federal Data Sources', 
+         labelloc='t', 
+         fontsize=50]
+  node [shape=box, style='rounded,filled', fontname=Arial, fontsize=28, margin=0.7, width=7, height=2.5]
+  edge [fontname=Arial, fontsize=22, labelfloat=true, labeldistance=4]
+  
+  INCOME [label='INCOME\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhousehold_income', fillcolor='lightblue']
+  RENT [label='RENT\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nmonthly_rent', fillcolor='lightblue']
+  POPULATION [label='POPULATION\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\npopulation', fillcolor='lightblue']
+  HOUSEHOLDS [label='HOUSEHOLDS\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhouseholds', fillcolor='lightblue']
+  PERMITS [label='PERMITS\\n\\nCBSA (PK)\\nyear (PK)\\n\\nnew_housing_units_permitted', fillcolor='#90EE90', width=8]
+  WAGES [label='WAGES\\n\\nFIPS (PK)\\nINDUSTRY (PK, FK)\\nYEAR (PK)\\n\\nEMPLOYMENT\\nTOTAL_WAGES\\nAVG_WAGE', fillcolor='lightcoral', width=8, height=3]
+  INDUSTRY [label='INDUSTRY_CODES\\n\\nlevel4_code (PK)\\n\\nlevel4_title\\nlevel3_code/title\\nlevel2_code/title\\nlevel1_code/title', fillcolor='lightcoral', width=8, height=3]
+  
+  INCOME -> RENT [label='      GEOID + year      ', color=blue, penwidth=5, fontcolor=blue, fontsize=22]
+  RENT -> POPULATION [label='      GEOID + year      ', color=blue, penwidth=5, fontcolor=blue, fontsize=22]
+  POPULATION -> HOUSEHOLDS [label='      GEOID + year      ', color=blue, penwidth=5, fontcolor=blue, fontsize=22]
+  POPULATION -> PERMITS [label='      Extract CBSA      \\n      from GEOID      ', color=orange, penwidth=5, style=dashed, fontcolor='#CC5500', fontsize=22]
+  PERMITS -> WAGES [label='      Format CBSA      \\n      to FIPS      ', color=orange, penwidth=5, style=dashed, fontcolor='#CC5500', fontsize=22]
+  WAGES -> INDUSTRY [label='      INDUSTRY to      \\n      level4_code      ', color=red, penwidth=5, fontcolor=red, fontsize=22]
+  
+  {rank=same; HOUSEHOLDS; PERMITS}
+}
+", height = "1200px", width = "100%")
+
+```
+
+### Geographic Identification Challenges
+
+As illustrated in Figure 1, each data source employs a different convention for identifying the same geographic units:
+
+- **Census ACS Tables** use alphanumeric `GEOID` strings (e.g., "CBSA35620" for New York City)
+- **Census Building Permits** use integer `CBSA` codes (e.g., 35620)
+- **BLS Wage Data** use formatted `FIPS` strings with "C" prefix and zero-padding (e.g., "C35620")
+
+These seemingly minor differences represent significant data engineering challenges. A naive join would fail to match any records across these sources, despite all three referring to identical geographic areas.
+
+### Data Integration Methodology
+
+The four ACS tables (INCOME, RENT, POPULATION, HOUSEHOLDS) share identical composite primary keys consisting of GEOID and year, enabling straightforward joins using standard `left_join()` operations. These tables form the analytical foundation, providing essential household economic and demographic metrics at the CBSA-year level.
+
+Connecting ACS data to the Building Permits database requires the first transformation: extracting the numeric CBSA code from the GEOID string. This is accomplished using:
+```r
+mutate(CBSA = as.integer(str_extract(GEOID, "[0-9]+")))
+```
+
+The second transformation bridges Building Permits to BLS wage data by formatting the integer CBSA code into the BLS-specific FIPS string format:
+```r
+mutate(FIPS = paste0("C", str_pad(CBSA, 5, pad = "0")))
+```
+
+Additionally, an important naming convention difference exists: ACS and Census tables use lowercase `year`, while BLS tables use uppercase `YEAR`. Join operations must explicitly map these columns:
+```r
+left_join(WAGES, by = c("FIPS", "year" = "YEAR"))
+```
+
+Finally, the INDUSTRY_CODES lookup table provides hierarchical NAICS classifications that enable occupational analysis. This requires converting the integer INDUSTRY column to character type for matching against level4_code.
+
+### Implications for Analysis Reproducibility
+
+Understanding these transformation requirements is essential for three reasons. First, they ensure **geographic accuracy**—incorrect joining would produce meaningless results or silent errors where CBSAs fail to match. Second, they enable **reproducibility**—future analysts can replicate this work by following the documented transformation logic. Third, they demonstrate **data quality awareness**—recognizing that real-world data integration often requires careful attention to formatting conventions across institutional boundaries.
+
+The relationship diagram serves as both documentation and validation, providing visual confirmation that the analysis correctly handles the complexity of multi-agency federal data integration.
