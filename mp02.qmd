@@ -39,6 +39,9 @@ library(gt)
 ## Data Acquisition
 
 ### Task 1: Data Import
+
+Following the guidelines for Mini Project #02, the code below contains all the essential content that addresses Tasks 2 through 7. 
+
 ```{r}
 if(!dir.exists(file.path("data", "mp02"))){
     dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
@@ -285,7 +288,7 @@ get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
 WAGES <- get_bls_qcew_annual_averages()
 ```
 
-## Data Integration Structure
+## Data Integration Structure (Extra Credit #1)
 
 This analysis integrates data from three federal agencies—the Census Bureau's American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each employing distinct identification systems for Core-Based Statistical Areas (CBSAs). 
 

@@ -207,6 +207,7 @@ strong, b {
 <h2 class="anchored" data-anchor-id="data-acquisition">Data Acquisition</h2>
 <section id="task-1-data-import" class="level3">
 <h3 class="anchored" data-anchor-id="task-1-data-import">Task 1: Data Import</h3>
+<p>Following the guidelines for Mini Project #02, the code below contains all the essential content that addresses Tasks 2 through 7.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -460,8 +461,8 @@ strong, b {
 </div>
 </section>
 </section>
-<section id="data-integration-structure" class="level2">
-<h2 class="anchored" data-anchor-id="data-integration-structure">Data Integration Structure</h2>
+<section id="data-integration-structure-extra-credit-1" class="level2">
+<h2 class="anchored" data-anchor-id="data-integration-structure-extra-credit-1">Data Integration Structure (Extra Credit #1)</h2>
 <p>This analysis integrates data from three federal agencies—the Census Bureau’s American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each employing distinct identification systems for Core-Based Statistical Areas (CBSAs).</p>
 <p>The primary analytical challenge lies in reconciling three incompatible geographic identification formats across these authoritative data sources.</p>
 <div class="cell">
@@ -503,8 +504,8 @@ strong, b {
 <span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, <span class="at">height =</span> <span class="st">"1200px"</span>, <span class="at">width =</span> <span class="st">"100%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="htmlwidget-ff1389fbfecaa0c156bc" style="width:100%;height:1200px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ff1389fbfecaa0c156bc">{"x":{"diagram":"\ndigraph MP02_ERD {\n  \n  graph [rankdir=TB, fontname=Arial, bgcolor=white, splines=polyline, nodesep=2, ranksep=3.5, margin=\"1.5,0.5\",\n         label=\"Data Integration Architecture:\\nEntity Relationships & Transformation Logic Across Federal Data Sources\", \n         labelloc=\"t\", \n         fontsize=50]\n  node [shape=box, style=\"rounded,filled\", fontname=Arial, fontsize=28, margin=0.7, width=7, height=2.5]\n  edge [fontname=Arial, fontsize=22, labelfloat=true, labeldistance=4]\n  \n  INCOME [label=\"INCOME\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhousehold_income\", fillcolor=\"lightblue\"]\n  RENT [label=\"RENT\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nmonthly_rent\", fillcolor=\"lightblue\"]\n  POPULATION [label=\"POPULATION\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\npopulation\", fillcolor=\"lightblue\"]\n  HOUSEHOLDS [label=\"HOUSEHOLDS\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhouseholds\", fillcolor=\"lightblue\"]\n  PERMITS [label=\"PERMITS\\n\\nCBSA (PK)\\nyear (PK)\\n\\nnew_housing_units_permitted\", fillcolor=\"#90EE90\", width=8]\n  WAGES [label=\"WAGES\\n\\nFIPS (PK)\\nINDUSTRY (PK, FK)\\nYEAR (PK)\\n\\nEMPLOYMENT\\nTOTAL_WAGES\\nAVG_WAGE\", fillcolor=\"lightcoral\", width=8, height=3]\n  INDUSTRY [label=\"INDUSTRY_CODES\\n\\nlevel4_code (PK)\\n\\nlevel4_title\\nlevel3_code/title\\nlevel2_code/title\\nlevel1_code/title\", fillcolor=\"lightcoral\", width=8, height=3]\n  \n  INCOME -> RENT [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  RENT -> POPULATION [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  POPULATION -> HOUSEHOLDS [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  POPULATION -> PERMITS [label=\"      Extract CBSA      \\n      from GEOID      \", color=orange, penwidth=5, style=dashed, fontcolor=\"#CC5500\", fontsize=22]\n  PERMITS -> WAGES [label=\"      Format CBSA      \\n      to FIPS      \", color=orange, penwidth=5, style=dashed, fontcolor=\"#CC5500\", fontsize=22]\n  WAGES -> INDUSTRY [label=\"      INDUSTRY to      \\n      level4_code      \", color=red, penwidth=5, fontcolor=red, fontsize=22]\n  \n  {rank=same; HOUSEHOLDS; PERMITS}\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-0482141e79663f5a5ed6" style="width:100%;height:1200px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0482141e79663f5a5ed6">{"x":{"diagram":"\ndigraph MP02_ERD {\n  \n  graph [rankdir=TB, fontname=Arial, bgcolor=white, splines=polyline, nodesep=2, ranksep=3.5, margin=\"1.5,0.5\",\n         label=\"Data Integration Architecture:\\nEntity Relationships & Transformation Logic Across Federal Data Sources\", \n         labelloc=\"t\", \n         fontsize=50]\n  node [shape=box, style=\"rounded,filled\", fontname=Arial, fontsize=28, margin=0.7, width=7, height=2.5]\n  edge [fontname=Arial, fontsize=22, labelfloat=true, labeldistance=4]\n  \n  INCOME [label=\"INCOME\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhousehold_income\", fillcolor=\"lightblue\"]\n  RENT [label=\"RENT\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nmonthly_rent\", fillcolor=\"lightblue\"]\n  POPULATION [label=\"POPULATION\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\npopulation\", fillcolor=\"lightblue\"]\n  HOUSEHOLDS [label=\"HOUSEHOLDS\\n\\nGEOID (PK)\\nNAME\\nyear (PK)\\n\\nhouseholds\", fillcolor=\"lightblue\"]\n  PERMITS [label=\"PERMITS\\n\\nCBSA (PK)\\nyear (PK)\\n\\nnew_housing_units_permitted\", fillcolor=\"#90EE90\", width=8]\n  WAGES [label=\"WAGES\\n\\nFIPS (PK)\\nINDUSTRY (PK, FK)\\nYEAR (PK)\\n\\nEMPLOYMENT\\nTOTAL_WAGES\\nAVG_WAGE\", fillcolor=\"lightcoral\", width=8, height=3]\n  INDUSTRY [label=\"INDUSTRY_CODES\\n\\nlevel4_code (PK)\\n\\nlevel4_title\\nlevel3_code/title\\nlevel2_code/title\\nlevel1_code/title\", fillcolor=\"lightcoral\", width=8, height=3]\n  \n  INCOME -> RENT [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  RENT -> POPULATION [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  POPULATION -> HOUSEHOLDS [label=\"      GEOID + year      \", color=blue, penwidth=5, fontcolor=blue, fontsize=22]\n  POPULATION -> PERMITS [label=\"      Extract CBSA      \\n      from GEOID      \", color=orange, penwidth=5, style=dashed, fontcolor=\"#CC5500\", fontsize=22]\n  PERMITS -> WAGES [label=\"      Format CBSA      \\n      to FIPS      \", color=orange, penwidth=5, style=dashed, fontcolor=\"#CC5500\", fontsize=22]\n  WAGES -> INDUSTRY [label=\"      INDUSTRY to      \\n      level4_code      \", color=red, penwidth=5, fontcolor=red, fontsize=22]\n  \n  {rank=same; HOUSEHOLDS; PERMITS}\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <section id="geographic-identification-challenges" class="level3">
@@ -589,23 +590,23 @@ strong, b {
 <span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_source_note</span>(<span class="fu">md</span>(<span class="st">"Source: **U.S. Census Bureau Building Permits Survey**"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="tjkabwougc" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#tjkabwougc table {
+<div id="ecuzgwovsm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ecuzgwovsm table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#tjkabwougc thead, #tjkabwougc tbody, #tjkabwougc tfoot, #tjkabwougc tr, #tjkabwougc td, #tjkabwougc th {
+#ecuzgwovsm thead, #ecuzgwovsm tbody, #ecuzgwovsm tfoot, #ecuzgwovsm tr, #ecuzgwovsm td, #ecuzgwovsm th {
   border-style: none;
 }
 
-#tjkabwougc p {
+#ecuzgwovsm p {
   margin: 0;
   padding: 0;
 }
 
-#tjkabwougc .gt_table {
+#ecuzgwovsm .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -631,12 +632,12 @@ strong, b {
   border-left-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_caption {
+#ecuzgwovsm .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#tjkabwougc .gt_title {
+#ecuzgwovsm .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -648,7 +649,7 @@ strong, b {
   border-bottom-width: 0;
 }
 
-#tjkabwougc .gt_subtitle {
+#ecuzgwovsm .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -660,7 +661,7 @@ strong, b {
   border-top-width: 0;
 }
 
-#tjkabwougc .gt_heading {
+#ecuzgwovsm .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -672,13 +673,13 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_bottom_border {
+#ecuzgwovsm .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_col_headings {
+#ecuzgwovsm .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -693,7 +694,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_col_heading {
+#ecuzgwovsm .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -713,7 +714,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#tjkabwougc .gt_column_spanner_outer {
+#ecuzgwovsm .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -725,15 +726,15 @@ strong, b {
   padding-right: 4px;
 }
 
-#tjkabwougc .gt_column_spanner_outer:first-child {
+#ecuzgwovsm .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#tjkabwougc .gt_column_spanner_outer:last-child {
+#ecuzgwovsm .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#tjkabwougc .gt_column_spanner {
+#ecuzgwovsm .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -745,11 +746,11 @@ strong, b {
   width: 100%;
 }
 
-#tjkabwougc .gt_spanner_row {
+#ecuzgwovsm .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#tjkabwougc .gt_group_heading {
+#ecuzgwovsm .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -775,7 +776,7 @@ strong, b {
   text-align: left;
 }
 
-#tjkabwougc .gt_empty_group_heading {
+#ecuzgwovsm .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -790,15 +791,15 @@ strong, b {
   vertical-align: middle;
 }
 
-#tjkabwougc .gt_from_md > :first-child {
+#ecuzgwovsm .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#tjkabwougc .gt_from_md > :last-child {
+#ecuzgwovsm .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#tjkabwougc .gt_row {
+#ecuzgwovsm .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -817,7 +818,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#tjkabwougc .gt_stub {
+#ecuzgwovsm .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -830,7 +831,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#tjkabwougc .gt_stub_row_group {
+#ecuzgwovsm .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -844,15 +845,15 @@ strong, b {
   vertical-align: top;
 }
 
-#tjkabwougc .gt_row_group_first td {
+#ecuzgwovsm .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#tjkabwougc .gt_row_group_first th {
+#ecuzgwovsm .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#tjkabwougc .gt_summary_row {
+#ecuzgwovsm .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -862,16 +863,16 @@ strong, b {
   padding-right: 5px;
 }
 
-#tjkabwougc .gt_first_summary_row {
+#ecuzgwovsm .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_first_summary_row.thick {
+#ecuzgwovsm .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#tjkabwougc .gt_last_summary_row {
+#ecuzgwovsm .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -881,7 +882,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_grand_summary_row {
+#ecuzgwovsm .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -891,7 +892,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#tjkabwougc .gt_first_grand_summary_row {
+#ecuzgwovsm .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -901,7 +902,7 @@ strong, b {
   border-top-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_last_grand_summary_row_top {
+#ecuzgwovsm .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -911,11 +912,11 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_striped {
+#ecuzgwovsm .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#tjkabwougc .gt_table_body {
+#ecuzgwovsm .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -924,7 +925,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_footnotes {
+#ecuzgwovsm .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -938,7 +939,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_footnote {
+#ecuzgwovsm .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -947,7 +948,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#tjkabwougc .gt_sourcenotes {
+#ecuzgwovsm .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -961,7 +962,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#tjkabwougc .gt_sourcenote {
+#ecuzgwovsm .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -969,72 +970,72 @@ strong, b {
   padding-right: 5px;
 }
 
-#tjkabwougc .gt_left {
+#ecuzgwovsm .gt_left {
   text-align: left;
 }
 
-#tjkabwougc .gt_center {
+#ecuzgwovsm .gt_center {
   text-align: center;
 }
 
-#tjkabwougc .gt_right {
+#ecuzgwovsm .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#tjkabwougc .gt_font_normal {
+#ecuzgwovsm .gt_font_normal {
   font-weight: normal;
 }
 
-#tjkabwougc .gt_font_bold {
+#ecuzgwovsm .gt_font_bold {
   font-weight: bold;
 }
 
-#tjkabwougc .gt_font_italic {
+#ecuzgwovsm .gt_font_italic {
   font-style: italic;
 }
 
-#tjkabwougc .gt_super {
+#ecuzgwovsm .gt_super {
   font-size: 65%;
 }
 
-#tjkabwougc .gt_footnote_marks {
+#ecuzgwovsm .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#tjkabwougc .gt_asterisk {
+#ecuzgwovsm .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#tjkabwougc .gt_indent_1 {
+#ecuzgwovsm .gt_indent_1 {
   text-indent: 5px;
 }
 
-#tjkabwougc .gt_indent_2 {
+#ecuzgwovsm .gt_indent_2 {
   text-indent: 10px;
 }
 
-#tjkabwougc .gt_indent_3 {
+#ecuzgwovsm .gt_indent_3 {
   text-indent: 15px;
 }
 
-#tjkabwougc .gt_indent_4 {
+#ecuzgwovsm .gt_indent_4 {
   text-indent: 20px;
 }
 
-#tjkabwougc .gt_indent_5 {
+#ecuzgwovsm .gt_indent_5 {
   text-indent: 25px;
 }
 
-#tjkabwougc .katex-display {
+#ecuzgwovsm .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#tjkabwougc div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ecuzgwovsm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1185,23 +1186,23 @@ strong, b {
 <span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_source_note</span>(<span class="fu">md</span>(<span class="st">"Source: **U.S. Census Bureau Building Permits Survey**"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="jpsuapysml" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#jpsuapysml table {
+<div id="wpjrybxkzj" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#wpjrybxkzj table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#jpsuapysml thead, #jpsuapysml tbody, #jpsuapysml tfoot, #jpsuapysml tr, #jpsuapysml td, #jpsuapysml th {
+#wpjrybxkzj thead, #wpjrybxkzj tbody, #wpjrybxkzj tfoot, #wpjrybxkzj tr, #wpjrybxkzj td, #wpjrybxkzj th {
   border-style: none;
 }
 
-#jpsuapysml p {
+#wpjrybxkzj p {
   margin: 0;
   padding: 0;
 }
 
-#jpsuapysml .gt_table {
+#wpjrybxkzj .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1227,12 +1228,12 @@ strong, b {
   border-left-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_caption {
+#wpjrybxkzj .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#jpsuapysml .gt_title {
+#wpjrybxkzj .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1244,7 +1245,7 @@ strong, b {
   border-bottom-width: 0;
 }
 
-#jpsuapysml .gt_subtitle {
+#wpjrybxkzj .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1256,7 +1257,7 @@ strong, b {
   border-top-width: 0;
 }
 
-#jpsuapysml .gt_heading {
+#wpjrybxkzj .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1268,13 +1269,13 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_bottom_border {
+#wpjrybxkzj .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_col_headings {
+#wpjrybxkzj .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1289,7 +1290,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_col_heading {
+#wpjrybxkzj .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1309,7 +1310,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#jpsuapysml .gt_column_spanner_outer {
+#wpjrybxkzj .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1321,15 +1322,15 @@ strong, b {
   padding-right: 4px;
 }
 
-#jpsuapysml .gt_column_spanner_outer:first-child {
+#wpjrybxkzj .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#jpsuapysml .gt_column_spanner_outer:last-child {
+#wpjrybxkzj .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#jpsuapysml .gt_column_spanner {
+#wpjrybxkzj .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1341,11 +1342,11 @@ strong, b {
   width: 100%;
 }
 
-#jpsuapysml .gt_spanner_row {
+#wpjrybxkzj .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#jpsuapysml .gt_group_heading {
+#wpjrybxkzj .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1371,7 +1372,7 @@ strong, b {
   text-align: left;
 }
 
-#jpsuapysml .gt_empty_group_heading {
+#wpjrybxkzj .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1386,15 +1387,15 @@ strong, b {
   vertical-align: middle;
 }
 
-#jpsuapysml .gt_from_md > :first-child {
+#wpjrybxkzj .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#jpsuapysml .gt_from_md > :last-child {
+#wpjrybxkzj .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#jpsuapysml .gt_row {
+#wpjrybxkzj .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1413,7 +1414,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#jpsuapysml .gt_stub {
+#wpjrybxkzj .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1426,7 +1427,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#jpsuapysml .gt_stub_row_group {
+#wpjrybxkzj .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1440,15 +1441,15 @@ strong, b {
   vertical-align: top;
 }
 
-#jpsuapysml .gt_row_group_first td {
+#wpjrybxkzj .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#jpsuapysml .gt_row_group_first th {
+#wpjrybxkzj .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#jpsuapysml .gt_summary_row {
+#wpjrybxkzj .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1458,16 +1459,16 @@ strong, b {
   padding-right: 5px;
 }
 
-#jpsuapysml .gt_first_summary_row {
+#wpjrybxkzj .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_first_summary_row.thick {
+#wpjrybxkzj .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#jpsuapysml .gt_last_summary_row {
+#wpjrybxkzj .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1477,7 +1478,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_grand_summary_row {
+#wpjrybxkzj .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1487,7 +1488,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#jpsuapysml .gt_first_grand_summary_row {
+#wpjrybxkzj .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1497,7 +1498,7 @@ strong, b {
   border-top-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_last_grand_summary_row_top {
+#wpjrybxkzj .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1507,11 +1508,11 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_striped {
+#wpjrybxkzj .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#jpsuapysml .gt_table_body {
+#wpjrybxkzj .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1520,7 +1521,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_footnotes {
+#wpjrybxkzj .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1534,7 +1535,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_footnote {
+#wpjrybxkzj .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1543,7 +1544,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#jpsuapysml .gt_sourcenotes {
+#wpjrybxkzj .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1557,7 +1558,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#jpsuapysml .gt_sourcenote {
+#wpjrybxkzj .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1565,72 +1566,72 @@ strong, b {
   padding-right: 5px;
 }
 
-#jpsuapysml .gt_left {
+#wpjrybxkzj .gt_left {
   text-align: left;
 }
 
-#jpsuapysml .gt_center {
+#wpjrybxkzj .gt_center {
   text-align: center;
 }
 
-#jpsuapysml .gt_right {
+#wpjrybxkzj .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#jpsuapysml .gt_font_normal {
+#wpjrybxkzj .gt_font_normal {
   font-weight: normal;
 }
 
-#jpsuapysml .gt_font_bold {
+#wpjrybxkzj .gt_font_bold {
   font-weight: bold;
 }
 
-#jpsuapysml .gt_font_italic {
+#wpjrybxkzj .gt_font_italic {
   font-style: italic;
 }
 
-#jpsuapysml .gt_super {
+#wpjrybxkzj .gt_super {
   font-size: 65%;
 }
 
-#jpsuapysml .gt_footnote_marks {
+#wpjrybxkzj .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#jpsuapysml .gt_asterisk {
+#wpjrybxkzj .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#jpsuapysml .gt_indent_1 {
+#wpjrybxkzj .gt_indent_1 {
   text-indent: 5px;
 }
 
-#jpsuapysml .gt_indent_2 {
+#wpjrybxkzj .gt_indent_2 {
   text-indent: 10px;
 }
 
-#jpsuapysml .gt_indent_3 {
+#wpjrybxkzj .gt_indent_3 {
   text-indent: 15px;
 }
 
-#jpsuapysml .gt_indent_4 {
+#wpjrybxkzj .gt_indent_4 {
   text-indent: 20px;
 }
 
-#jpsuapysml .gt_indent_5 {
+#wpjrybxkzj .gt_indent_5 {
   text-indent: 25px;
 }
 
-#jpsuapysml .katex-display {
+#wpjrybxkzj .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#jpsuapysml div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#wpjrybxkzj div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2107,23 +2108,23 @@ strong, b {
 <span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_source_note</span>(<span class="fu">md</span>(<span class="st">"Source: **BLS QCEW**; NAICS 52."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="oetukhvjkw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#oetukhvjkw table {
+<div id="twwfmbfcgx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#twwfmbfcgx table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#oetukhvjkw thead, #oetukhvjkw tbody, #oetukhvjkw tfoot, #oetukhvjkw tr, #oetukhvjkw td, #oetukhvjkw th {
+#twwfmbfcgx thead, #twwfmbfcgx tbody, #twwfmbfcgx tfoot, #twwfmbfcgx tr, #twwfmbfcgx td, #twwfmbfcgx th {
   border-style: none;
 }
 
-#oetukhvjkw p {
+#twwfmbfcgx p {
   margin: 0;
   padding: 0;
 }
 
-#oetukhvjkw .gt_table {
+#twwfmbfcgx .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2149,12 +2150,12 @@ strong, b {
   border-left-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_caption {
+#twwfmbfcgx .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#oetukhvjkw .gt_title {
+#twwfmbfcgx .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2166,7 +2167,7 @@ strong, b {
   border-bottom-width: 0;
 }
 
-#oetukhvjkw .gt_subtitle {
+#twwfmbfcgx .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2178,7 +2179,7 @@ strong, b {
   border-top-width: 0;
 }
 
-#oetukhvjkw .gt_heading {
+#twwfmbfcgx .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2190,13 +2191,13 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_bottom_border {
+#twwfmbfcgx .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_col_headings {
+#twwfmbfcgx .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2211,7 +2212,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_col_heading {
+#twwfmbfcgx .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2231,7 +2232,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#oetukhvjkw .gt_column_spanner_outer {
+#twwfmbfcgx .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2243,15 +2244,15 @@ strong, b {
   padding-right: 4px;
 }
 
-#oetukhvjkw .gt_column_spanner_outer:first-child {
+#twwfmbfcgx .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#oetukhvjkw .gt_column_spanner_outer:last-child {
+#twwfmbfcgx .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#oetukhvjkw .gt_column_spanner {
+#twwfmbfcgx .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2263,11 +2264,11 @@ strong, b {
   width: 100%;
 }
 
-#oetukhvjkw .gt_spanner_row {
+#twwfmbfcgx .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#oetukhvjkw .gt_group_heading {
+#twwfmbfcgx .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2293,7 +2294,7 @@ strong, b {
   text-align: left;
 }
 
-#oetukhvjkw .gt_empty_group_heading {
+#twwfmbfcgx .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2308,15 +2309,15 @@ strong, b {
   vertical-align: middle;
 }
 
-#oetukhvjkw .gt_from_md > :first-child {
+#twwfmbfcgx .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#oetukhvjkw .gt_from_md > :last-child {
+#twwfmbfcgx .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#oetukhvjkw .gt_row {
+#twwfmbfcgx .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2335,7 +2336,7 @@ strong, b {
   overflow-x: hidden;
 }
 
-#oetukhvjkw .gt_stub {
+#twwfmbfcgx .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2348,7 +2349,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#oetukhvjkw .gt_stub_row_group {
+#twwfmbfcgx .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2362,15 +2363,15 @@ strong, b {
   vertical-align: top;
 }
 
-#oetukhvjkw .gt_row_group_first td {
+#twwfmbfcgx .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#oetukhvjkw .gt_row_group_first th {
+#twwfmbfcgx .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#oetukhvjkw .gt_summary_row {
+#twwfmbfcgx .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2380,16 +2381,16 @@ strong, b {
   padding-right: 5px;
 }
 
-#oetukhvjkw .gt_first_summary_row {
+#twwfmbfcgx .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_first_summary_row.thick {
+#twwfmbfcgx .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#oetukhvjkw .gt_last_summary_row {
+#twwfmbfcgx .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2399,7 +2400,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_grand_summary_row {
+#twwfmbfcgx .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2409,7 +2410,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#oetukhvjkw .gt_first_grand_summary_row {
+#twwfmbfcgx .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2419,7 +2420,7 @@ strong, b {
   border-top-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_last_grand_summary_row_top {
+#twwfmbfcgx .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2429,11 +2430,11 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_striped {
+#twwfmbfcgx .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#oetukhvjkw .gt_table_body {
+#twwfmbfcgx .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2442,7 +2443,7 @@ strong, b {
   border-bottom-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_footnotes {
+#twwfmbfcgx .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2456,7 +2457,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_footnote {
+#twwfmbfcgx .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2465,7 +2466,7 @@ strong, b {
   padding-right: 5px;
 }
 
-#oetukhvjkw .gt_sourcenotes {
+#twwfmbfcgx .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2479,7 +2480,7 @@ strong, b {
   border-right-color: #D3D3D3;
 }
 
-#oetukhvjkw .gt_sourcenote {
+#twwfmbfcgx .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2487,72 +2488,72 @@ strong, b {
   padding-right: 5px;
 }
 
-#oetukhvjkw .gt_left {
+#twwfmbfcgx .gt_left {
   text-align: left;
 }
 
-#oetukhvjkw .gt_center {
+#twwfmbfcgx .gt_center {
   text-align: center;
 }
 
-#oetukhvjkw .gt_right {
+#twwfmbfcgx .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#oetukhvjkw .gt_font_normal {
+#twwfmbfcgx .gt_font_normal {
   font-weight: normal;
 }
 
-#oetukhvjkw .gt_font_bold {
+#twwfmbfcgx .gt_font_bold {
   font-weight: bold;
 }
 
-#oetukhvjkw .gt_font_italic {
+#twwfmbfcgx .gt_font_italic {
   font-style: italic;
 }
 
-#oetukhvjkw .gt_super {
+#twwfmbfcgx .gt_super {
   font-size: 65%;
 }
 
-#oetukhvjkw .gt_footnote_marks {
+#twwfmbfcgx .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#oetukhvjkw .gt_asterisk {
+#twwfmbfcgx .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#oetukhvjkw .gt_indent_1 {
+#twwfmbfcgx .gt_indent_1 {
   text-indent: 5px;
 }
 
-#oetukhvjkw .gt_indent_2 {
+#twwfmbfcgx .gt_indent_2 {
   text-indent: 10px;
 }
 
-#oetukhvjkw .gt_indent_3 {
+#twwfmbfcgx .gt_indent_3 {
   text-indent: 15px;
 }
 
-#oetukhvjkw .gt_indent_4 {
+#twwfmbfcgx .gt_indent_4 {
   text-indent: 20px;
 }
 
-#oetukhvjkw .gt_indent_5 {
+#twwfmbfcgx .gt_indent_5 {
   text-indent: 25px;
 }
 
-#oetukhvjkw .katex-display {
+#twwfmbfcgx .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#oetukhvjkw div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#twwfmbfcgx div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
