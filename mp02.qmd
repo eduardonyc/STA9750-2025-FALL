@@ -31,16 +31,10 @@ library(httr2)
 library(rvest)
 library(DiagrammeR)
 library(kableExtra)
+library(stringr)
+library(gt)
 
 ```
-
-# Test Section
-
-This is regular text. **This should be bold.** This is regular again.
-
-## Another Test
-
-More text with **bold words** in the middle.
 
 ## Data Acquisition
 
@@ -385,92 +379,146 @@ permits_2010_2019 <- PERMITS |>
   summarize(total_new_units = sum(new_housing_units_permitted, na.rm = TRUE)) |>
   arrange(desc(total_new_units))
 
-# Step 2: Join with POPULATION to get CBSA names
-# (We only need one year to get the name, so filter for 2019)
+# Step 2: Get CBSA names
 cbsa_names <- POPULATION |>
   filter(year == 2019) |>
   mutate(CBSA = as.integer(str_extract(GEOID, "[0-9]+"))) |>
   select(CBSA, NAME)
 
-# Step 3: Join and find the top CBSA
-answer_q1 <- permits_2010_2019 |>
-  left_join(cbsa_names, by = "CBSA") |>
-  slice(1)  # Get the top row
-
-# Show top 5 CBSAs
+# Step 3: Join and get top 5
 top_5_permits <- permits_2010_2019 |>
   left_join(cbsa_names, by = "CBSA") |>
   head(5) |>
-  select(NAME, total_new_units)
+  mutate(rank = row_number()) |>
+  select(rank, NAME, total_new_units)
 
-knitr::kable(top_5_permits, 
-             col.names = c("Metro Area", "Total New Units Permitted (2010-2019)"),
-             format.args = list(big.mark = ","))
+# Get the winner
+winner_name <- top_5_permits |> slice(1) |> pull(NAME)
+winner_units <- top_5_permits |> slice(1) |> pull(total_new_units)
+
+# Create styled gt table
+top_5_permits |>
+  gt() |>
+  tab_header(
+    title = md("**Top 5 CBSAs for New Housing Units Permitted**"),
+    subtitle = "2010–2019 (inclusive)"
+  ) |>
+  cols_label(
+    rank = "Rank",
+    NAME = "CBSA",
+    total_new_units = "Total New Units"
+  ) |>
+  fmt_number(
+    columns = total_new_units,
+    decimals = 0
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "#d4edda"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(rows = rank == 1)
+  ) |>
+  tab_source_note(md("Source: **U.S. Census Bureau Building Permits Survey**"))
 ```
 
-**Answer:** The CBSA that permitted the largest number of new housing units from 2010 to 2019 was **`r answer_q1$NAME`** with **`r format(answer_q1$total_new_units, big.mark = ",")`** new units permitted.
+**Answer:** The **`r winner_name`** permitted the largest number of new housing units from 2010 to 2019, with **`r format(winner_units, big.mark = ",")`** total new units permitted during the decade.
 
 ### Question 2: Albuquerque Peak Year
 
 In what year did Albuquerque, NM (CBSA Number 10740) permit the most new housing units?
 
 ```{r}
-# Filter for Albuquerque and find top years
+
+# Filter for Albuquerque and get all years
 albuquerque_permits <- PERMITS |>
   filter(CBSA == 10740) |>
-  arrange(desc(new_housing_units_permitted))
-
-# Get the peak year
-peak_year <- albuquerque_permits |>
-  slice(1) |>
-  pull(year)
-
-# Show top 5 years in a nice table
-top_5_years <- albuquerque_permits |>
-  head(5) |>
+  arrange(year) |>
   select(year, new_housing_units_permitted)
 
-knitr::kable(top_5_years, 
-             col.names = c("Year", "New Housing Units Permitted"),
-             format.args = list(big.mark = ","),
-             caption = "Top 5 Years for Housing Permits in Albuquerque, NM (CBSA 10740)")
+# Get peak year
+peak_year <- albuquerque_permits |>
+  slice_max(new_housing_units_permitted, n = 1) |>
+  pull(year)
 
-# Improved plot with better label positioning
+peak_units <- albuquerque_permits |>
+  slice_max(new_housing_units_permitted, n = 1) |>
+  pull(new_housing_units_permitted)
+
+# Create visualization
 ggplot(albuquerque_permits, aes(x = year, y = new_housing_units_permitted)) +
-  geom_line(color = "steelblue", size = 1) +
+  geom_line(color = "steelblue", size = 1.5) +
   geom_point(size = 3, color = "steelblue") +
-  geom_point(data = albuquerque_permits |> filter(year == 2020), 
-             aes(x = year, y = new_housing_units_permitted),
-             color = "red", size = 4) +
-  geom_point(data = albuquerque_permits |> filter(year == 2021), 
-             aes(x = year, y = new_housing_units_permitted),
-             color = "darkgreen", size = 4) +
-  annotate("text", x = 2020, 
-           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2020], 
-           label = "COVID Dip", color = "red", hjust = 1.2, vjust = 1.1) +
-  annotate("text", x = 2021, 
-           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2021], 
-           label = "Peak", color = "darkgreen", hjust = 0.5, vjust = -1.7) +
-  labs(title = "Housing Permits in Albuquerque, NM (CBSA 10740)",
-       subtitle = "Note the 2020 COVID dip and 2021 rebound",
-       x = "Year",
-       y = "New Housing Units Permitted") +
+  geom_point(
+    data = albuquerque_permits |> filter(year == 2020),
+    aes(x = year, y = new_housing_units_permitted),
+    color = "red", size = 4
+  ) +
+  geom_point(
+    data = albuquerque_permits |> filter(year == 2021),
+    aes(x = year, y = new_housing_units_permitted),
+    color = "darkgreen", size = 4
+  ) +
+  annotate("text", x = 2020,
+           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2020],
+           label = "COVID Dip", color = "red", hjust = 1.2, vjust = 1.5) +
+  annotate("text", x = 2021,
+           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2021],
+           label = "Peak", color = "darkgreen", hjust = 0.5, vjust = -1.5) +
+  labs(
+    title = "Housing Permits in Albuquerque, NM (CBSA 10740)",
+    subtitle = "Note the 2020 COVID dip and 2021 rebound",
+    x = "Year",
+    y = "New Housing Units Permitted"
+  ) +
   theme_minimal() +
-  scale_y_continuous(labels = scales::comma,
-                     expand = expansion(mult = c(0.05, 0.15))) +  # Add more space at top
-  coord_cartesian(clip = "off")  # Prevent labels from being cut off
+  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0.05, 0.15))) +
+  coord_cartesian(clip = "off")
 
+# Create styled table showing all years
+albuquerque_permits |>
+  mutate(year = as.character(year)) |>
+  gt() |>
+  tab_header(
+    title = md("**Albuquerque Housing Permits by Year**"),
+    subtitle = "CBSA 10740 (2009–2023)"
+  ) |>
+  cols_label(
+    year = "Year",
+    new_housing_units_permitted = "New Housing Units Permitted"
+  ) |>
+  fmt_number(
+    columns = new_housing_units_permitted,
+    decimals = 0
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "#d1ecf1"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(rows = year == as.character(peak_year))
+  ) |>
+  tab_style(
+    style = list(
+      cell_fill(color = "#f8d7da"),
+      cell_text(style = "italic")
+    ),
+    locations = cells_body(rows = year == "2020")
+  ) |>
+  tab_source_note(md("Source: **U.S. Census Bureau Building Permits Survey**"))
 ```
 
-**Answer:** Albuquerque, NM (CBSA 10740) permitted the most new housing units in **`r peak_year`** with **`r format(albuquerque_permits$new_housing_units_permitted[1], big.mark = ",")`** units.
+**Answer:** Albuquerque, NM (CBSA 10740) permitted the most new housing units in **`r peak_year`** with **`r format(peak_units, big.mark = ",")`** units.
 
-**COVID-19 Artifact Note:** The 2021 peak represents a "catch-up" effect following severe disruption to construction permitting in 2020 due to COVID-19 lockdowns. As shown in the table above, 2021, 2022, and 2023 all show elevated permit levels compared to the pre-pandemic decade, suggesting sustained post-COVID housing development activity rather than a temporary spike.
+**COVID-19 Artifact Note:** The 2021 peak represents a "catch-up" effect following severe disruption to construction permitting in 2020 (highlighted in red in the table) due to COVID-19 lockdowns. The table shows 2020 had the lowest permits in the dataset, followed by a dramatic rebound in 2021 as delayed projects moved forward and pent-up housing demand materialized. This pattern is observed across many metropolitan areas and should be interpreted as COVID-related disruption rather than a structural shift in housing development.
+
 
 ### Question 3: Highest Average Individual Income by State (2015)
 
 Which state (not CBSA) had the highest average individual income in 2015?
 
 ```{r}
+
 # Step 1: Join the three tables for 2015
 income_2015 <- INCOME |>
   filter(year == 2015) |>
@@ -514,37 +562,43 @@ top_state_name <- state_df |>
   filter(abb == top_state_abb) |>
   pull(name)
 
-# Show top 10 to give better context
+# Show top 10 states with formatted income
 top_10_states <- state_income |>
   head(10) |>
   left_join(state_df, by = c("state" = "abb")) |>
-  select(name, state, avg_individual_income, total_state_population) |>
   mutate(
-    multistate_flag = ifelse(state == "DC", "⚠️ 100% Multi-State", 
-                            ifelse(state %in% c("NY", "MD", "VA"), "Contains Multi-State CBSAs", ""))
-  )
+    # Format income with dollar sign and commas
+    income_formatted = paste0("$", format(round(avg_individual_income, 2), 
+                                         big.mark = ",", 
+                                         nsmall = 2)),
+    note = case_when(
+      state == "DC" ~ "⚠️ 100% Multi-State",
+      state %in% c("NY", "MD", "VA", "PA", "NJ") ~ "Contains Multi-State CBSAs",
+      TRUE ~ ""
+    )
+  ) |>
+  select(name, state, income_formatted, total_state_population, note)
 
-knitr::kable(top_10_states, 
+knitr::kable(top_10_states,
              col.names = c("State", "Abbr", "Avg Individual Income", 
                           "Total Population", "Note"),
+             align = "lllll",  # LEFT-ALIGN ALL 5 COLUMNS
              format.args = list(big.mark = ","),
              caption = "Top 10 States by Average Individual Income (2015)")
 ```
 
-**Answer:** Based on CBSA-level data, the **District of Columbia** had the highest average individual income at **$33,232.88** per person in 2015.
+**Answer:** In 2015, the **`r top_state_name`** had the highest average individual income at **$`r format(round(top_state_income, 2), big.mark = ",")`** per person.
 
 **Critical Methodological Limitations:**
 
 1. **Multi-State CBSA Bias:** DC's result is derived entirely from the Washington-Arlington-Alexandria metropolitan area, which spans DC, Virginia, Maryland, and West Virginia. This methodology attributes income from wealthy Virginia and Maryland suburbs to DC, inflating DC's apparent income level. DC represents 100% of a multi-state metro area rather than a standalone state economy.
 
-2. **CBSA Coverage Limitation:** This analysis only includes Core-Based Statistical Areas (metropolitan areas) and excludes rural populations. States with large rural populations are systematically undercounted:
-   - Alaska: Only 499,421 of ~737,000 residents included (~68%)
-   - Vermont: Only 216,661 of ~626,000 residents included (~35%)
-   - In contrast, DC, Massachusetts, and Connecticut are nearly 100% metropolitan
-   
-   This creates an urban-rural bias where highly urbanized states appear to have higher incomes, partially because rural (typically lower-income) populations are excluded from the analysis.
+2. **CBSA Coverage Limitation:** This analysis only includes Core-Based Statistical Areas (metropolitan areas) and excludes rural populations. States with large rural populations are systematically undercounted. This creates an urban-rural bias where highly urbanized states appear to have higher incomes, partially because rural (typically lower-income) populations are excluded from the analysis.
 
-3. **Most Accurate Interpretation:** Among states with primarily single-state CBSAs and high metro coverage, **Massachusetts** ($27,620.62) and **Connecticut** ($27,194.05) represent the most reliable results, as they include most of their state populations and don't have the multi-state attribution problem affecting DC.
+3. **Most Accurate Interpretation:** Among states with primarily single-state CBSAs and high metro coverage, **Massachusetts** and **Connecticut** represent the most reliable results, as they include most of their state populations and don't have the multi-state attribution problem affecting DC.
+
+**Conclusion:** While DC technically ranks first in this analysis, the result reflects methodological artifacts rather than genuine state-level economic comparison. Multi-state CBSAs represent 27.3% of the total population in this dataset. For a fair state-to-state comparison, Massachusetts or Connecticut would be more defensible answers.
+
 
 ### Question 4: Data Scientists by CBSA Over Time
 
@@ -602,3 +656,71 @@ knitr::kable(transition_years,
 ```
 
 **Answer:** The last year in which the New York City CBSA had the most data scientists and business analysts (NAICS 51821) in the country was **`r last_nyc_year`**. As shown in the table above, San Francisco has led the nation since then, reflecting the tech industry's concentration in Silicon Valley.
+
+### Question 5: Finance & Insurance Wages in NYC
+
+What fraction of total wages in the NYC CBSA was earned by people employed in the finance and insurance industries (NAICS code 52)? In what year did this fraction peak?
+
+```{r}
+
+# Identify NYC CBSA code
+nyc_cbsa_code <- "C3562"
+
+# Calculate finance wages as fraction of total wages by year
+nyc_wage_share <- WAGES |>
+  filter(FIPS == nyc_cbsa_code, YEAR != 2020) |>  # Omit 2020 per data issues
+  mutate(
+    is_finance = str_starts(as.character(INDUSTRY), "52")
+  ) |>
+  group_by(year = YEAR) |>
+  summarize(
+    wages_total = sum(TOTAL_WAGES, na.rm = TRUE),
+    wages_fin = sum(if_else(is_finance, TOTAL_WAGES, 0), na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    share_fin = wages_fin / wages_total
+  ) |>
+  arrange(year)
+
+# Get peak year
+peak_year <- nyc_wage_share$year[which.max(nyc_wage_share$share_fin)]
+peak_share <- max(nyc_wage_share$share_fin) * 100
+
+# Create professional gt table
+nyc_wage_share |>
+  select(
+    Year = year,
+    `Total Wages (USD)` = wages_total,
+    `Finance & Insurance Wages (USD)` = wages_fin,
+    `Finance Share` = share_fin
+  ) |>
+  gt() |>
+  tab_header(
+    title = md("**NYC CBSA — Finance & Insurance Wage Share**"),
+    subtitle = "BLS QCEW 2009–2023 • NAICS 52 • 2020 omitted"
+  ) |>
+  fmt_currency(
+    columns = c(`Total Wages (USD)`, `Finance & Insurance Wages (USD)`),
+    decimals = 0
+  ) |>
+  fmt_percent(columns = `Finance Share`, decimals = 1) |>
+  cols_label(`Finance Share` = "Finance Share of Total") |>
+  tab_style(
+    style = list(
+      cell_fill(color = "#fff3cd"),
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(rows = Year == peak_year)
+  ) |>
+  tab_source_note(md("Source: **BLS QCEW**; NAICS 52."))
+
+```
+
+**Answer:** 
+
+**Part A - The Fraction:** Finance and insurance workers earned between **9.4%** and **15.9%** of total wages in the NYC CBSA across the study period.
+
+**Part B - Peak Year:** This fraction **peaked in `r peak_year` at `r round(peak_share, 1)`%**, as highlighted in the table above. The 2021 peak represents a recovery from the declining share observed through the mid-2010s, exceeding even the 2010 post-financial-crisis level (15.4%)
+
+**Context:** The prominence of finance and insurance in NYC's economy reflects the city's role as a global financial capital, though the fraction has fluctuated over time due to economic cycles and industry shifts.
