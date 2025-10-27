@@ -30,6 +30,8 @@ library(tidycensus)
 library(httr2)
 library(rvest)
 library(DiagrammeR)
+library(kableExtra)
+
 ```
 
 # Test Section
@@ -370,3 +372,233 @@ Finally, the INDUSTRY_CODES lookup table provides hierarchical NAICS classificat
 Understanding these transformation requirements is essential for three reasons. First, they ensure **geographic accuracy**—incorrect joining would produce meaningless results or silent errors where CBSAs fail to match. Second, they enable **reproducibility**—future analysts can replicate this work by following the documented transformation logic. Third, they demonstrate **data quality awareness**—recognizing that real-world data integration often requires careful attention to formatting conventions across institutional boundaries.
 
 The relationship diagram serves as both documentation and validation, providing visual confirmation that the analysis correctly handles the complexity of multi-agency federal data integration.
+
+### Question 1: Largest Housing Permits (2010-2019)
+
+Which CBSA (by name) permitted the largest number of new housing units in the decade from 2010 to 2019 (inclusive)?
+
+```{r}
+# Step 1: Filter PERMITS for 2010-2019 and sum by CBSA
+permits_2010_2019 <- PERMITS |>
+  filter(year >= 2010 & year <= 2019) |>
+  group_by(CBSA) |>
+  summarize(total_new_units = sum(new_housing_units_permitted, na.rm = TRUE)) |>
+  arrange(desc(total_new_units))
+
+# Step 2: Join with POPULATION to get CBSA names
+# (We only need one year to get the name, so filter for 2019)
+cbsa_names <- POPULATION |>
+  filter(year == 2019) |>
+  mutate(CBSA = as.integer(str_extract(GEOID, "[0-9]+"))) |>
+  select(CBSA, NAME)
+
+# Step 3: Join and find the top CBSA
+answer_q1 <- permits_2010_2019 |>
+  left_join(cbsa_names, by = "CBSA") |>
+  slice(1)  # Get the top row
+
+# Show top 5 CBSAs
+top_5_permits <- permits_2010_2019 |>
+  left_join(cbsa_names, by = "CBSA") |>
+  head(5) |>
+  select(NAME, total_new_units)
+
+knitr::kable(top_5_permits, 
+             col.names = c("Metro Area", "Total New Units Permitted (2010-2019)"),
+             format.args = list(big.mark = ","))
+```
+
+**Answer:** The CBSA that permitted the largest number of new housing units from 2010 to 2019 was **`r answer_q1$NAME`** with **`r format(answer_q1$total_new_units, big.mark = ",")`** new units permitted.
+
+### Question 2: Albuquerque Peak Year
+
+In what year did Albuquerque, NM (CBSA Number 10740) permit the most new housing units?
+
+```{r}
+# Filter for Albuquerque and find top years
+albuquerque_permits <- PERMITS |>
+  filter(CBSA == 10740) |>
+  arrange(desc(new_housing_units_permitted))
+
+# Get the peak year
+peak_year <- albuquerque_permits |>
+  slice(1) |>
+  pull(year)
+
+# Show top 5 years in a nice table
+top_5_years <- albuquerque_permits |>
+  head(5) |>
+  select(year, new_housing_units_permitted)
+
+knitr::kable(top_5_years, 
+             col.names = c("Year", "New Housing Units Permitted"),
+             format.args = list(big.mark = ","),
+             caption = "Top 5 Years for Housing Permits in Albuquerque, NM (CBSA 10740)")
+
+# Improved plot with better label positioning
+ggplot(albuquerque_permits, aes(x = year, y = new_housing_units_permitted)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_point(data = albuquerque_permits |> filter(year == 2020), 
+             aes(x = year, y = new_housing_units_permitted),
+             color = "red", size = 4) +
+  geom_point(data = albuquerque_permits |> filter(year == 2021), 
+             aes(x = year, y = new_housing_units_permitted),
+             color = "darkgreen", size = 4) +
+  annotate("text", x = 2020, 
+           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2020], 
+           label = "COVID Dip", color = "red", hjust = 1.2, vjust = 1.1) +
+  annotate("text", x = 2021, 
+           y = albuquerque_permits$new_housing_units_permitted[albuquerque_permits$year == 2021], 
+           label = "Peak", color = "darkgreen", hjust = 0.5, vjust = -1.7) +
+  labs(title = "Housing Permits in Albuquerque, NM (CBSA 10740)",
+       subtitle = "Note the 2020 COVID dip and 2021 rebound",
+       x = "Year",
+       y = "New Housing Units Permitted") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma,
+                     expand = expansion(mult = c(0.05, 0.15))) +  # Add more space at top
+  coord_cartesian(clip = "off")  # Prevent labels from being cut off
+
+```
+
+**Answer:** Albuquerque, NM (CBSA 10740) permitted the most new housing units in **`r peak_year`** with **`r format(albuquerque_permits$new_housing_units_permitted[1], big.mark = ",")`** units.
+
+**COVID-19 Artifact Note:** The 2021 peak represents a "catch-up" effect following severe disruption to construction permitting in 2020 due to COVID-19 lockdowns. As shown in the table above, 2021, 2022, and 2023 all show elevated permit levels compared to the pre-pandemic decade, suggesting sustained post-COVID housing development activity rather than a temporary spike.
+
+### Question 3: Highest Average Individual Income by State (2015)
+
+Which state (not CBSA) had the highest average individual income in 2015?
+
+```{r}
+# Step 1: Join the three tables for 2015
+income_2015 <- INCOME |>
+  filter(year == 2015) |>
+  left_join(HOUSEHOLDS |> filter(year == 2015), by = c("GEOID", "NAME", "year")) |>
+  left_join(POPULATION |> filter(year == 2015), by = c("GEOID", "NAME", "year"))
+
+# Step 2: Calculate total income per CBSA and extract state
+cbsa_income <- income_2015 |>
+  mutate(
+    total_income = household_income * households,
+    state = str_extract(NAME, ", (.{2})", group = 1)
+  ) |>
+  select(GEOID, NAME, state, total_income, population)
+
+# Step 3: Sum by state
+state_income <- cbsa_income |>
+  group_by(state) |>
+  summarize(
+    total_state_income = sum(total_income, na.rm = TRUE),
+    total_state_population = sum(population, na.rm = TRUE)
+  ) |>
+  mutate(avg_individual_income = total_state_income / total_state_population) |>
+  arrange(desc(avg_individual_income))
+
+# Step 4: Get the top state
+top_state_abb <- state_income |>
+  slice(1) |>
+  pull(state)
+
+top_state_income <- state_income |>
+  slice(1) |>
+  pull(avg_individual_income)
+
+# Step 5: Convert abbreviation to full state name
+state_df <- data.frame(
+  abb  = c(state.abb, "DC", "PR"),
+  name = c(state.name, "District of Columbia", "Puerto Rico")
+)
+
+top_state_name <- state_df |>
+  filter(abb == top_state_abb) |>
+  pull(name)
+
+# Show top 10 to give better context
+top_10_states <- state_income |>
+  head(10) |>
+  left_join(state_df, by = c("state" = "abb")) |>
+  select(name, state, avg_individual_income, total_state_population) |>
+  mutate(
+    multistate_flag = ifelse(state == "DC", "⚠️ 100% Multi-State", 
+                            ifelse(state %in% c("NY", "MD", "VA"), "Contains Multi-State CBSAs", ""))
+  )
+
+knitr::kable(top_10_states, 
+             col.names = c("State", "Abbr", "Avg Individual Income", 
+                          "Total Population", "Note"),
+             format.args = list(big.mark = ","),
+             caption = "Top 10 States by Average Individual Income (2015)")
+```
+
+**Answer:** Based on CBSA-level data, the **District of Columbia** had the highest average individual income at **$33,232.88** per person in 2015.
+
+**Critical Methodological Limitations:**
+
+1. **Multi-State CBSA Bias:** DC's result is derived entirely from the Washington-Arlington-Alexandria metropolitan area, which spans DC, Virginia, Maryland, and West Virginia. This methodology attributes income from wealthy Virginia and Maryland suburbs to DC, inflating DC's apparent income level. DC represents 100% of a multi-state metro area rather than a standalone state economy.
+
+2. **CBSA Coverage Limitation:** This analysis only includes Core-Based Statistical Areas (metropolitan areas) and excludes rural populations. States with large rural populations are systematically undercounted:
+   - Alaska: Only 499,421 of ~737,000 residents included (~68%)
+   - Vermont: Only 216,661 of ~626,000 residents included (~35%)
+   - In contrast, DC, Massachusetts, and Connecticut are nearly 100% metropolitan
+   
+   This creates an urban-rural bias where highly urbanized states appear to have higher incomes, partially because rural (typically lower-income) populations are excluded from the analysis.
+
+3. **Most Accurate Interpretation:** Among states with primarily single-state CBSAs and high metro coverage, **Massachusetts** ($27,620.62) and **Connecticut** ($27,194.05) represent the most reliable results, as they include most of their state populations and don't have the multi-state attribution problem affecting DC.
+
+### Question 4: Data Scientists by CBSA Over Time
+
+What is the last year in which the NYC CBSA had the most data scientists in the country? In recent, the San Francisco CBSA has had the most data scientists.
+
+```{r}
+
+# Prepare data
+data_scientists <- WAGES |>
+  filter(INDUSTRY == 51821) |>
+  rename(std_cbsa = FIPS, year = YEAR)
+
+cbsa_names <- POPULATION |>
+  filter(year == 2019) |>
+  mutate(
+    CBSA = as.integer(str_extract(GEOID, "[0-9]+")),
+    std_cbsa = paste0("C", str_sub(as.character(CBSA), 1, 4))
+  ) |>
+  select(std_cbsa, NAME)
+
+# Calculate last NYC year properly
+last_nyc_year <- data_scientists |>
+  group_by(std_cbsa, year) |>
+  summarize(total_employment = sum(EMPLOYMENT, na.rm = TRUE), .groups = "drop") |>
+  left_join(cbsa_names, by = "std_cbsa") |>
+  group_by(year) |>
+  slice_max(total_employment, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  filter(str_detect(NAME, "New York")) |>
+  pull(year) |>
+  max()
+
+# Focus on the transition period: 2014-2017
+transition_years <- data_scientists |>
+  filter(year %in% c(2014, 2015, 2016, 2017)) |>
+  group_by(std_cbsa, year) |>
+  summarize(total_employment = sum(EMPLOYMENT, na.rm = TRUE), .groups = "drop") |>
+  left_join(cbsa_names, by = "std_cbsa") |>
+  group_by(year) |>
+  slice_max(total_employment, n = 3, with_ties = FALSE) |>
+  ungroup() |>
+  arrange(year, desc(total_employment)) |>
+  group_by(year) |>
+  mutate(rank = row_number()) |>
+  ungroup() |>
+  mutate(year = as.character(year)) |>
+  select(year, rank, NAME, total_employment)
+
+knitr::kable(transition_years,
+             col.names = c("Year", "Rank", "CBSA", "Employment"),
+             align = "llll",
+             format.args = list(big.mark = ","),
+             caption = "The NYC-to-San Francisco Transition (2014-2017)")
+
+```
+
+**Answer:** The last year in which the New York City CBSA had the most data scientists and business analysts (NAICS 51821) in the country was **`r last_nyc_year`**. As shown in the table above, San Francisco has led the nation since then, reflecting the tech industry's concentration in Silicon Valley.
