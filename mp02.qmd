@@ -36,9 +36,9 @@ library(gt)
 
 ```
 
-## Data Acquisition
+## Task 1: Data Import
 
-### Task 1: Data Import
+### Data Acquistion
 
 Following the guidelines for Mini Project #02, the code below contains all the essential content that addresses Tasks 2 through 7. 
 
@@ -288,7 +288,9 @@ get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
 WAGES <- get_bls_qcew_annual_averages()
 ```
 
-## Data Integration Structure (Extra Credit #1)
+## Extra Credit # 1
+
+### Data Integration Structure 
 
 This analysis integrates data from three federal agencies—the Census Bureau's American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each employing distinct identification systems for Core-Based Statistical Areas (CBSAs). 
 
@@ -369,6 +371,8 @@ Finally, the INDUSTRY_CODES lookup table provides hierarchical NAICS classificat
 Understanding these transformation requirements is essential for three reasons. First, they ensure **geographic accuracy**—incorrect joining would produce meaningless results or silent errors where CBSAs fail to match. Second, they enable **reproducibility**—future analysts can replicate this work by following the documented transformation logic. Third, they demonstrate **data quality awareness**—recognizing that real-world data integration often requires careful attention to formatting conventions across institutional boundaries.
 
 The relationship diagram serves as both documentation and validation, providing visual confirmation that the analysis correctly handles the complexity of multi-agency federal data integration.
+
+## Task 2: Multi-Table Questions
 
 ### Question 1: Largest Housing Permits (2010-2019)
 
@@ -727,3 +731,12 @@ nyc_wage_share |>
 **Part B - Peak Year:** This fraction **peaked in `r peak_year` at `r round(peak_share, 1)`%**, as highlighted in the table above. The 2021 peak represents a recovery from the declining share observed through the mid-2010s, exceeding even the 2010 post-financial-crisis level (15.4%)
 
 **Context:** The prominence of finance and insurance in NYC's economy reflects the city's role as a global financial capital, though the fraction has fluctuated over time due to economic cycles and industry shifts.
+
+
+## Task 3: Initial Visualization
+
+### Monthly Rent vs. Average Household Income (2009)
+
+### Total Employment vs. Total Employment in Health Care and Social Services
+
+### Evolution of Average Household
