@@ -23,16 +23,31 @@ strong, b {
 #| warning: false
 
 # Load all required packages
-library(tidyverse)   # includes dplyr, purrr, ggplot2, readr, etc.
+library(tidyverse)    
 library(glue)
 library(readxl)
 library(tidycensus)
 library(httr2)
 library(rvest)
 library(DiagrammeR)
-library(kableExtra)
 library(stringr)
 library(gt)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(tidyverse)
+library(knitr)
+library(gganimate)
+library(gifski)
+library(DT)
+library(readr)
+library(htmltools)
+library(ggrepel)
+library(plotly)
+library(kableExtra)
+library(tidyr)
+library(purrr)
+library(rlang)
 
 ```
 
@@ -43,6 +58,7 @@ library(gt)
 Following the guidelines for Mini Project #02, the code below contains all the essential content that addresses Tasks 2 through 7. 
 
 ```{r}
+
 if(!dir.exists(file.path("data", "mp02"))){
     dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
 }
@@ -103,6 +119,7 @@ HOUSEHOLDS <- get_acs_all_years("B11001_001") |>
 
 
 ```{r}
+
 get_building_permits <- function(start_year = 2009, end_year = 2023){
     fname <- glue("housing_units_{start_year}_{end_year}.csv")
     fname <- file.path("data", "mp02", fname)
@@ -165,6 +182,7 @@ PERMITS <- get_building_permits()
 
 
 ```{r}
+
 library(httr2)
 library(rvest)
 get_bls_industry_codes <- function(){
@@ -217,9 +235,11 @@ INDUSTRY_CODES <- get_bls_industry_codes()
 
 
 ```{r}
+
 library(httr2)
 library(rvest)
 library(glue)
+
 get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
     fname <- glue("bls_qcew_{start_year}_{end_year}.csv.gz")
     fname <- file.path("data", "mp02", fname)
@@ -286,15 +306,42 @@ get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
 }
 
 WAGES <- get_bls_qcew_annual_averages()
+
 ```
 
 ## Extra Credit # 1
 
 ### Data Integration Structure 
 
-This analysis integrates data from three federal agencies—the Census Bureau's American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each employing distinct identification systems for Core-Based Statistical Areas (CBSAs). 
+This analysis integrates data from three federal agencies—the Census Bureau's American Community Survey (ACS), the Census Building Permits database, and the Bureau of Labor Statistics (BLS)—each using distinct identification systems for Core-Based Statistical Areas (CBSAs). 
 
-The primary analytical challenge lies in reconciling three incompatible geographic identification formats across these authoritative data sources.
+### Integration Strategy
+
+The four ACS tables (INCOME, RENT, POPULATION, HOUSEHOLDS) share identical composite primary keys consisting of GEOID and year, enabling straightforward joins using standard `left_join()` operations. These tables form the analytical foundation, providing essential household economic and demographic metrics at the CBSA-year level.
+
+Connecting ACS data to the Building Permits database requires the first transformation: extracting the numeric CBSA code from the GEOID string. This is accomplished using:
+
+```r
+mutate(CBSA = as.integer(str_extract(GEOID, "[0-9]+")))
+```
+
+The second transformation bridges Building Permits to BLS wage data by formatting the integer CBSA code into the BLS-specific FIPS string format:
+```r
+mutate(FIPS = paste0("C", str_pad(CBSA, 5, pad = "0")))
+```
+
+Additionally, an important naming convention difference exists: ACS and Census tables use lowercase `year`, while BLS tables use uppercase `YEAR`. Join operations must explicitly map these columns:
+```r
+left_join(WAGES, by = c("FIPS", "year" = "YEAR"))
+```
+
+Finally, the INDUSTRY_CODES lookup table provides hierarchical NAICS classifications that enable occupational analysis. This requires converting the integer INDUSTRY column to character type for matching against level4_code.
+```r
+WAGES %>%
+  mutate(INDUSTRY = as.character(INDUSTRY)) %>%
+  left_join(INDUSTRY_CODES, by = c("INDUSTRY" = "level4_code"))
+```
+The Relationship Diagram below highlights these naming conventions, showing the connections between these data sources.
 
 ```{r}
 
@@ -303,7 +350,6 @@ The primary analytical challenge lies in reconciling three incompatible geograph
 #| out-width: "100%"
 #| results: 'asis'
 
-library(DiagrammeR)
 grViz("
 digraph MP02_ERD {
   
@@ -337,7 +383,7 @@ digraph MP02_ERD {
 
 ### Geographic Identification Challenges
 
-As illustrated in Figure 1, each data source employs a different convention for identifying the same geographic units:
+As illustrated in Figure 1, each data source uses a different convention for identifying the same geographic units:
 
 - **Census ACS Tables** use alphanumeric `GEOID` strings (e.g., "CBSA35620" for New York City)
 - **Census Building Permits** use integer `CBSA` codes (e.g., 35620)
@@ -345,32 +391,19 @@ As illustrated in Figure 1, each data source employs a different convention for 
 
 These seemingly minor differences represent significant data engineering challenges. A naive join would fail to match any records across these sources, despite all three referring to identical geographic areas.
 
-### Data Integration Methodology
+### Implications for Reproducibility
 
-The four ACS tables (INCOME, RENT, POPULATION, HOUSEHOLDS) share identical composite primary keys consisting of GEOID and year, enabling straightforward joins using standard `left_join()` operations. These tables form the analytical foundation, providing essential household economic and demographic metrics at the CBSA-year level.
+This transformation process is essential for the analysis. It ensures geographic accuracy by preventing data mismatches, enables reproducibility by documenting the logic, and demonstrates data quality awareness. The accompanying relationship diagram visually confirms that this complex integration is managed appropriately.
 
-Connecting ACS data to the Building Permits database requires the first transformation: extracting the numeric CBSA code from the GEOID string. This is accomplished using:
-```r
-mutate(CBSA = as.integer(str_extract(GEOID, "[0-9]+")))
-```
+### Analytical Limitations
 
-The second transformation bridges Building Permits to BLS wage data by formatting the integer CBSA code into the BLS-specific FIPS string format:
-```r
-mutate(FIPS = paste0("C", str_pad(CBSA, 5, pad = "0")))
-```
+This analysis has three main limitations:
 
-Additionally, an important naming convention difference exists: ACS and Census tables use lowercase `year`, while BLS tables use uppercase `YEAR`. Join operations must explicitly map these columns:
-```r
-left_join(WAGES, by = c("FIPS", "year" = "YEAR"))
-```
+- **Metro-Only Focus**: The data covers 380+ metropolitan areas (86% of the U.S. population) but excludes rural regions; thus, all findings apply to urban housing markets, not the entire country
+- **Population Growth Data**: The data combines new migrants (who need housing now) with natural increase or births (who will not), leading to likely understated housing demand.  
+- **Multi-State Metros**: Data for metros that cross state lines (like NYC-NJ-PA or DC-VA-MD) link to an individual primary state, which can skew state-level rankings.
 
-Finally, the INDUSTRY_CODES lookup table provides hierarchical NAICS classifications that enable occupational analysis. This requires converting the integer INDUSTRY column to character type for matching against level4_code.
-
-### Implications for Analysis Reproducibility
-
-Understanding these transformation requirements is essential for three reasons. First, they ensure **geographic accuracy**—incorrect joining would produce meaningless results or silent errors where CBSAs fail to match. Second, they enable **reproducibility**—future analysts can replicate this work by following the documented transformation logic. Third, they demonstrate **data quality awareness**—recognizing that real-world data integration often requires careful attention to formatting conventions across institutional boundaries.
-
-The relationship diagram serves as both documentation and validation, providing visual confirmation that the analysis correctly handles the complexity of multi-agency federal data integration.
+**Impact on Mini Project 2 Findings**: Because these metrics do not fully capture the entirety of the country, these findings, including YIMBY and NIMBY candidates, should be considered conservative.
 
 ## Task 2: Multi-Table Questions
 
@@ -379,6 +412,7 @@ The relationship diagram serves as both documentation and validation, providing 
 Which CBSA (by name) permitted the largest number of new housing units in the decade from 2010 to 2019 (inclusive)?
 
 ```{r}
+
 # Step 1: Filter PERMITS for 2010-2019 and sum by CBSA
 permits_2010_2019 <- PERMITS |>
   filter(year >= 2010 & year <= 2019) |>
@@ -406,9 +440,19 @@ winner_units <- top_5_permits |> slice(1) |> pull(total_new_units)
 # Create styled gt table
 top_5_permits |>
   gt() |>
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) |>
   tab_header(
-    title = md("**Top 5 CBSAs for New Housing Units Permitted**"),
+    title = md("**Table 1: Top 5 CBSAs for New Housing Units Permitted**"),
     subtitle = "2010–2019 (inclusive)"
+  ) |>
+  cols_align(
+    align = "left",
+    columns = everything()
   ) |>
   cols_label(
     rank = "Rank",
@@ -426,7 +470,12 @@ top_5_permits |>
     ),
     locations = cells_body(rows = rank == 1)
   ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
   tab_source_note(md("Source: **U.S. Census Bureau Building Permits Survey**"))
+
 ```
 
 **Answer:** The **`r winner_name`** permitted the largest number of new housing units from 2010 to 2019, with **`r format(winner_units, big.mark = ",")`** total new units permitted during the decade.
@@ -454,7 +503,7 @@ peak_units <- albuquerque_permits |>
 
 # Create visualization
 ggplot(albuquerque_permits, aes(x = year, y = new_housing_units_permitted)) +
-  geom_line(color = "steelblue", size = 1.5) +
+  geom_line(color = "steelblue", linewidth = 1.5) +
   geom_point(size = 3, color = "steelblue") +
   geom_point(
     data = albuquerque_permits |> filter(year == 2020),
@@ -486,9 +535,19 @@ ggplot(albuquerque_permits, aes(x = year, y = new_housing_units_permitted)) +
 albuquerque_permits |>
   mutate(year = as.character(year)) |>
   gt() |>
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) |>
   tab_header(
-    title = md("**Albuquerque Housing Permits by Year**"),
+    title = md("**Table 2: Albuquerque Housing Permits by Year**"),
     subtitle = "CBSA 10740 (2009–2023)"
+  ) |>
+  cols_align(
+    align = "center",
+    columns = everything()
   ) |>
   cols_label(
     year = "Year",
@@ -512,12 +571,18 @@ albuquerque_permits |>
     ),
     locations = cells_body(rows = year == "2020")
   ) |>
+  tab_style(
+    style = 
+      cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
   tab_source_note(md("Source: **U.S. Census Bureau Building Permits Survey**"))
+
 ```
 
 **Answer:** Albuquerque, NM (CBSA 10740) permitted the most new housing units in **`r peak_year`** with **`r format(peak_units, big.mark = ",")`** units.
 
-**COVID-19 Artifact Note:** The 2021 peak represents a "catch-up" effect following severe disruption to construction permitting in 2020 (highlighted in red in the table) due to COVID-19 lockdowns. The table shows 2020 had the lowest permits in the dataset, followed by a dramatic rebound in 2021 as delayed projects moved forward and pent-up housing demand materialized. This pattern is observed across many metropolitan areas and should be interpreted as COVID-related disruption rather than a structural shift in housing development.
+**COVID-19 Artifact Note:** 2021’s big jump is a result of 2020’s delayed permits catching up after lockdowns. In other words, this is a data “blip,” not a new trend, seen across several metro areas.
 
 
 ### Question 3: Highest Average Individual Income by State (2015)
@@ -586,26 +651,123 @@ top_10_states <- state_income |>
   ) |>
   select(name, state, income_formatted, total_state_population, note)
 
-knitr::kable(top_10_states,
-             col.names = c("State", "Abbr", "Avg Individual Income", 
-                          "Total Population", "Note"),
-             align = "lllll",  # LEFT-ALIGN ALL 5 COLUMNS
-             format.args = list(big.mark = ","),
-             caption = "Top 10 States by Average Individual Income (2015)")
+top_10_states %>%
+  gt() %>%
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) %>%
+  tab_header(
+    title = md("**Table 3: Top 10 States by Average Individual Income (2015)**"),
+    subtitle = "Ranked by average individual income across metropolitan areas"
+  ) %>%
+  fmt_number(columns = total_state_population, decimals = 0, sep_mark = ",") %>%
+  cols_align(
+    align = "left",
+    columns = everything()
+  ) |>
+  cols_label(
+    name = "State",
+    state = "Abbr",
+    income_formatted = "Avg Individual Income",
+    total_state_population = "Total Population",
+    note = "Note"
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md("Source: **U.S. Census Bureau, American Community Survey (ACS), 2015**")
+    )
+
+
 ```
 
-**Answer:** In 2015, the **`r top_state_name`** had the highest average individual income at **$`r format(round(top_state_income, 2), big.mark = ",")`** per person.
+**Answer:** **`r top_state_name`** appears highest in 2015 at $`r format(round(top_state_income, 2), big.mark = ",")`, **but** that result is inflated by:
 
-**Critical Methodological Limitations:**
+- **Multi-state Washington CBSA** attribution
+- **CBSA-only coverage**excludes rural areas
 
-1. **Multi-State CBSA Bias:** DC's result is derived entirely from the Washington-Arlington-Alexandria metropolitan area, which spans DC, Virginia, Maryland, and West Virginia. This methodology attributes income from wealthy Virginia and Maryland suburbs to DC, inflating DC's apparent income level. DC represents 100% of a multi-state metro area rather than a standalone state economy.
+**Most comparable state-to-state finding:** Excluding the mentioned artifacts and using states with strong single-state CBSA coverage, **Massachusetts** ranks highest, followed by **Connecticut**.
 
-2. **CBSA Coverage Limitation:** This analysis only includes Core-Based Statistical Areas (metropolitan areas) and excludes rural populations. States with large rural populations are systematically undercounted. This creates an urban-rural bias where highly urbanized states appear to have higher incomes, partially because rural (typically lower-income) populations are excluded from the analysis.
+*Note:* Multi-state CBSAs account for ~27% of the population in this dataset, or ~10% of CBSAs by count.
 
-3. **Most Accurate Interpretation:** Among states with primarily single-state CBSAs and high metro coverage, **Massachusetts** and **Connecticut** represent the most reliable results, as they include most of their state populations and don't have the multi-state attribution problem affecting DC.
+```{r}
 
-**Conclusion:** While DC technically ranks first in this analysis, the result reflects methodological artifacts rather than genuine state-level economic comparison. Multi-state CBSAs represent 27.3% of the total population in this dataset. For a fair state-to-state comparison, Massachusetts or Connecticut would be more defensible answers.
+#| label: multi_state_cbsa_prevalence
+#| code-fold: true
+#| code-summary: "Show code for multi-state CBSA shares"
 
+# ---- require a CBSA-level ACS table named POPULATION ----
+if (!exists("POPULATION")) {
+  stop("Please load your ACS CBSA table as POPULATION (with columns NAME, GEOID, year, population).")
+}
+
+# Helper: pick the first matching column name
+pick_col <- function(df, candidates){
+  hit <- intersect(candidates, names(df))
+  if (!length(hit)) stop("Missing columns: ", paste(candidates, collapse=", "))
+  hit[1]
+}
+
+# Flexible column detection
+name_col <- pick_col(POPULATION, c("NAME","name"))
+geoid_col <- pick_col(POPULATION, c("GEOID","CBSA","cbsa"))
+year_col  <- pick_col(POPULATION, c("year","YEAR"))
+pop_col   <- pick_col(POPULATION, c("population","B01003_001"))
+
+# ---- filter to target year (2015 here; change if needed) ----
+pop15 <- POPULATION %>%
+  filter(.data[[year_col]] == 2015) %>%
+  transmute(
+    cbsa = if (geoid_col == "GEOID")
+              as.integer(str_extract(.data[[geoid_col]], "\\d+"))
+           else as.integer(.data[[geoid_col]]),
+    name = .data[[name_col]],
+    population = as.numeric(.data[[pop_col]])
+  ) %>%
+  distinct(cbsa, .keep_all = TRUE)
+
+# Extract the "state block" after the comma: e.g., "GA" or "DC-VA-MD-WV"
+pop15 <- pop15 %>%
+  mutate(
+    state_block = str_extract(name, "(?<=,\\s)[A-Z]{2}(?:-[A-Z]{2})*"),
+    n_states    = if_else(is.na(state_block), 1L, str_count(state_block, "-") + 1L),
+    is_multi    = n_states > 1
+  )
+
+# ---- metrics ----
+metrics <- summarise(pop15,
+  `Population share (%)` = 100 * sum(population[is_multi], na.rm = TRUE) / sum(population, na.rm = TRUE),
+  `CBSA share (%)`       = 100 * mean(is_multi),
+  `Total CBSAs`          = n(),
+  `Multi-state CBSAs`    = sum(is_multi)
+)
+
+# ---- display as a neat table ----
+gt(metrics) %>%
+    tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) |>
+  cols_align(
+    align = "left",
+    columns = everything()
+  ) |>
+  tab_header(title = md("**Table 4: Multi-state CBSA Prevalence (2015)**")) %>%
+  tab_source_note(md("Population share = share of **people** living in multi-state CBSAs (headline). CBSA share = share of CBSAs that are multi-state (by count).")) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  fmt_number(columns = c(`Population share (%)`, `CBSA share (%)`), decimals = 1) %>%
+  fmt_number(columns = c(`Total CBSAs`, `Multi-state CBSAs`), decimals = 0) 
+
+```
 
 ### Question 4: Data Scientists by CBSA Over Time
 
@@ -626,7 +788,7 @@ cbsa_names <- POPULATION |>
   ) |>
   select(std_cbsa, NAME)
 
-# Calculate last NYC year properly
+# Calculate last NYC year (retained if needed elsewhere)
 last_nyc_year <- data_scientists |>
   group_by(std_cbsa, year) |>
   summarize(total_employment = sum(EMPLOYMENT, na.rm = TRUE), .groups = "drop") |>
@@ -638,7 +800,7 @@ last_nyc_year <- data_scientists |>
   pull(year) |>
   max()
 
-# Focus on the transition period: 2014-2017
+# Focus on the transition period: 2014–2017
 transition_years <- data_scientists |>
   filter(year %in% c(2014, 2015, 2016, 2017)) |>
   group_by(std_cbsa, year) |>
@@ -652,13 +814,45 @@ transition_years <- data_scientists |>
   mutate(rank = row_number()) |>
   ungroup() |>
   mutate(year = as.character(year)) |>
-  select(year, rank, NAME, total_employment)
+  select(year, rank, NAME, total_employment) |>
+  arrange(year, rank)
 
-knitr::kable(transition_years,
-             col.names = c("Year", "Rank", "CBSA", "Employment"),
-             align = "llll",
-             format.args = list(big.mark = ","),
-             caption = "The NYC-to-San Francisco Transition (2014-2017)")
+# ---- gt table (with header, options, and source) ----
+transition_years |>
+  gt() |>
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) |>
+  tab_header(
+    title = md("**Table 5: The NYC-to-San Francisco Transition (2014–2017)**"),
+    subtitle = "Top 3 CBSAs by total employment in NAICS 51821 for each year"
+  ) |>
+  cols_label(
+    year = "Year",
+    rank = "Rank",
+    NAME = "CBSA",
+    total_employment = "Employment"
+  ) |>
+  fmt_number(
+    columns = total_employment,
+    decimals = 0,
+    use_seps = TRUE
+  ) |>
+  cols_align(
+    align = "left",
+    columns = c(year, rank, NAME, total_employment)
+  ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md(paste0(
+      "**Source.** BLS QCEW (NAICS 51821), 2014–2017; U.S. Census Bureau (2019) for CBSA names. "))
+  )
 
 ```
 
@@ -703,8 +897,13 @@ nyc_wage_share |>
     `Finance Share` = share_fin
   ) |>
   gt() |>
+  tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) |>
   tab_header(
-    title = md("**NYC CBSA — Finance & Insurance Wage Share**"),
+    title = md("**Table 6: NYC CBSA — Finance & Insurance Wage Share**"),
     subtitle = "BLS QCEW 2009–2023 • NAICS 52 • 2020 omitted"
   ) |>
   fmt_currency(
@@ -712,6 +911,10 @@ nyc_wage_share |>
     decimals = 0
   ) |>
   fmt_percent(columns = `Finance Share`, decimals = 1) |>
+  cols_align(
+    align = "left",
+    columns = everything()
+  ) |>
   cols_label(`Finance Share` = "Finance Share of Total") |>
   tab_style(
     style = list(
@@ -720,6 +923,10 @@ nyc_wage_share |>
     ),
     locations = cells_body(rows = Year == peak_year)
   ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
   tab_source_note(md("Source: **BLS QCEW**; NAICS 52."))
 
 ```
@@ -730,13 +937,2581 @@ nyc_wage_share |>
 
 **Part B - Peak Year:** This fraction **peaked in `r peak_year` at `r round(peak_share, 1)`%**, as highlighted in the table above. The 2021 peak represents a recovery from the declining share observed through the mid-2010s, exceeding even the 2010 post-financial-crisis level (15.4%)
 
-**Context:** The prominence of finance and insurance in NYC's economy reflects the city's role as a global financial capital, though the fraction has fluctuated over time due to economic cycles and industry shifts.
-
-
 ## Task 3: Initial Visualization
 
 ### Monthly Rent vs. Average Household Income (2009)
 
-### Total Employment vs. Total Employment in Health Care and Social Services
+```{r}
+
+#| label: viz-1-rent-income
+#| fig-width: 10
+#| fig-height: 7
+
+# Prepare data
+rent_income_2009 <- RENT |>
+  filter(year == 2009) |>
+  inner_join(INCOME |> filter(year == 2009), 
+             by = c("GEOID", "NAME", "year")) |>
+  select(GEOID, NAME, monthly_rent, household_income) |>
+  mutate(
+    state = str_extract(NAME, ", ([A-Z]{2})", group = 1),
+    region = case_when(
+      state %in% c("CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA") ~ "Northeast",
+      state %in% c("IL", "IN", "MI", "OH", "WI", "IA", "KS", "MN", "MO", "NE", "ND", "SD") ~ "Midwest",
+      state %in% c("DE", "FL", "GA", "MD", "NC", "SC", "VA", "WV", "AL", "KY", "MS", "TN", "AR", "LA", "OK", "TX", "DC") ~ "South",
+      state %in% c("AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY", "AK", "CA", "HI", "OR", "WA") ~ "West",
+      state == "PR" ~ "Puerto Rico",
+      is.na(state) ~ "Unknown",
+      TRUE ~ "Other"
+    )
+  )
+
+# Create plot
+ggplot(rent_income_2009, aes(x = household_income, y = monthly_rent, color = region)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linewidth = 1.2) +
+  geom_text_repel(
+    data = rent_income_2009 %>% 
+      filter(NAME %in% c("San Francisco-Oakland-Hayward, CA Metro Area",
+                         "New York-Newark-Jersey City, NY-NJ-PA Metro Area",
+                         "Miami-Fort Lauderdale-West Palm Beach, FL Metro Area")),
+    aes(label = str_remove(NAME, " Metro Area")),
+    size = 3,
+    box.padding = 0.5,
+    point.padding = 0.3,
+    segment.color = "gray50"
+  ) +
+  scale_x_continuous(
+    labels = dollar_format(),
+    breaks = seq(0, 100000, 20000)
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(),
+    breaks = seq(0, 2000, 250)
+  ) +
+  scale_color_manual(
+    name = "Region",
+    values = c("Northeast" = "#1f77b4", 
+               "Midwest" = "#ff7f0e", 
+               "South" = "#2ca02c", 
+               "West" = "#d62728",
+               "Puerto Rico" = "#9467bd")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 4, alpha = 1))) +
+  labs(
+    title = "How Economic Growth Drives Up Housing Costs",
+    subtitle = "Relationship between household income and monthly rent across U.S. metro areas, 2009",
+    x = "Average Household Income (USD)",
+    y = "Average Monthly Rent (USD)",
+    caption = "Source: American Community Survey (ACS), 2009 1-Year Estimates\nNote: Each point represents one Core-Based Statistical Area (CBSA)"
+  ) +
+  theme_minimal(base_family = "sans", base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, margin = margin(b = 5)),
+    plot.subtitle = element_text(color = "gray30", size = 11, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, face = "italic", color = "gray50", size = 9),
+    panel.grid.minor = element_blank(),
+    legend.position = "right",
+    legend.title = element_text(size = 11, face = "bold"),
+    legend.text = element_text(size = 10)
+  )
+
+```
+
+This visualization examines whether metropolitan areas with higher household incomes experience proportionally higher rental costs, and how regional patterns differ across the United States in 2009.
+
+## Total Employment vs. Total Employment in Health Care and Social Services
+
+```{r}
+
+#| label: viz-2-healthcare-share
+#| fig-width: 10
+#| fig-height: 6
+
+# Calculate healthcare share by year
+healthcare_share <- WAGES |>
+  mutate(
+    year = YEAR,
+    is_healthcare = str_starts(as.character(INDUSTRY), "62")
+  ) |>
+  group_by(year) |>
+  summarize(
+    total_employment = sum(EMPLOYMENT, na.rm = TRUE),
+    healthcare_employment = sum(if_else(is_healthcare, EMPLOYMENT, 0), na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(healthcare_share = healthcare_employment / total_employment * 100)
+
+# Create line plot
+ggplot(healthcare_share, aes(x = year, y = healthcare_share)) +
+  geom_line(color = "steelblue", linewidth = 1.5) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_area(alpha = 0.2, fill = "steelblue") +
+  scale_y_continuous(
+    labels = percent_format(scale = 1),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  scale_x_continuous(
+    breaks = seq(2009, 2023, 2),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  labs(
+    title = "Healthcare & Social Services as Share of Total Employment",
+    subtitle = "Steady growth from 9.3% (2009) to 10.1% (2023), with pandemic-driven acceleration",
+    x = "Year",
+    y = "Healthcare Share of Total Employment",
+    caption = "Source: Bureau of Labor Statistics, Quarterly Census of Employment and Wages (QCEW)\nNAICS 62: Health Care and Social Assistance | 2020 excluded due to COVID-19 data artifacts"
+  ) +
+  theme_minimal(base_family = "sans", base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, margin = margin(b = 5)),
+    plot.subtitle = element_text(color = "gray30", size = 11, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, face = "italic", color = "gray50", size = 9),
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+Healthcare and social service jobs grew from 9.3% to 10.1% of all metro employment between 2009 and 2023. This steady growth, which spiked in 2021 due to the pandemic, shows healthcare is an increasing part of the American economy.
 
 ### Evolution of Average Household
+
+```{r}
+
+#| label: viz-3-household-size
+#| fig-width: 12
+#| fig-height: 8
+
+# Step 1: Calculate household size by CBSA and year
+household_size_data <- POPULATION |>
+  inner_join(HOUSEHOLDS, by = c("GEOID", "NAME", "year")) |>
+  mutate(
+    household_size = population / households,
+    state = str_extract(NAME, ", ([A-Z]{2})", group = 1),
+    region = case_when(
+      state %in% c("CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA") ~ "Northeast",
+      state %in% c("IL", "IN", "MI", "OH", "WI", "IA", "KS", "MN", "MO", "NE", "ND", "SD") ~ "Midwest",
+      state %in% c("DE", "FL", "GA", "MD", "NC", "SC", "VA", "WV", "AL", "KY", "MS", "TN", "AR", "LA", "OK", "TX", "DC") ~ "South",
+      state %in% c("AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY", "AK", "CA", "HI", "OR", "WA") ~ "West",
+      state == "PR" ~ "Puerto Rico",
+      TRUE ~ "Other"
+    )
+  ) |>
+  filter(region != "Other", region != "Puerto Rico") |>
+  select(GEOID, NAME, year, household_size, region, population, households)
+
+# Step 2: Calculate regional averages (weighted by population)
+regional_averages <- household_size_data |>
+  group_by(region, year) |>
+  summarize(
+    avg_household_size = weighted.mean(household_size, w = population, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 3: Calculate national average (weighted by population)
+national_average <- household_size_data |>
+  group_by(year) |>
+  summarize(
+    avg_household_size = weighted.mean(household_size, w = population, na.rm = TRUE),
+    region = "National Average",
+    .groups = "drop"
+  )
+
+# Step 4: Combine for plotting
+plot_data <- bind_rows(regional_averages, national_average) |>
+  mutate(
+    region = factor(region, 
+                   levels = c("National Average", "Northeast", "Midwest", "South", "West"))
+  )
+
+# Step 5: Create expanded, properly spaced plot
+ggplot(plot_data, aes(x = year, y = avg_household_size, color = region, linetype = region)) +
+  geom_line(linewidth = 1.2, alpha = 0.9) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_manual(
+    name = "Region",
+    values = c("National Average" = "gray30",
+               "Northeast" = "#1f77b4", 
+               "Midwest" = "#ff7f0e", 
+               "South" = "#2ca02c", 
+               "West" = "#d62728")
+  ) +
+  scale_linetype_manual(
+    name = "Region",
+    values = c("National Average" = "dashed",
+               "Northeast" = "solid",
+               "Midwest" = "solid",
+               "South" = "solid",
+               "West" = "solid")
+  ) +
+  scale_y_continuous(
+    breaks = seq(2.0, 3.5, 0.25),
+    limits = c(2.0, 3.5),
+    expand = expansion(mult = c(0.05, 0.05))
+  ) +
+  scale_x_continuous(
+    breaks = seq(2009, 2023, 2),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  labs(
+    title = "Evolution of Average Household Size by Region",
+    subtitle = "Population-weighted regional averages, 2009-2023",
+    x = "Year",
+    y = "Average Household Size\n(Persons per Household)",
+    caption = "Source: American Community Survey (ACS)\nRegional colors consistent with Visualization 1; national average shown as dashed line"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5, margin = margin(b = 10)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "gray40", margin = margin(b = 20)),
+    axis.title.x = element_text(size = 14, face = "bold", margin = margin(t = 15)),
+    axis.title.y = element_text(size = 14, face = "bold", margin = margin(r = 20)),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    plot.caption = element_text(size = 10, color = "gray50", hjust = 0, margin = margin(t = 15)),
+    legend.position = "right",
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 11),
+    legend.key.height = unit(1.5, "cm"),
+    legend.key.width = unit(1.5, "cm"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90"),
+    plot.margin = margin(20, 25, 20, 20)
+  )
+
+```
+
+Nationally, the average household size fell from 2.62 to 2.54 people between 2009 and 2023, a trend seen across all U.S. regions. Regional differences have been consistent: the West has the largest households (2.75 people in 2023), and the Midwest has the smallest (2.45).
+
+This long-term national decline reflects documented demographic and economic factors, including shifts in family structure (<a href="https://usafacts.org/articles/why-are-us-homes-getting-bigger-while-households-shrink/" target="_blank"> such as smaller family sizes</a>) and economic pressures (like housing costs) that influence living arrangements, <a href="https://www.pewresearch.org/short-reads/2025/04/17/the-shares-of-young-adults-living-with-parents-vary-widely-across-the-us/" target="_blank"> especially for young adults</a>.
+
+## Task 4: Rent Burden Analysis
+
+### Change of Rent Burden Over Time 
+
+```{r}
+
+#| label: task4-rent-burden
+#| message: false
+#| warning: false
+
+# ========================================
+# PART 1: DATA PREPARATION
+# ========================================
+
+df_rent_burden <- INCOME %>%
+  filter(grepl("Metro Area", NAME)) %>%
+  inner_join(
+    RENT %>% filter(grepl("Metro Area", NAME)),
+    by = c("GEOID", "NAME", "year")
+  ) %>%
+  filter(year != 2020, household_income > 0, monthly_rent > 0) %>%
+  mutate(
+    state = str_extract(NAME, ", ([A-Z]{2})", group = 1)
+  ) %>%
+  filter(state != "PR") %>%  # Exclude Puerto Rico
+  mutate(
+    monthly_income = household_income / 12,
+    rent_to_income_ratio = monthly_rent / monthly_income,
+    affordability_gap_pp = (rent_to_income_ratio - 0.30) * 100,
+    rti_pct = rent_to_income_ratio * 100
+  ) %>%
+  select(GEOID, NAME, state, year, affordability_gap_pp, rti_pct, 
+         rent_to_income_ratio, median_rent = monthly_rent, 
+         median_income = household_income) %>%
+  arrange(NAME, year)
+
+latest_year <- max(df_rent_burden$year)
+metro_single <- "Colorado Springs, CO Metro Area"
+metro_highest <- "Miami-Fort Lauderdale-West Palm Beach, FL Metro Area"
+metro_lowest <- df_rent_burden %>%
+  filter(year == latest_year) %>%
+  arrange(affordability_gap_pp) %>%
+  slice(1) %>%
+  pull(NAME)
+
+```
+
+---
+
+We measure housing affordability using the **Affordability Gap**, which calculates how many percentage points a metro area's rent-to-income ratio deviates from the <a href="https://www.huduser.gov/portal/datasets/cp/CHAS/bg_chas.html" target="_blank">30% affordability threshold</a> established by the U.S. Department of Housing and Urban Development (HUD).
+
+**Formula:**
+
+$$\text{Affordability Gap (pp)} = (\text{Rent-to-Income Ratio} - 0.30) \times 100$$
+
+**Metric Interpretation:** 
+
+The **Affordability Gap** metric shows how many percentage points a metro's rent-to-income ratio is above or below the 30% federal affordability standard.
+
+- **Positive values** (e.g., +8.0 pp): Burdened. Rent is 8 points above the 30% limit.
+- **Negative values** (e.g., -12.8 pp): Affordable. Rent is 12.8 points below the 30% limit.
+- **Zero value** (0.0 pp): At the 30% limit.
+
+This metric is used because it's more intuitive than a raw ratio and directly answers the policy question: "How far from the affordability standard is this city?"
+
+**Note:** Analysis covers all U.S. metropolitan areas, excluding Puerto Rico. 2020 data is omitted due to pandemic anomalies.
+
+---
+
+#### **Finding: Deteriorating Affordability in Fast-Growing Southern & Mountain-West Metros**
+
+The metros with the largest rent-burden increases from 2009–2023 cluster in the South and Mountain West, with many appearing from traditional Sunbelt markets. Colorado Springs ranks first, with its affordability cushion narrowing from comfortable to concerning. While still below the 30% HUD threshold, the broader pattern shows historically affordable, fast-growing metros facing mounting affordability pressures.
+
+```{r}
+
+# ========================================
+# TABLE 4: LARGEST INCREASES
+# ========================================
+
+df_change <- df_rent_burden %>%
+  filter(year %in% c(2009, 2023)) %>%
+  select(GEOID, NAME, state, year, affordability_gap_pp) %>%
+  pivot_wider(names_from = year, values_from = affordability_gap_pp, 
+              names_prefix = "gap_") %>%
+  mutate(change_pp = gap_2023 - gap_2009) %>%
+  filter(!is.na(change_pp))
+
+df_table4 <- df_change %>%
+  arrange(desc(change_pp)) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Gap 2009 (pp)` = round(gap_2009, 1),
+    `Gap 2023 (pp)` = round(gap_2023, 1),
+    `Change (pp)` = round(change_pp, 1)
+  )
+
+datatable(
+  df_table4,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 1: Top 5 Metro Areas with Largest Rent Burden Increases (2009-2023)"
+  )
+) %>%
+  formatRound(c("Gap 2009 (pp)", "Gap 2023 (pp)", "Change (pp)"), digits = 1) %>%
+  formatStyle(
+    "Metro Area",
+    target = 'row',
+    backgroundColor = styleEqual(metro_single, '#fdebd0'),
+    fontWeight = styleEqual(metro_single, 'bold')
+  ) %>%
+  formatStyle(
+    "Change (pp)",
+    backgroundColor = styleInterval(c(2, 4, 6), c("#d4edda", "#fff3cd", "#f8d7da", "#f5c6cb"))
+  )
+
+```
+
+---
+
+This Sunbelt tightening is happening because affordable areas experienced a variety of challenges during the observed period. 
+
+1. Mass Migration: An increase in new residents, many with high-earning potential, migrated to these areas.
+2. Slow Building: Existing housing and zoning rules prevented developers from increasing the supply of new housing.
+3. Wage-Rent Gap: Rents increased for everyone over this period, but wages have not caught up.
+
+---
+
+#### **Anatomy of a Squeeze: Colorado Springs Rent Burden Evolution**
+
+This metro experienced the largest sustained increase in rent burden, illustrating how affordability can wane over time.
+
+```{r}
+
+# ========================================
+# TABLE 1: TIME SERIES
+# ========================================
+
+df_table1 <- df_rent_burden %>%
+  filter(NAME == metro_single) %>%
+  transmute(
+    Year = year,
+    `Affordability Gap (pp)` = round(affordability_gap_pp, 1),
+    `Rent-to-Income Ratio (RTI)` = round(rent_to_income_ratio, 2),
+    `Median Rent ($)` = round(median_rent, 0),
+    `Median Income ($)` = round(median_income, 0)
+  )
+
+datatable(
+  df_table1,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    paste("Table 2: Rent Burden Over Time —", metro_single, "(2009-2023)")
+  )
+) %>%
+  formatRound(c("Affordability Gap (pp)", "Rent-to-Income Ratio (RTI)"), digits = 1) %>%
+  formatCurrency(c("Median Rent ($)", "Median Income ($)"), currency = "$", digits = 0) %>%
+  formatStyle(
+    "Affordability Gap (pp)",
+    backgroundColor = styleInterval(
+      cuts = c(-10, 0, 10),
+      values = c("#d4edda", "#fff3cd", "#f8d7da", "#f5c6cb")
+    )
+  )
+```
+
+---
+
+#### **Context: National Rent Burden Extremes**
+
+To contextualize Colorado Springs, the top end is dominated by Florida. Cape Coral–Fort Myers and Miami both sit around 30.1% RTI—we highlight Miami because its far larger population makes the stakes higher. Several other large Florida metros hover within ~2 percentage points of the 30% line, underscoring how close they are to the affordability edge.
+
+```{r}
+
+# ========================================
+# TABLE 2: HIGHEST BURDEN
+# ========================================
+
+df_table2 <- df_rent_burden %>%
+  filter(year == latest_year) %>%
+  arrange(desc(affordability_gap_pp)) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Affordability Gap (pp)` = round(affordability_gap_pp, 1),
+    `RTI (%)` = round(rti_pct, 1),
+    `Median Rent ($)` = round(median_rent, 0),
+    `Median Income ($)` = round(median_income, 0)
+  )
+
+datatable(
+  df_table2,
+    rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    HTML(paste0("Table 3: Top 5 Highest Rent Burden Metro Areas — ", latest_year, 
+        "<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>",
+        "Note: Cape Coral-Fort Myers and Miami are statistically tied at 0.1 pp above the affordability threshold (both 30.1% RTI). ",
+        "Miami is highlighted due to its larger population (6.1M vs 830K) and greater policy significance.</span>"))
+  )
+) %>%
+  formatRound(c("Affordability Gap (pp)", "RTI (%)"), digits = 1) %>%
+  formatCurrency(c("Median Rent ($)", "Median Income ($)"), currency = "$", digits = 0) %>%
+  formatStyle(
+    "Metro Area",
+    target = 'row',
+    backgroundColor = styleEqual(metro_highest, '#fff3cd'),
+    fontWeight = styleEqual(metro_highest, 'bold')
+  ) %>%
+  formatStyle(
+    "Affordability Gap (pp)",
+    backgroundColor = styleInterval(0, c("#d4edda", "#f8d7da"))
+  )
+
+```
+
+---
+
+Affordability is strongest in smaller Midwest/Plains metros. Bismarck leads, with Jefferson City, Decatur, Dubuque, and Paducah close behind. Each of these metros are comfortably below the 30% rent standard, signaling real budget relief compared with tighter Sunbelt markets.
+
+```{r}
+
+# ========================================
+# TABLE 3: LOWEST BURDEN
+# ========================================
+
+df_table3 <- df_rent_burden %>%
+  filter(year == latest_year) %>%
+  arrange(affordability_gap_pp) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Affordability Gap (pp)` = round(affordability_gap_pp, 1),
+    `RTI (%)` = round(rti_pct, 1),
+    `Median Rent ($)` = round(median_rent, 0),
+    `Median Income ($)` = round(median_income, 0)
+  )
+
+datatable(
+  df_table3,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    paste("Table 4: Top 5 Lowest Rent Burden Metro Areas —", latest_year)
+  )
+) %>%
+  formatRound(c("Affordability Gap (pp)", "RTI (%)"), digits = 1) %>%
+  formatCurrency(c("Median Rent ($)", "Median Income ($)"), currency = "$", digits = 0) %>%
+  formatStyle(
+    "Metro Area",
+    target = 'row',
+    backgroundColor = styleEqual(metro_lowest, '#d4edda'),
+    fontWeight = styleEqual(metro_lowest, 'bold')
+  ) %>%
+  formatStyle(
+    "Affordability Gap (pp)",
+    backgroundColor = styleInterval(0, c("#d4edda", "#f8d7da"))
+  )
+
+```
+
+## Task 5: Housing Growth
+
+```{r}
+
+#| label: task5-housing-data-prep
+#| code-fold: true
+#| code-summary: "Show code"
+#| output: false
+#| message: false
+#| warning: false
+
+# ========================================
+# STEP 1: PREPARE POPULATION DATA
+# ========================================
+
+pop_metro <- POPULATION %>%
+  filter(grepl("Metro Area", NAME)) %>%
+  mutate(
+    CBSA = as.numeric(str_extract(GEOID, "[0-9]+$")),
+    state = str_extract(NAME, ", ([A-Z]{2})", group = 1)
+  ) %>%
+  filter(state != "PR") %>%
+  select(GEOID, NAME, CBSA, state, year, population)
+
+# ========================================
+# STEP 2: JOIN WITH PERMITS
+# ========================================
+
+housing_data <- pop_metro %>%
+  inner_join(
+    PERMITS %>% rename(permits = new_housing_units_permitted),
+    by = c("CBSA", "year")
+  ) %>%
+  arrange(NAME, year)
+
+# ========================================
+# STEP 3: CALCULATE 5-YEAR ROLLING POPULATION GROWTH
+# ========================================
+
+housing_data <- housing_data %>%
+  group_by(GEOID, NAME, CBSA) %>%
+  arrange(year) %>%
+  mutate(
+    pop_5yr_ago = lag(population, n = 5),
+    pop_change_5yr = population - pop_5yr_ago,
+    pop_growth_rate_5yr = (population - pop_5yr_ago) / pop_5yr_ago * 100,
+    is_growing = pop_change_5yr > 0
+  ) %>%
+  ungroup() %>%
+  filter(year >= 2014, !is.na(pop_change_5yr))
+```
+
+```{r}
+
+#| label: task5-metrics-calculation
+#| code-fold: true
+#| code-summary: "Show code"
+#| output: false
+#| message: false
+#| warning: false
+
+# ========================================
+# METRIC 1: INSTANTANEOUS HOUSING SUPPLY
+# ========================================
+
+housing_data <- housing_data %>%
+  mutate(
+    permits_per_1000 = (permits / population) * 1000
+  )
+
+national_avg_metric1 <- housing_data %>%
+  group_by(year) %>%
+  summarize(
+    nat_avg_permits_per_1000 = weighted.mean(permits_per_1000, 
+                                             w = population, 
+                                             na.rm = TRUE),
+    .groups = "drop"
+  )
+
+housing_data <- housing_data %>%
+  left_join(national_avg_metric1, by = "year") %>%
+  mutate(
+    metric1_index = (permits_per_1000 / nat_avg_permits_per_1000) * 100
+  )
+
+# ========================================
+# METRIC 2: GROWTH ACCOMMODATION INDEX
+# ========================================
+
+IDEAL_HOUSEHOLD_SIZE <- 2.5
+IDEAL_PERMITS_PER_CAPITA <- 1 / IDEAL_HOUSEHOLD_SIZE
+
+housing_data <- housing_data %>%
+  mutate(
+    permits_per_pop_growth = if_else(
+      is_growing & pop_change_5yr > 100,
+      permits / pop_change_5yr,
+      NA_real_
+    ),
+    metric2_index = if_else(
+      !is.na(permits_per_pop_growth),
+      (permits_per_pop_growth / IDEAL_PERMITS_PER_CAPITA) * 100,
+      NA_real_
+    )
+  )
+
+# ========================================
+# COMPOSITE SCORE
+# ========================================
+
+housing_data <- housing_data %>%
+  mutate(
+    composite_score = case_when(
+      !is.na(metric2_index) ~ 0.6 * metric1_index + 0.4 * metric2_index,
+      !is.na(metric1_index) ~ metric1_index,
+      TRUE ~ NA_real_
+    )
+  )
+
+```
+
+---
+
+We develop two complementary metrics to assess housing supply across U.S. metros areas: current per-capita building rate and responsiveness to population growth.
+
+#### **Instantaneous Housing Supply Index (Metric 1)**
+
+This metric shows how intensively a metro is building right now, focusing on permits issued relative to its current population, regardless of whether the population is rising or falling. It reflects the metro’s near-term commitment to expanding supply.
+
+**Calculation:**
+
+* Per-capita permitting rate: 
+
+$$\text{Permits per 1,000} = \frac{\text{Total Housing Permits}}{\text{Population}} \times 1,000$$
+
+* Index (national baseline = 100): Divide each metro’s rate by the same-year, population-weighted national average, then multiply by 100.
+
+$$\text{Metric 1 Index} = \frac{\text{Metro's Permits per 1,000}}{\text{National Average Permits per 1,000}} \times 100$$
+
+**Interpretation:**
+
+- **Index = 100**: Building at the national average rate
+- **Index > 100**: Building faster than average (e.g., 150 = 50% above average)
+- **Index < 100**: Building less than average (e.g., 75 = 25% below average)
+
+For example, a metro with an index of 200 is issuing housing permits at twice the national per-capita rate, indicating fast housing supply expansion.
+
+---
+
+#### **Growth Accommodation Index (Metric 2)**
+
+This metric measures whether a metro is permitting enough new homes to keep pace with 5-year population growth.
+
+**Calculation:**
+
+- Permits per growth resident:
+
+$$\text{Permits per Growth} = \frac{\text{Annual Housing Permits}}{\text{5-Year Population Change}}$$
+
+- Index (ideal baseline = 100): Compare to the ideal 0.4 units per new resident or ~2.5 persons per household (<a href="https://usafacts.org/articles/why-are-us-homes-getting-bigger-while-households-shrink/" target="_blank">U.S. Census Bureau, 2023</a>). 
+
+$$\text{Metric 2 Index} = \frac{\text{Permits per Growth}}{0.4} \times 100$$
+
+**Interpretation:**
+
+- **Index = 100**: building on pace with growth
+- **Index > 100**: Surplus housing relative to growth
+- **Index < 100**: Deficit housing relative to growth
+
+**Metric Note:** This metric is not applicable to metros with declining or stable populations (defined as 5-year population change ≤ 100 people). For these metros, Metric 2 is recorded as NA, and their composite score is based solely on Metric 1.
+
+**Data Note:** Population growth includes both net migration and natural increase (births minus deaths). Housing demand is typically higher for growth driven by in-migration, as new households form immediately, compared to natural increase where housing needs develop gradually as children mature.
+
+---
+
+#### **Composite Housing Growth Score**
+
+A single score that blends current building effort (Metric 1) and growth responsiveness (Metric 2):
+
+$$\text{Composite Score} = (0.6 \times \text{Metric 1}) + (0.4 \times \text{Metric 2})$$
+
+- **Justification for 60/40**: Most residents are current households, so steady per-capita building should carry slightly more weight than growth-driven need; thus,  rewarding metros that keep up with population gains.
+
+- **Special Case for No Growth**: If 5-year population change ≤ 100 (Metric 2 = NA), the Composite = Metric 1.
+
+---
+
+#### **Strategic Design Choices**
+
+- Population-weighted baseline: National averages are weighted by population, thus the “100” benchmark reflects where most people live.
+- Five-year window: Matches <a href="https://www.census.gov/content/dam/Census/library/publications/2018/acs/acs_general_handbook_2018_ch03.pdf" target="_blank">typical housing/ACS 5-year cycles<a/>, smoothing year-to-year noise.
+- Household size anchor: Uses ~2.5 persons/household ⇒ 0.4 units per new resident as the “on-pace” benchmark for Metric 2.
+- Robustness: Results are stable under other nearby weights (e.g., 50/50 or 70/30); therefore, rankings move little, confirming the composite isn’t overly sensitive.
+
+---
+
+#### **Robustness Check: Alternative Weighting Scenarios**
+
+Testing different formulas shows the same five metros consistently at the Top 5, but rankings within this group shift drastically. 
+
+---
+
+```{r}
+
+#| label: task5-sensitivity-analysis
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Calculate alternative composite scores
+sensitivity_2023 <- housing_data %>%
+  filter(year == 2023, !is.na(metric2_index)) %>%
+  mutate(
+    composite_50_50 = 0.5 * metric1_index + 0.5 * metric2_index,
+    composite_70_30 = 0.7 * metric1_index + 0.3 * metric2_index
+  ) %>%
+  arrange(desc(composite_score)) %>%
+  slice_head(n = 5) %>%
+  transmute(
+    Metro = str_remove(NAME, "\\s*Metro Area$"),
+    `60/40 (Current)` = round(composite_score, 1),
+    `50/50` = round(composite_50_50, 1),
+    `70/30` = round(composite_70_30, 1),
+    `Max Difference` = round(pmax(
+      abs(composite_score - composite_50_50),
+      abs(composite_score - composite_70_30)
+    ), 1)
+  )
+
+# ---- gt table ----
+sensitivity_2023 %>%
+  gt() %>%
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) %>%
+  tab_header(
+    title = md("**Robustness Check — Alternative Weighting Scenarios (2023 Top 5)**"),
+    subtitle = "Top 5 metros ranked by current 60/40 composite score"
+  ) %>%
+  opt_row_striping() %>%  # striped rows (hover effect isn't native to gt)
+  cols_label(
+    Metro = "Metro",
+    `60/40 (Current)` = "60/40 (Current)",
+    `50/50` = "50/50",
+    `70/30` = "70/30",
+    `Max Difference` = "Max Difference"
+  ) %>%
+  fmt_number(
+    columns = c(`60/40 (Current)`, `50/50`, `70/30`, `Max Difference`),
+    decimals = 1,
+    use_seps = TRUE
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = everything()
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md(paste0(
+      "**Source.** Census Building Permits Survey, ACS Population estimates, 2023. "))
+  )
+  
+```
+
+---
+
+**Urban Honolulu** metro shows a **114.2-point swing** between 50/50 (325.1) and 70/30 (210.9) weighting and has the largest sensitivity in this cohort. Although Honolulu excels at building for new arrivals (Metric 2) it falls extremely short for existing residents (Metric 1). The 50/50 weighting wrongly highlights this metro as a top performer despite neglecting the housing needs of its current residents. 
+
+Therefore, the **60/40** weight is the best option as it accurately reflects resident composition. Most of the analzyed metros (95%+) consist of existing households needing stable supply, with population growth impacting a smaller share annually. This weighted balance recognizes and awards metros like Punta Gorda that are consistently building for *all* residents. 
+
+---
+
+```{r}
+
+#| label: task5-tables-metric1
+#| code-fold: true
+#| code-summary: "Show code for Metric 1 analysis"
+
+metrics_2023 <- housing_data %>%
+  filter(year == 2023)
+
+# ========================================
+# TABLE 1A: TOP 5 - METRIC 1
+# ========================================
+
+table1_high <- metrics_2023 %>%
+  arrange(desc(metric1_index)) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Index` = round(metric1_index, 1),
+    `Permits per 1,000` = round(permits_per_1000, 2),
+    `Total Permits` = scales::comma(permits),
+    `Population (M)` = round(population / 1e6, 2)
+  )
+
+datatable(
+  table1_high,
+   rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 1a: Top 5 Metros — Instantaneous Housing Supply Index (2023)"
+  )
+) %>%
+  formatStyle(
+    "Index",
+    backgroundColor = styleInterval(c(150, 250, 350), 
+                                   c("#ffffff", "#d4edda", "#c3e6cb", "#a8d5ba"))
+  )
+```
+
+---
+```{r}
+
+#| code-fold: true
+#| code-summary: "Show code"
+
+# ========================================
+# TABLE 1B: BOTTOM 5 - METRIC 1
+# ========================================
+
+table1_low <- metrics_2023 %>%
+  arrange(metric1_index) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Index` = round(metric1_index, 1),
+    `Permits per 1,000` = round(permits_per_1000, 2),
+    `Total Permits` = scales::comma(permits),
+    `Population (M)` = round(population / 1e6, 2)
+  )
+
+datatable(
+  table1_low,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 1b: Bottom 5 Metros — Instantaneous Housing Supply Index (2023)"
+  )
+) %>%
+  formatStyle(
+    "Index",
+    backgroundColor = styleInterval(c(10, 25, 50), 
+                                   c("#f5c6cb", "#f8d7da", "#fff3cd", "#ffffff"))
+  )
+```
+
+---
+```{r}
+
+#| label: task5-tables-metric2
+#| code-fold: true
+#| code-summary: "Show code for Metric 2 analysis"
+
+# ========================================
+# TABLE 2A: TOP 5 - METRIC 2
+# ========================================
+
+table2_high <- metrics_2023 %>%
+  filter(!is.na(metric2_index)) %>%
+  arrange(desc(metric2_index)) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Index` = round(metric2_index, 1),
+    `Permits per Growth` = round(permits_per_pop_growth, 3),
+    `5yr Pop Growth` = scales::comma(pop_change_5yr),
+    `Total Permits` = scales::comma(permits)
+  )
+
+datatable(
+  table2_high,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 2a: Top 5 Metros — Growth Accommodation Index (2023)"
+  )
+) %>%
+  formatStyle(
+    "Index",
+    backgroundColor = styleInterval(c(100, 200, 400), 
+                                   c("#ffffff", "#d4edda", "#c3e6cb", "#a8d5ba"))
+  )
+
+```
+
+---
+```{r}
+
+#| code-fold: true
+#| code-summary: "Show code"
+
+# ========================================
+# TABLE 2B: BOTTOM 5 - METRIC 2
+# ========================================
+
+table2_low <- metrics_2023 %>%
+  filter(!is.na(metric2_index)) %>%
+  arrange(metric2_index) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Index` = round(metric2_index, 1),
+    `Permits per Growth` = round(permits_per_pop_growth, 3),
+    `5yr Pop Growth` = scales::comma(pop_change_5yr),
+    `Total Permits` = scales::comma(permits)
+  )
+
+datatable(
+  table2_low,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 2b: Bottom 5 Metros — Growth Accommodation Index (2023)"
+  )
+) %>%
+  formatStyle(
+    "Index",
+    backgroundColor = styleInterval(c(5, 10, 25), 
+                                   c("#f5c6cb", "#f8d7da", "#fff3cd", "#ffffff"))
+  )
+```
+
+---
+```{r}
+
+#| label: task5-tables-composite
+#| code-fold: true
+#| code-summary: "Show code for Composite Score analysis"
+
+# ========================================
+# TABLE 3A: TOP 5 - COMPOSITE SCORE
+# ========================================
+
+table3_high <- metrics_2023 %>%
+  filter(!is.na(composite_score)) %>%
+  arrange(desc(composite_score)) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Composite Score` = round(composite_score, 1),
+    `Metric 1` = round(metric1_index, 1),
+    `Metric 2` = round(metric2_index, 1),
+    `Population (M)` = round(population / 1e6, 2)
+  )
+
+datatable(
+  table3_high,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 3a: Top 5 Metros — Composite Housing Growth Score (2023)",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Composite = 60% Instantaneous Index + 40% Growth Accommodation Index</span>")
+  )
+) %>%
+  formatStyle(
+    "Composite Score",
+    backgroundColor = styleInterval(c(150, 225, 300), 
+                                   c("#ffffff", "#d4edda", "#c3e6cb", "#a8d5ba"))
+  )
+```
+
+---
+```{r}
+
+#| code-fold: true
+#| code-summary: "Show code"
+
+# ========================================
+# TABLE 3B: BOTTOM 5 - COMPOSITE SCORE
+# ========================================
+
+table3_low <- metrics_2023 %>%
+  filter(!is.na(composite_score)) %>%
+  arrange(composite_score) %>%
+  head(5) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `Composite Score` = round(composite_score, 1),
+    `Metric 1` = round(metric1_index, 1),
+    `Metric 2` = if_else(!is.na(metric2_index), as.character(round(metric2_index, 1)), "—"),
+    `Population (M)` = round(population / 1e6, 2)
+  )
+
+datatable(
+  table3_low,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 3b: Bottom 5 Metros — Composite Housing Growth Score (2023)",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Composite = 60% Instantaneous Index + 40% Growth Accommodation Index (or Metric 1 only if declining)</span>")
+  )
+) %>%
+  formatStyle(
+    "Composite Score",
+    backgroundColor = styleInterval(c(5, 15, 30), 
+                                   c("#f5c6cb", "#f8d7da", "#fff3cd", "#ffffff"))
+  )
+
+```
+
+---
+```{r}
+
+#| label: task5-declining-metros
+#| code-fold: true
+#| code-summary: "Show code for declining metros analysis"
+#| message: false
+#| warning: false
+
+# ========================================
+# EXPLANATORY TABLE: DECLINING METROS
+# ========================================
+
+declining_explanation <- housing_data %>%
+  filter(year == 2023) %>%
+  arrange(pop_change_5yr) %>%
+  head(10) %>%
+  transmute(
+    Rank = row_number(),
+    `Metro Area` = NAME,
+    State = state,
+    `5yr Pop Change` = scales::comma(pop_change_5yr),
+    `Growth Rate (%)` = round(pop_growth_rate_5yr, 1),
+    `Metric 2 Status` = if_else(is.na(metric2_index), "Not Applicable", "Calculated"),
+    `Metric 1 Index` = round(metric1_index, 1)
+  )
+
+datatable(
+  declining_explanation,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 't', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Supplemental Table: Metros with Declining or Minimal Population Growth (2018-2023)",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Metric 2 (Growth Accommodation Index) is not applicable for metros with declining or negligible growth,
+         as there is no population increase to accommodate. These metros are evaluated solely on Metric 1.</span>")
+  )
+) %>%
+  formatStyle(
+    "5yr Pop Change",
+    backgroundColor = styleInterval(c(-5000, 0, 500), 
+                                   c("#f5c6cb", "#f8d7da", "#fff3cd", "#ffffff"))
+  )
+```
+
+## Task 6: Rent Burden and Housing Growth Relationships
+
+```{r}
+
+#| label: task6-data-prep
+#| code-fold: true
+#| code-summary: "Show code"
+#| output: false
+#| message: false
+#| warning: false
+
+# ========================================
+# DATA PREPARATION
+# ========================================
+
+rent_burden_periods <- df_rent_burden %>%
+  mutate(
+    period = case_when(
+      year >= 2014 & year <= 2016 ~ "early",
+      year >= 2021 & year <= 2023 ~ "late",
+      TRUE ~ "middle"
+    )
+  ) %>%
+  filter(period %in% c("early", "late")) %>%
+  group_by(GEOID, NAME, state, period) %>%
+  summarize(avg_gap = mean(affordability_gap_pp, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = period, values_from = avg_gap, names_prefix = "gap_") %>%
+  mutate(rent_burden_change = gap_late - gap_early)
+
+housing_2023 <- housing_data %>%
+  filter(year == 2023) %>%
+  select(GEOID, NAME, state, composite_score, pop_change_5yr, is_growing, population, pop_5yr_ago)
+
+combined_analysis <- rent_burden_periods %>%
+  inner_join(housing_2023, by = c("GEOID", "NAME", "state")) %>%
+  filter(!is.na(composite_score), !is.na(rent_burden_change)) %>%
+  mutate(
+    pop_growth_rate = (pop_change_5yr / pop_5yr_ago) * 100
+  )
+
+early_burden_threshold <- quantile(combined_analysis$gap_early, 0.75, na.rm = TRUE)
+
+combined_analysis <- combined_analysis %>%
+  mutate(
+    criterion1 = gap_early > early_burden_threshold,
+    criterion2 = rent_burden_change < 0,
+    criterion3 = is_growing & pop_change_5yr > 0,
+    criterion4 = composite_score > 100,
+    yimby_score = criterion1 + criterion2 + criterion3 + criterion4
+  )
+
+```
+
+---
+
+### **YIMBY Success Identification**
+
+We classify “YIMBY success” as metros who meet **four** special criteria, where aggressive building successfully reduces housing costs despite growing population demands.  
+
+- **Criteria 1 (C1)**: High early rent burden (top 25%; threshold = `r round(early_burden_threshold, 1)` percentage points [pp] above 30%),  
+- **Criteria 1 (C2)**:Rent burden **improved** (2021–2023 avg < 2014–2016 avg),  
+- **Criteria 1 (C3)**: (positive 5-year change, 2018–2023), and  
+- **Criteria 1 (C4)**: **Above-average housing growth** (composite > 100).
+
+*Time Periods*: Early = 2014–2016; Late = 2021–2023.
+
+---
+
+### **Key Findings: YIMBY Success Summary**
+
+```{r}
+
+#| label: task6-summary
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Calculate summary statistics
+total_metros <- nrow(combined_analysis)
+success_4of4 <- sum(combined_analysis$yimby_score == 4, na.rm = TRUE)
+success_3of4 <- sum(combined_analysis$yimby_score == 3, na.rm = TRUE)
+avg_change_4of4 <- mean(combined_analysis$rent_burden_change[combined_analysis$yimby_score == 4], na.rm = TRUE)
+avg_change_3of4 <- mean(combined_analysis$rent_burden_change[combined_analysis$yimby_score == 3], na.rm = TRUE)
+
+```
+
+The analysis of **`r total_metros` metropolitan areas** reveals compelling evidence for YIMBY policy effectiveness:
+
+- **Complete YIMBY success (4/4):** `r success_4of4` metros; average rent burden change **`r round(abs(avg_change_4of4), 1)` pp** (better).  
+- **Strong performance (3/4):** `r success_3of4` metros; average rent burden change **`r round(avg_change_3of4, 1)` pp**.
+
+These metros demonstrate that sustained, above-average housing construction can successfully reduce rent burden even in rapidly growing markets.
+
+---
+
+### **Complete YIMBY Success: Metros Meeting All 4 Criteria**
+
+```{r}
+
+#| label: task6-table-4of4
+#| code-fold: true
+#| code-summary: "Show code"
+
+yimby_4of4 <- combined_analysis %>%
+  filter(yimby_score == 4) %>%
+  arrange(desc(composite_score)) %>%
+  transmute(
+    Rank = row_number(),
+    Metro = str_remove(NAME, " Metro Area"),
+    State = state,
+    `Early Burden` = round(gap_early, 1),
+    `Burden Change` = round(rent_burden_change, 1),
+    `Pop Growth (%)` = round(pop_growth_rate, 1),
+    `Housing` = round(composite_score, 1)
+  )
+
+datatable(
+  yimby_4of4,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 'ltp', 
+    ordering = TRUE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all'),
+      list(width = '200px', targets = 1),
+      list(width = '50px', targets = 2),
+      list(width = '90px', targets = 3:6)
+    )
+  ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 1: Complete YIMBY Success (4/4 Criteria)",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Metros meeting all four criteria: high early burden, improved, growing, and high housing growth</span>")
+  )
+) %>%
+  formatStyle(
+    columns = c(1:7),
+    backgroundColor = "#e8f5e9"
+  ) %>%
+  formatStyle(
+    "Burden Change",
+    color = "darkgreen",
+    fontWeight = "bold"
+  )
+
+```
+
+---
+
+### **Strong Performance: Metros Meeting 3 of 4 Criteria**
+```{r}
+
+#| label: task6-table-3of4
+#| code-fold: true
+#| code-summary: "Show code"
+
+yimby_3of4 <- combined_analysis %>%
+  filter(yimby_score == 3) %>%
+  arrange(desc(composite_score)) %>%
+  mutate(
+    missing_criterion = case_when(
+      !criterion1 ~ "C1",
+      !criterion2 ~ "C2",
+      !criterion3 ~ "C3",
+      !criterion4 ~ "C4",
+      TRUE ~ "—"
+    )
+  ) %>%
+  transmute(
+    Rank = row_number(),
+    Metro = str_remove(NAME, " Metro Area"),
+    State = state,
+    Missing = missing_criterion,
+    `Early` = round(gap_early, 1),
+    `Burden Change` = round(rent_burden_change, 1),
+    `Pop Growth (%)` = round(pop_growth_rate, 1),
+    `Housing` = round(composite_score, 1)
+  )
+
+datatable(
+  yimby_3of4,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 'ltp', 
+    ordering = TRUE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all'),
+      list(width = '180px', targets = 1),
+      list(width = '50px', targets = 2),
+      list(width = '60px', targets = 3),
+      list(className = 'dt-center', targets = 3),
+      list(width = '80px', targets = 4:7)
+    )
+  ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 2: Strong Performance (3/4 Criteria)",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Missing: C1 = High early burden | C2 = Improved | C3 = Growing | C4 = High housing</span>")
+  )
+) %>%
+  formatStyle(
+    columns = c(1:8),
+    backgroundColor = "#f1f8e9"
+  ) %>%
+  formatStyle(
+    "Burden Change",
+    color = styleInterval(0, c("darkgreen", "darkred"))
+  ) %>%
+  formatStyle(
+    "Missing",
+    backgroundColor = "#fff3cd"
+  )
+```
+
+---
+
+### **Visualization 1: The Core Relationship**
+
+This interactive scatterplot reveals the relationship between housing construction intensity and rent burden outcomes among YIMBY success candidates (3/4 and 4/4 metros only). **Hover over bubbles to see metro details**.
+
+```{r}
+
+#| label: task6-plot1
+#| code-fold: true
+#| code-summary: "Show code"
+#| fig.width: 12
+#| fig.height: 9
+#| warning: false
+
+# Filter to only 3/4 and 4/4 metros for cleaner visualization
+plot_data <- combined_analysis %>%
+  filter(yimby_score >= 3) %>%
+  mutate(
+    metro_clean = str_remove(NAME, " Metro Area"),
+    score_label = paste0(yimby_score, "/4"),
+    # Create rich hover text
+    hover_text = paste0(
+      "<b>", metro_clean, "</b><br>",
+      "Population Growth: ", comma(abs(pop_change_5yr))
+    )
+  )
+
+# Create ggplot
+p <- ggplot(plot_data, aes(
+  x = composite_score, 
+  y = rent_burden_change,
+  text = hover_text
+)) +
+  # Reference lines
+  geom_hline(yintercept = 0, color = "gray30", linewidth = 0.8) +
+  geom_vline(xintercept = 100, color = "gray30", linewidth = 0.8) +
+  
+  # Shaded success quadrant (LOWER-RIGHT = Q4)
+  annotate("rect", xmin = 100, xmax = Inf, ymin = -Inf, ymax = 0,
+           alpha = 0.08, fill = "green") +
+  
+  # Quadrant labels
+  annotate("text", x = 220, y = 7, 
+           label = "Q1: Growing Pains", 
+           size = 3.5, color = "gray40", hjust = 0.5) +
+  annotate("text", x = 30, y = 7, 
+           label = "Q2: Worst", 
+           size = 3.5, color = "gray40", hjust = 0.5) +
+  annotate("text", x = 30, y = -7, 
+           label = "Q3: Lucky", 
+           size = 3.5, color = "gray40", hjust = 0.5) +
+  annotate("text", x = 220, y = -7, 
+           label = "Q4: YIMBY SUCCESS", 
+           size = 4, fontface = "bold", color = "darkgreen", hjust = 0.5) +
+  
+  # Points with color and size
+  geom_point(
+    aes(color = factor(yimby_score), 
+        size = abs(pop_change_5yr)),
+    alpha = 0.7
+  ) +
+  
+  # Color scale
+  scale_color_manual(
+    values = c(
+      "4" = "#006d2c",
+      "3" = "#a1d99b"
+    ),
+    name = "YIMBY Score",
+    labels = c("3" = "3/4 (Strong)", "4" = "4/4 (Complete)")
+  ) +
+  
+  # Size scale (won't show in legend, but controls visual size)
+  scale_size_continuous(
+    range = c(3, 16),
+    guide = "none"  # Accept it won't show, info is in hover
+  ) +
+  
+  # Scales
+  scale_x_continuous(
+    breaks = seq(0, 310, 50),
+    limits = c(0, 310),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_y_continuous(
+    breaks = seq(-10, 10, 2.5),
+    limits = c(-10, 10),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  
+  # Labels
+  labs(
+    title = "Housing Growth vs. Rent Burden Outcomes",
+    x = "Housing Growth Composite Score (100 = National Average)",
+    y = "Change in Rent Burden (pp), 2023 vs 2014-2016\nNegative = Improvement"
+  ) +
+  
+  # Theme
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.title.x = element_text(size = 11),
+    axis.title.y = element_text(size = 11),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 11, face = "bold"),
+    legend.text = element_text(size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+
+# Convert to plotly with custom tooltip
+fig <- ggplotly(p, tooltip = "text") %>%
+  layout(
+    title = list(
+      text = "Housing Growth vs. Rent Burden Outcomes",
+      x = 0.5,
+      xanchor = "center",
+      font = list(size = 17, color = "black")
+    ),
+    margin = list(t = 90, r = 180, b = 80, l = 90),
+    showlegend = TRUE,
+    hoverlabel = list(
+      bgcolor = "white",
+      font = list(size = 13, color = "black"),
+      bordercolor = "gray",
+      align = "left"
+    ),
+    xaxis = list(
+      title = list(
+        text = "Housing Growth Composite Score (100 = National Average)",
+        font = list(size = 11)
+      ),
+      tickfont = list(size = 10),
+      range = c(0, 310)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Change in Rent Burden (pp), 2023 vs 2014-2016<br>Negative = Improvement",
+        font = list(size = 11)
+      ),
+      tickfont = list(size = 10)
+    ),
+    legend = list(
+      x = 1.02,
+      y = 0.98,
+      xanchor = "left",
+      yanchor = "top",
+      font = list(size = 11),
+      bgcolor = "rgba(255,255,255,0.9)",
+      bordercolor = "lightgray",
+      borderwidth = 1
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("select2d", "lasso2d", "toggleSpikelines"),
+    displaylogo = FALSE
+  )
+
+fig
+
+```
+
+**Notes** 
+
+- **Q1 (upper-right)**: Building but burden rising
+- **Q2 (upper-left)**: Low building + Worsening
+- **Q3 (lower-left)**: Improving without building 
+- **Q4 (lower-right)**: YIMBY SUCCESS (High building + Improving)
+- **Circle** size represents absolute population growth 2018-2023. Larger circles imply higher population growth.
+- **Periods**: Early = 2014-2016 avg, Late = 2021-2023 avg.
+
+---
+
+#### **The Q3 Quandary: Improving Without Building**
+
+Some metros became more affordable without building new homes, but this wasn't a result of luck. It occured as a result of the following: 
+
+- **People Migrated**: Most of these metros (e.g., Rust Belt metros) lost population, reducing demand for housing.
+- **Wages Increased**: A few metros had a sudden industry surge (like energy), raising salaries faster than rent.
+
+However, these outcomes are unrealistic. A growing metros can't gamble on "losing people" to address housing issues. For metros experience population influxes, building more remains the only feasible solution. Therefore, Q4 (YIMBY success—building metros) remains the only sustainable model for identified growth metros.
+
+---
+
+### **Visualization 2: Distribution by Criteria Met**
+
+This boxplot shows how rent burden change varies by the number of YIMBY criteria met across all metros. 
+
+```{r}
+
+#| label: task6-plot2
+#| code-fold: true
+#| code-summary: "Show code"
+#| fig.width: 10
+#| fig.height: 6
+#| warning: false
+
+# Calculate summary statistics for labels
+summary_by_score <- combined_analysis %>%
+  group_by(yimby_score) %>%
+  summarize(
+    n = n(),
+    median_change = median(rent_burden_change, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    yimby_label = paste0(yimby_score, "/4\n(n=", n, ")")
+  )
+
+# Create boxplot
+ggplot(combined_analysis, aes(x = factor(yimby_score), y = rent_burden_change)) +
+  geom_boxplot(
+    aes(fill = factor(yimby_score)),
+    alpha = 0.7,
+    outlier.alpha = 0.3,
+    outlier.size = 1.5
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.8) +
+  
+  # Add median value labels
+  stat_summary(
+    fun = median,
+    geom = "text",
+    aes(label = round(after_stat(y), 1)),
+    size = 3.5,
+    fontface = "bold",
+    vjust = -0.5
+  ) +
+  
+  scale_fill_manual(
+    values = c(
+      "4" = "#006d2c",  # Rich dark green
+      "3" = "#a1d99b",  # Soft light green
+      "2" = "#fee090",
+      "1" = "#fc8d59",
+      "0" = "#d73027"
+    ),
+    guide = "none"
+  ) +
+  scale_x_discrete(
+    labels = summary_by_score$yimby_label
+  ) +
+  labs(
+    title = "Rent Burden Change by YIMBY Criteria Met",
+    subtitle = "Distribution of burden change for metros meeting 0-4 criteria | Numbers show median values\nDashed red line at 0 = no change | Negative values = improvement",
+    x = "YIMBY Score (number of criteria met)",
+    y = "Change in Rent Burden (pp), 2023 vs 2014-2016\nNegative = Improvement",
+    caption = "Box shows interquartile range; whiskers extend to 1.5×IQR\nHigher YIMBY scores correlate with greater rent burden improvements"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.major.x = element_blank()
+  )
+
+```
+
+---
+
+### **Interpretation and Policy Implications**
+
+Across the sample, 12 metros meeting all 4 criteria cut rent burden by ~1.4 pp between 2014–2016 and 2021–2023 despite population growth. As a result, there is clear, outcome-level evidence that sustained building can relieve pressure.
+
+**The Data Story**
+
+- **Where it works**: Success clusters in the Southeast/Sunbelt and a few high-growth markets—places with faster permitting and fewer density constraints.
+- **More criteria, bigger gains**: The more YIMBY criteria a metro meets, the larger the burden improvement; 4/4 metros outperform lower scorers.
+- **Mechanism**: “Q4” metros (high building + improving burden) absorbed growth without proportional rent increases.
+- **Timing**: Gains materialize over ~7–9 years, and likely compound with continued permitting.
+
+A future policy implication is clear: regulatory reform that enables sustained construction may lead to improved affordability within a 7-9 year timeframe.
+
+## Task 7: Policy Brief - Sponsor City Selection
+
+### Primary Sponsor: YIMBY Success City
+
+Building on our Task 6 analysis, we identified **Punta Gorda, FL** as the flagship YIMBY success story. It meets all four YIMBY tests: high early burden, burden fell (-0.3 pp), strong growth (+13.2%), and nation-leading building (housing index ~292). A key takeaway is that when metros build at scale, they can grow and keep rents in check.
+
+---
+
+### Co-Sponsor: Opportunity City Selection
+
+To identify optimal co-sponsor cities, we refined our analysis to target metros exhibiting the inverse pattern, specifically fast-growing metros where affordability is slipping because construction lags. Our three-part test is simple:
+
+- Population growth (real demand),
+- Burden flat/worse (no relief),
+- Below-average building (under-supply).
+
+Metros that satisfy this test are on a potential path to crisis, making them the best candidates for a federal YIMBY incentive to enhance supply and shift rents down.
+
+```{r}
+
+#| label: task7-nimby-table
+#| code-fold: true
+
+# Generate NIMBY candidates (from previous analysis)
+nimby_candidates <- combined_analysis %>%
+  filter(criterion3 == TRUE) %>%
+  filter(criterion2 == FALSE) %>%
+  filter(criterion4 == FALSE) %>%
+  filter(population >= 500000) %>%
+  filter(state != "FL") %>%
+  filter(rent_burden_change > 0) %>%
+  mutate(
+    metro_clean = str_remove(NAME, " Metro Area"),
+    current_burden = gap_late,
+    pop_millions = population / 1000000
+  ) %>%
+  arrange(desc(rent_burden_change)) %>%
+  select(metro_clean, state, current_burden, rent_burden_change,
+         pop_growth_rate, pop_millions, composite_score)
+
+# Display table
+display_nimby <- nimby_candidates %>%
+  head(10) %>%
+  transmute(
+    Rank = row_number(),
+    Metro = metro_clean,
+    State = state,
+    `Burden (pp)` = round(current_burden, 1),
+    `Worsened (pp)` = round(rent_burden_change, 1),
+    `Pop (M)` = round(pop_millions, 1),
+    `Growth (%)` = round(pop_growth_rate, 1),
+    `Housing` = round(composite_score, 0)
+  )
+
+datatable(
+  display_nimby,
+  rownames = FALSE,
+  options = list(
+    pageLength = 5,
+    dom = 'ltp', 
+    ordering = FALSE,
+    columnDefs = list(
+      list(className = 'dt-left', targets = '_all')
+      )
+    ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
+    "Table 1: Opportunity Cities: Metros Where Affordability is Worsening",
+    HTML("<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>
+         Growing cities with worsening burden and insufficient building | Sorted by magnitude of burden increase | M = Millions</span>")
+  )
+) %>%
+  formatStyle("Worsened (pp)", backgroundColor = "#ffc107", fontWeight = "bold") %>%
+  formatStyle("Housing", color = styleInterval(90, c("#dc3545", "#6c757d")))
+```
+
+---
+
+**Recommended Co-Sponsor:** **Atlanta, GA Metro** — With 6.3M residents and 12.4% population growth, this metro exemplifies a booming metro where rent burden worsened by 3.0 pp despite demand, due to below-average housing construction (score: 84). This is exactly the profile that a policy bill would target: a metro candidate eligible for federal incentives to unlock housing supply to reduce rents.
+
+---
+
+### Federal YIMBY Bill Proposal: Success Stories vs. Opportunity Cities
+
+```{r}
+
+#| label: task7-side-by-side-comparison
+#| code-fold: true
+
+# ---- Data Prep ----
+yimby_success <- combined_analysis %>%
+  filter(yimby_score == 4) %>%
+  arrange(desc(composite_score)) %>%
+  mutate(
+    metro_clean     = str_remove(NAME, " Metro Area"),
+    burden_display  = round(rent_burden_change, 1),
+    housing_display = round(composite_score, 1)
+  ) %>%
+  select(metro_clean, state, burden_display, housing_display) %>%
+  head(10)
+
+nimby_opportunity <- nimby_candidates %>%
+  arrange(desc(rent_burden_change)) %>%
+  mutate(
+    burden_display  = round(rent_burden_change, 1),
+    housing_display = round(composite_score, 0)
+  ) %>%
+  select(metro_clean, state, burden_display, housing_display) %>%
+  head(10)
+
+tbl <- tibble(
+  rank                = 1:10,
+  success_metro       = paste0(yimby_success$metro_clean, ", ", yimby_success$state),
+  burden_change_s     = paste0(yimby_success$burden_display, " pp"),
+  housing_s           = yimby_success$housing_display,
+  opportunity_metro   = paste0(nimby_opportunity$metro_clean, ", ", nimby_opportunity$state),
+  burden_change_o     = paste0("+", nimby_opportunity$burden_display, " pp"),
+  housing_o           = nimby_opportunity$housing_display
+)
+
+# add star to rank 1 success metro
+tbl$success_metro[1] <- paste0(tbl$success_metro[1], " ★")
+
+# ---- render with gt (full-width note + styling) ----
+gt_tbl <- tbl %>%
+  gt() %>%
+  # Use tab_options and tab_header like your other tables
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(14)   
+  ) %>%
+  tab_header(
+    title = md("**Table 2: Federal YIMBY Bill Proposal: Rewarding Success, Catalyzing Change**")
+  ) %>%
+  # Make column headers bold
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+  ) %>%
+  # column labels
+  cols_label(
+    rank              = "Rank",
+    success_metro     = "Success Story Metro",
+    burden_change_s   = "Burden Change",
+    housing_s         = "Housing",
+    opportunity_metro = "Opportunity City Metro",
+    burden_change_o   = "Burden Change",
+    housing_o         = "Housing"
+  ) %>%
+  # spanners (group headers)
+  tab_spanner(
+    label = "Grant Recipients (4/4 YIMBY Success)",
+    columns = c(success_metro, burden_change_s, housing_s)
+  ) %>%
+  tab_spanner(
+    label = "Priority Cities (Worsening Burden)",
+    columns = c(opportunity_metro, burden_change_o, housing_o)
+  ) %>%
+  # widths
+  cols_width(
+    rank ~ px(48),
+    success_metro ~ px(240),
+    c(burden_change_s, housing_s) ~ px(70),
+    opportunity_metro ~ px(240),
+    c(burden_change_o, housing_o) ~ px(70)
+  ) %>%
+  # alignment
+  cols_align(align = "left", columns = everything()) %>%
+  cols_align(align = "center", columns = rank) %>%
+  cols_align(align = "left",
+             columns = c(burden_change_s, housing_s, burden_change_o, housing_o)) %>%
+  # left border before Opportunity columns
+  tab_style(
+    style = cell_borders(sides = "left", color = "#dee2e6", weight = px(2)),
+    locations = list(
+      cells_body(columns = opportunity_metro),
+      cells_column_labels(columns = opportunity_metro)
+    )
+  ) %>%
+  # row striping
+  opt_row_striping() %>%
+  # highlight rank 1 row
+  tab_style(
+    style = list(cell_fill(color = "#d4edda"), cell_text(weight = "bold")),
+    locations = cells_body(rows = rank == 1)
+  ) %>%
+  # light background for spanner row
+  tab_style(
+    style = cell_fill(color = "#f8f9fa"),
+    locations = cells_column_spanners(
+      spanners = c("Grant Recipients (4/4 YIMBY Success)",
+                   "Priority Cities (Worsening Burden)")
+    )
+  ) %>%
+  # Source note at bottom
+  tab_source_note(
+    md("**Note:** Burden Change = Change in rent burden (pp), 2023 vs 2014–2016. Negative = improvement. Housing = Composite growth score (100 = national avg).")
+  )
+
+gt_tbl
+
+
+```
+
+**Policy Implication:** : When metros scale building, they can hold rent burden down even while growing (Punta Gorda). Conversely, metros that under-build result in burden increases  despite growth (Atlanta). 
+
+A federal YIMBY grant would help “opportunity” metros follow the success path by incentivizing pro-building local reforms and rewarding measurable progress.
+
+## Determining a YIMBY-to-NIMBY Comparison 
+
+A comprehensive review of every major two-digit NAICS sector was necessary to avoid arbitrary selection. The pattern is consistent: rent-sensitive, locally-serving sectors, specifically **Accommodation & Food (NAICS 72)** and **Retail (NAICS 44)**, show the largest ATL-PG rent-share gaps, while high-wage tradables show little or no difference. These two sectors also employ large, credible coalitions in both metros.
+
+## Calculation Process
+
+1. Choosing a Single Year
+
+Used **2023** for both metros (excluded **2020** elsewhere due to COVID artifacts).
+
+2. Metro-level Rent (ACS B25064: median **monthly** rent)
+
+$$
+\text{AnnualRent}_{m} = 12 \times \text{Rent}_{m}
+$$
+
+3. Sector-level wage (BLS QCEW), by two-digit NAICS root (e.g., 72 or 44) 
+
+Aggregate all sub-industries whose code **starts with** the root, then compute the employment-weighted average wage:
+
+$$
+\text{AvgWage}*{m,s} = \frac{\sum \text{TOTAL WAGES}*{m,s}}{\sum \text{EMPLOYMENT}*{m,s}}
+$$
+
+4. Rent Burden Calculation (rent share of wage)
+
+$$
+\text{RentShare}_{m,s} =
+\frac{\text{AnnualRent}_{m}}{\text{AvgWage}_{m,s}}
+$$
+*(Interpretation: e.g., \(0.34 = 34\%\) of an average sector wage goes to median rent.)*
+
+5. Cross-city Rent-burden Gap (percentage points)
+
+For **Atlanta minus Punta Gorda**:
+
+$$
+\text{Gap}_{\text{ATL}-\text{PG},\,s}
+= \Big(\text{RentShare}_{\text{ATL},s} -
+\text{RentShare}_{\text{PG},s}\Big)\times100\
+$$
+
+* Positive: Atlanta more rent-burdened for sector \(s\)
+* Negative: Punta Gorda more rent-burdened
+
+---
+
+**Symbols:** \(m\) = metro; \(s\) = sector (two-digit NAICS root);
+**Rent** = median monthly rent; **AnnualRent** = \(12\times\)Rent;
+**AvgWage** = employment-weighted average annual wage;
+**Gap** reported in **percentage points (pp)**.
+
+---
+
+The coalition centers on 72, Accommodations & Food Services, and 44, Retail Trade. These represent large worker bases having clear affordability gains from YIMBY policy, and strong, organized industry partners.
+
+```{r}
+
+# ==== Top-10 sectors by ATL vs PG rent-burden gap (2023) ====
+
+# --- Helper: first existing column name
+pick_col <- function(df, candidates, err_msg){
+  nm <- intersect(candidates, names(df))
+  if (length(nm) == 0) stop(err_msg, call. = FALSE)
+  nm[[1]]
+}
+
+# --- Metro targets (CBSA + BLS FIPS-4 prefixes)
+metros <- tibble::tribble(
+  ~metro_key, ~metro_label,                                        ~cbsa,  ~fips4,
+  "ATL",      "Atlanta–Sandy Springs–Alpharetta, GA Metro Area",   12060L, "C1206",
+  "PG",       "Punta Gorda, FL Metro Area",                        39460L, "C3946"
+)
+
+# --- Nice names for 2-digit (and combo) NAICS roots
+naics_sector_name <- function(root_chr){
+  r <- str_replace_all(root_chr, "[^0-9]", "-")
+  case_when(
+    r == "23"    ~ "Construction",
+    r %in% c("31","32","33") ~ paste0("Manufacturing (", r, ")"),
+    r == "31-33" ~ "Manufacturing",
+    r == "42"    ~ "Wholesale Trade",
+    r == "44"    ~ "Retail: Autos/Groceries/Gas/Clothing (44xx)",
+    r == "44-45" ~ "Retail Trade (44–45)",
+    r == "48-49" ~ "Transportation & Warehousing",
+    r == "51"    ~ "Information",
+    r == "52"    ~ "Finance & Insurance",
+    r == "53"    ~ "Real Estate & Rental & Leasing",
+    r == "54"    ~ "Professional, Scientific & Technical",
+    r == "55"    ~ "Management of Companies",
+    r == "56"    ~ "Admin & Support, Waste Mgmt",
+    r == "61"    ~ "Educational Services",
+    r == "62"    ~ "Health Care & Social Assistance",
+    r == "71"    ~ "Arts, Entertainment & Recreation",
+    r == "72"    ~ "Accommodation & Food Services",
+    r == "81"    ~ "Other Services",
+    TRUE         ~ "Other / Unmapped"
+  )
+}
+
+# --- Build a regex that also handles hyphenated NAICS roots (e.g., "31-33", "48-49")
+build_root_pattern <- function(root) {
+  if (grepl("-", root)) {
+    parts <- strsplit(root, "-", fixed = TRUE)[[1]]
+    paste0("^(", paste(parts, collapse = "|"), ")")
+  } else {
+    paste0("^", root)
+  }
+}
+
+# --- Robust ACS column detection
+rent_col <- pick_col(RENT,        c("monthly_rent", "B25064_001"),
+                     "Couldn't find median rent column in RENT")
+pop_col  <- pick_col(POPULATION,  c("population", "B01003_001"),
+                     "Couldn't find population column in POPULATION")
+
+# --- ACS slice (2023): population + median rent by CBSA, joined to metro keys
+acs_23 <- POPULATION %>%
+  filter(year == 2023) %>%
+  mutate(cbsa = as.integer(str_extract(GEOID, "\\d+"))) %>%
+  select(cbsa, population = !!sym(pop_col)) %>%
+  inner_join(
+    RENT %>%
+      filter(year == 2023) %>%
+      mutate(cbsa = as.integer(str_extract(GEOID, "\\d+"))) %>%
+      select(cbsa, median_rent = !!sym(rent_col)),
+    by = "cbsa"
+  ) %>%
+  inner_join(select(metros, cbsa, metro_key, metro_label), by = "cbsa")
+stopifnot(nrow(acs_23) == 2)
+
+# --- Function: rent share (median rent as % of avg wage) for a NAICS root
+bls_rent_share_by_root <- function(root_code){
+  patt <- build_root_pattern(root_code)
+  WAGES %>%
+    filter(YEAR == 2023, substr(FIPS, 1, 5) %in% metros$fips4) %>%
+    filter(str_detect(as.character(INDUSTRY), patt)) %>%
+    mutate(fips4 = substr(FIPS, 1, 5)) %>%
+    group_by(fips4) %>%
+    summarise(
+      employment  = sum(EMPLOYMENT,  na.rm = TRUE),
+      total_wages = sum(TOTAL_WAGES, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(avg_wage = total_wages / pmax(employment, 1)) %>%
+    inner_join(select(metros, fips4, metro_key), by = "fips4") %>%
+    inner_join(acs_23, by = "metro_key") %>%
+    transmute(
+      `NAICS Root` = root_code,
+      metro_key,
+      rent_share   = (median_rent * 12) / pmax(avg_wage, 1)  # proportion 0–1
+    ) %>%
+    pivot_wider(names_from = metro_key, values_from = rent_share)
+}
+
+# --- Roots to analyze (two-digit plus standard combo groups)
+roots_to_show <- c(
+  "72","44","62","45","56","54","31","32","33","55","42","52",
+  "81","23","48-49","53","51","71","61"
+)
+
+# --- Build + format the Top-10 table
+rent_gap_tbl <- map_dfr(roots_to_show, bls_rent_share_by_root) %>%
+  filter(!is.na(ATL), !is.na(PG)) %>%
+  mutate(
+    Sector       = naics_sector_name(`NAICS Root`),
+    ATL          = ATL * 100,                  # convert to %
+    PG           = PG  * 100,                  # convert to %
+    ATL_minus_PG = ATL - PG                    # percentage-point gap
+  ) %>%
+  select(`NAICS Root`, Sector, ATL, PG, ATL_minus_PG) %>%
+  arrange(desc(ATL_minus_PG)) %>%
+  slice_head(n = 10)
+
+gt(rent_gap_tbl) %>%
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left",
+    table.font.size = px(16)
+  ) %>%
+  tab_header(
+    title = md("**Table 3: Sector Rent-Burden Gap: Atlanta vs. Punta Gorda (Top 10, 2023)**"),
+    subtitle = md("Which sectors show the largest ATL → PG rent-share differences?")
+  ) %>%
+  cols_label(
+    `NAICS Root` = "NAICS Root",
+    Sector       = "Sector",
+    ATL          = "ATL (%)",
+    PG           = "PG (%)",
+    ATL_minus_PG = "ATL - PG"
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  fmt_number(columns = c(ATL, PG, ATL_minus_PG), decimals = 1) %>%
+  cols_align(align = "left", columns = everything()) %>%
+  tab_options(table.font.size = "small")
+
+```
+
+```{r}
+
+# ===== Coalition Snapshot: Food Service (72) & Retail (44) — 2023 =====
+
+# Helper: pick the first existing column name from a set
+pick_col <- function(df, candidates, err_msg){
+  nm <- intersect(candidates, names(df))
+  if (!length(nm)) stop(err_msg, call. = FALSE)
+  nm[[1]]
+}
+
+# Target metros (CBSA + BLS FIPS-4), with state abbrev
+metros <- tibble::tribble(
+  ~metro_key, ~metro_label,                                        ~cbsa,  ~fips4,  ~state_abbr,
+  "ATL",      "Atlanta–Sandy Springs–Alpharetta, GA Metro Area",   12060L, "C1206", "GA",
+  "PG",       "Punta Gorda, FL Metro Area",                        39460L, "C3946", "FL"
+)
+
+# Robust ACS column detection
+rent_col <- pick_col(RENT,        c("monthly_rent", "B25064_001"),
+                     "Couldn't find median rent column in RENT")
+pop_col  <- pick_col(POPULATION,  c("population", "B01003_001"),
+                     "Couldn't find population column in POPULATION")
+
+# ACS slice (2023) joined to metro keys; derive a safe state code
+acs_23 <- POPULATION %>%
+  filter(year == 2023) %>%
+  mutate(cbsa = as.integer(stringr::str_extract(GEOID, "\\d+"))) %>%
+  select(cbsa, NAME, population = !!sym(pop_col)) %>%
+  inner_join(
+    RENT %>%
+      filter(year == 2023) %>%
+      mutate(cbsa = as.integer(stringr::str_extract(GEOID, "\\d+"))) %>%
+      select(cbsa, median_rent = !!sym(rent_col)),
+    by = "cbsa"
+  ) %>%
+  inner_join(
+    select(metros, cbsa, metro_key, metro_label, metro_state = state_abbr),
+    by = "cbsa"
+  ) %>%
+  mutate(
+    state_from_name  = stringr::str_match(NAME, ",\\s([A-Z]{2})")[,2],
+    state_from_label = stringr::str_match(metro_label, ",\\s([A-Z]{2})")[,2],
+    state_final      = dplyr::coalesce(metro_state, state_from_name, state_from_label)
+  ) %>%
+  select(metro_key, metro_label, population, median_rent, state_final)
+
+stopifnot(nrow(acs_23) == 2)
+
+# Function: compute sector metrics for a 2-digit NAICS root (e.g., "72" or "44")
+sector_metrics <- function(root_code, sector_label){
+  patt <- paste0("^", root_code)
+  WAGES %>%
+    filter(YEAR == 2023, substr(FIPS, 1, 5) %in% metros$fips4) %>%
+    filter(str_detect(as.character(INDUSTRY), patt)) %>%
+    mutate(fips4 = substr(FIPS, 1, 5)) %>%
+    group_by(fips4) %>%
+    summarize(
+      employment  = sum(EMPLOYMENT,  na.rm = TRUE),
+      total_wages = sum(TOTAL_WAGES, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(avg_wage = total_wages / pmax(employment, 1)) %>%
+    inner_join(select(metros, fips4, metro_key), by = "fips4") %>%
+    inner_join(acs_23, by = "metro_key") %>%
+    transmute(
+      Metro                    = metro_label,
+      State                    = state_final,
+      Sector                   = sector_label,
+      Employment               = employment,
+      `Emp / 1k residents`     = 1000 * employment / population,
+      `Avg Wage ($)`           = avg_wage,
+      `Median Rent ($)`        = median_rent,
+      `Rent as % of Avg Wage`  = (median_rent * 12) / pmax(avg_wage, 1) * 100
+    )
+}
+
+# Build the two sectors (two-digit NAICS for consistency)
+s72 <- sector_metrics("72", "Accommodation & Food Services (NAICS 72)")
+s44 <- sector_metrics("44", "Retail Trade — 44xx (Autos/Groceries/Gas/Clothing)")
+
+out_tbl <- bind_rows(s72, s44) %>%
+  mutate(Metro = factor(Metro, levels = metros$metro_label)) %>%
+  arrange(Metro, Sector)
+
+# Drop Metro grouping from display; show 7 requested columns
+out_tbl_display <- out_tbl %>%
+  select(
+    State, Sector, Employment, `Emp / 1k residents`,
+    `Avg Wage ($)`, `Median Rent ($)`, `Rent as % of Avg Wage`
+  )
+
+# Render clean table (no row-group headers)
+gt(out_tbl_display) %>%
+    tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) %>%
+  tab_header(
+    title = md("**Table 4: Coalition Snapshot: Food Service (72) & Retail (44) — 2023**"),
+    subtitle = paste(
+      metros$metro_label[metros$metro_key == "ATL"], "•",
+      metros$metro_label[metros$metro_key == "PG"]
+    )
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  fmt_number(columns = Employment, decimals = 0, sep_mark = ",") %>%
+  fmt_number(columns = `Emp / 1k residents`, decimals = 1) %>%
+  fmt_currency(columns = c(`Avg Wage ($)`, `Median Rent ($)`), decimals = 0) %>%
+  fmt_number(columns = `Rent as % of Avg Wage`, decimals = 1, pattern = "{x}%") %>%
+  cols_align("left", columns = everything()) %>%
+  tab_source_note(
+    md("Sources: **BLS QCEW (employment, avg wages)** • **ACS (median rent, population)**")
+  )
+
+```
+
+```{r}
+
+# ==== Rent-Share Gap (Atlanta minus Punta Gorda) — 2023 (pp) ====
+
+# If sector tables from the coalition snapshot aren't in memory, build them
+if (!exists("sector_metrics")) {
+  stop("sector_metrics() not found. Run the coalition snapshot chunk first.")
+}
+if (!exists("s72") || !exists("s44")) {
+  s72 <- sector_metrics("72", "Accommodation & Food Services (NAICS 72)")
+  s44 <- sector_metrics("44", "Retail Trade — 44xx (NAICS 44)")
+}
+
+# Assemble and pivot wide
+gap_input <- bind_rows(s72, s44) %>%
+  select(Sector, Metro, `Rent as % of Avg Wage`)
+
+rent_share_wide <- gap_input %>%
+  pivot_wider(names_from = Metro, values_from = `Rent as % of Avg Wage`)
+
+# Metro labels (from your metros tibble)
+atl_name <- metros$metro_label[metros$metro_key == "ATL"]
+pg_name  <- metros$metro_label[metros$metro_key == "PG"]
+
+# Compute ATL – PG in percentage points (already percent values)
+gap_tbl <- rent_share_wide %>%
+  transmute(
+    Sector,
+    `ATL – PG (pp)` = .data[[atl_name]] - .data[[pg_name]]
+  )
+
+# Render
+gt(gap_tbl) %>%
+    tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) %>%
+  tab_header(title = md("**Table 5: Rent-Share Gap (Atlanta minus Punta Gorda) — 2023**")) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  fmt_number(columns = `ATL – PG (pp)`, decimals = 1)
+
+
+```
+---
+
+Atlanta exemplifies the supply-constrained growth pattern federal YIMBY grants target: 6.3 million residents growing 12.4% over five years, yet rent burden worsened by 3.0 percentage points—the most among large metros—due to below-average housing construction (score: 83.5). This gap leaves 1.2 million service workers paying 4-10 percentage points more of wages to rent than workers in successful metros.
+
+---
+
+## Unlocking Atlanta Metro's Housing Supply and Job Growth
+
+The Atlanta metro currently employs 331,350 construction workers. If the metro matched Punta Gorda's proven construction intensity of 102.9 workers per 1,000 residents, it would sustain 648,834 construction jobs—a potential increase of 317,484 jobs representing 96% sector growth. More construction workers can lead to more housing built, placing more housing in the supply to reduce pressure on rents.
+
+```{r}
+
+#| label: construction-mechanism
+#| code-fold: true
+#| echo: false
+#| warning: false
+#| message: false
+
+# ===== Silent data extraction (no output) =====
+s23 <- sector_metrics("23", "Construction (NAICS 23)")
+
+# Get values using NAME search
+atl_row_data <- combined_analysis %>% 
+  filter(grepl("Atlanta", NAME, ignore.case = TRUE))
+atl_pop_value <- atl_row_data$population[1]
+atl_housing_value <- atl_row_data$composite_score[1]
+
+pg_row_data <- combined_analysis %>% 
+  filter(grepl("Punta", NAME, ignore.case = TRUE))
+pg_pop_value <- pg_row_data$population[1]
+pg_housing_value <- pg_row_data$composite_score[1]
+
+# Get construction data from s23
+pg_const <- s23 %>% filter(State == "FL") %>% pull(`Emp / 1k residents`)
+pg_employment <- s23 %>% filter(State == "FL") %>% pull(Employment)
+pg_metro_name <- s23 %>% filter(State == "FL") %>% pull(Metro)
+
+atl_const <- s23 %>% filter(State == "GA") %>% pull(`Emp / 1k residents`)
+atl_employment <- s23 %>% filter(State == "GA") %>% pull(Employment)
+atl_metro_name <- s23 %>% filter(State == "GA") %>% pull(Metro)
+
+# Calculate job creation potential
+jobs_at_pg_intensity <- round(atl_pop_value * (pg_const / 1000))
+job_gap <- jobs_at_pg_intensity - atl_employment
+
+# Build mechanism table
+mechanism_table <- tibble(
+  Metro = c(pg_metro_name, atl_metro_name),
+  State = c("FL", "GA"),
+  `Construction jobs per 1K` = c(pg_const, atl_const),
+  `Housing Score` = c(pg_housing_value, atl_housing_value),
+  `Hospitality Burden (%)` = c(
+    s72 %>% filter(State == "FL") %>% pull(`Rent as % of Avg Wage`),
+    s72 %>% filter(State == "GA") %>% pull(`Rent as % of Avg Wage`)
+  ),
+  `Retail Burden (%)` = c(
+    s44 %>% filter(State == "FL") %>% pull(`Rent as % of Avg Wage`),
+    s44 %>% filter(State == "GA") %>% pull(`Rent as % of Avg Wage`)
+  )
+)
+
+# Calculate key metrics
+const_diff_pct <- round(((pg_const - atl_const) / atl_const) * 100, 0)
+housing_diff_pct <- round(((pg_housing_value - atl_housing_value) / atl_housing_value) * 100, 0)
+
+pg_hosp <- mechanism_table %>% filter(State == "FL") %>% pull(`Hospitality Burden (%)`)
+atl_hosp <- mechanism_table %>% filter(State == "GA") %>% pull(`Hospitality Burden (%)`)
+hosp_gap <- round(atl_hosp - pg_hosp, 1)
+
+pg_retail <- mechanism_table %>% filter(State == "FL") %>% pull(`Retail Burden (%)`)
+atl_retail <- mechanism_table %>% filter(State == "GA") %>% pull(`Retail Burden (%)`)
+retail_gap <- round(atl_retail - pg_retail, 1)
+
+hosp_wage <- s72 %>% filter(State == "GA") %>% pull(`Avg Wage ($)`)
+retail_wage <- s44 %>% filter(State == "GA") %>% pull(`Avg Wage ($)`)
+
+hosp_savings <- round((hosp_gap / 100) * hosp_wage, 0)
+retail_savings <- round((retail_gap / 100) * retail_wage, 0)
+
+```
+
+```{r}
+
+#| label: construction-tables
+#| code-fold: true
+
+# Display mechanism table
+gt(mechanism_table) %>%
+    tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) %>%
+  tab_header(
+    title = md("**Table 6: The Construction Mechanism: Building Intensity → Supply → Affordability**"),
+    subtitle = "How construction employment drives housing supply and worker rent burden (2023)"
+  ) %>%
+  fmt_number(columns = `Construction jobs per 1K`, decimals = 1) %>%
+  fmt_number(columns = `Housing Score`, decimals = 1) %>%
+  fmt_number(columns = c(`Hospitality Burden (%)`, `Retail Burden (%)`), decimals = 1) %>%
+  cols_align("left", columns = everything()) %>%
+  tab_style(
+    style = cell_fill(color = "#d4edda"),
+    locations = cells_body(rows = State == "FL")
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#fff3cd"),
+    locations = cells_body(rows = State == "GA")
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md("**Pattern:** Higher construction intensity → Higher housing score → Lower rent burden")
+  )
+```
+
+
+```{r}
+# Job creation table
+job_table <- tibble(
+  Metro = atl_metro_name,
+  `Current Jobs` = atl_employment,
+  `Jobs at PG Rate` = jobs_at_pg_intensity,
+  `Job Gap (+)` = job_gap
+)
+
+gt(job_table) %>%
+    tab_options(
+    table.width  = gt::pct(100),
+    table.align  = "left",   # left-place the whole table block
+    heading.align = "left"   # left-align title/subtitle
+  ) %>%
+  tab_header(
+    title = md("**Table 7: Atlanta Construction Employment Projection**"),
+    subtitle = "Job creation potential if Atlanta matched Punta Gorda's construction jobs rate"
+  ) %>%
+  fmt_number(columns = c(`Current Jobs`, `Jobs at PG Rate`, `Job Gap (+)`), 
+             decimals = 0, sep_mark = ",") %>%
+  cols_align("left", columns = Metro) %>%
+  cols_align("right", columns = c(`Current Jobs`, `Jobs at PG Rate`, `Job Gap (+)`)) %>%
+  tab_style(
+    style = cell_fill(color = "#d1ecf1"),
+    locations = cells_body(columns = `Job Gap (+)`)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = `Job Gap (+)`)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md("**Calculation:** Atlanta population × Punta Gorda construction per 1K rate")
+  )
+
+```
+
+---
+
+This outcome is plausible as Punta Gorda has sustained a high building rate for years while keeping housing affordable for workers. The relationship between construction intensity, housing supply, and worker affordability is clearer when comparing these two growing metros using the table below:
+
+---
+
+```{r}
+
+#| label: task7-affordability-comparison-table
+#| code-fold: true
+
+# Create the comparison table
+affordability_table <- tibble(
+  Metric = c(
+    "Construction Intensity",
+    "Housing Supply Index",
+    "Hospitality Worker Burden",
+    "Retail Worker Burden",
+    "Worker Population",
+    "Total Annual Impact"
+  ),
+  `Punta Gorda, FL (Success)` = c(
+    "102.9 workers per 1,000 residents",
+    "291.7 (3× national average)",
+    "65.3% of wage to rent",
+    "37.4% of wage to rent",
+    "38,000 service workers",
+    "Baseline (affordable)"
+  ),
+  `Atlanta, GA (Opportunity)` = c(
+    "52.5 per 1,000 residents",
+    "84 (17% below average)",
+    "74.8% (+9.6pp)",
+    "41.3% (+4.0pp)",
+    "1.2M service workers",
+    "$3B in excess rent burden"
+  ),
+  `The Gap` = c(
+    "Atlanta builds at half PG's rate",
+    "PG produces 3.5× more housing per capita",
+    "Costs Atlanta workers $2,619/year more",
+    "Costs Atlanta workers $1,976/year more",
+    "—",
+    "Support unlocks $3B in savings"
+  )
+)
+
+# Render with gt
+gt(affordability_table) %>%
+  tab_options(
+    table.width = pct(100),
+    table.align = "left",
+    heading.align = "left"
+  ) %>%
+  tab_header(
+    title = md("**Table 8: How Building Drives Affordability: Punta Gorda vs. Atlanta**")
+  ) %>%
+  cols_align("left", columns = everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = Metric)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#d4edda"),
+    locations = cells_body(columns = `Punta Gorda, FL (Success)`)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#fff3cd"),
+    locations = cells_body(columns = `Atlanta, GA (Opportunity)`)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#d1ecf1"),
+    locations = cells_body(columns = `The Gap`)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+    ) %>%
+  tab_source_note(
+    md("*Source: 2023 ACS B25064 (median rent), BLS QCEW (average wages), Census Building Permits*")
+  )
+
+```
+
+**Conclusion:** Federal support to help Atlanta build like Punta Gorda could restore $3 billion annually to working families while creating 317,000+ construction jobs.
+
+---
+
+## **The Federal YIMBY Housing Growth Incentive Bill: A Policy Brief**
+
+**TO:** Interested Congressional Members 
+
+**RE:** Proposed Sponsors: A primary sponsor from Punta Gorda, FL (YIMBY Success) and a co-sponsor from Atlanta, GA (Opportunity City)
+
+**ASK:** Join as a co-sponsor of the Federal YIMBY Housing Growth Incentive Bill, a **voluntary, no-mandates** $500M competitive-grant program that rewards cities for adding homes and lowering rent burden.
+
+---
+
+## **1. How the Program Works**
+
+This voluntary, no-mandates program uses existing federal data (Census and BLS) and discretionary spending to direct funds where they produce results.
+
+* **Eligibility:** Open to all metropolitan areas through competitive application. 
+
+* **Scale:** $500M over five years; grants range from $5M-$50M per metro.
+
+* **Awards:** Planning Grants ($5-15M) for zoning and permitting updates, plus Performance Grants ($25-50M) for areas documenting improvements in housing supply and lowering rent burden.
+
+---
+
+## **2. A Bipartisan Sponsorship Strategy: "Success" and "Opportunity"**
+
+Our strategy pairs two districts to prove the model is effective and necessary.
+
+**YIMBY Success Sponsor: Punta Gorda, FL**
+
+* Building at three times the national average (Housing Growth Index: 291.7)
+* Kept rent pressure low despite 13.2% population growth
+* Qualifies for immediate implementation grants
+
+**Opportunity Co-Sponsor: Atlanta, GA**  
+
+* Construction ~17% below national average (Housing Growth Index: 83.5)
+* Despite 12.4% population growth, rent burden worsened by 3.0pp
+* Federal support can create **317,484 construction jobs** (96% increase from current 331K)
+
+**2023 Evidence (ACS B25064; BLS QCEW):**
+
+* Hospitality (NAICS 72) Rent Burden: ATL 74.8% vs. PG 65.3% (9.6pp gap = **$2,619/year/worker**)
+* Retail (NAICS 44) Rent Burden: ATL 41.3% vs. PG 37.4% (4.0pp gap = **$1,976/year/worker**)
+
+---
+
+## **3. Why This Bill? A Pro-Worker, Pro-Business Coalition**
+
+This data provides a powerful, targeted message for local supporters:
+
+* **For Construction Trades** (AFL-CIO Building Trades, National Association of Home Builders): Atlanta matching Punta Gorda's building rate creates **317,484 additional jobs**, higher-paying, non-outsourceable employment that supports local trade unions and contractors.
+
+* **For Service Workers** (UNITE HERE, United Food and Commercial Workers): Reduces the 9.6pp rent-burden gap for Hospitality workers (**$2,619 savings**) and 4.0pp for Retail workers (**$1,976 savings**). **Scale:** 1.2M workers in Atlanta, 38K in Punta Gorda (BLS QCEW 2023). **Total wage power restored: ~$3 billion.**
+
+* **For Business** (Chambers of Commerce, employers): This bill tackles the primary barrier to employee hiring and retention: high housing costs. By increasing housing supply, it helps ensure workers can afford to live in the communities where they work. 
+
+This bill creates 300K+ jobs, saves workers $2,400 annually, and restores $3B in wages, resulting in a pro-worker, pro-business solution with no mandates.
+
+---
+
+## **4. Scoring & Program Safeguards**
+
+**Scoring Metrics:**
+
+* **Rent Burden by Sector:** Share of a typical Hospitality (NAICS 72) or Retail (NAICS 44) worker's wage that median local rent would consume.
+  * Formula: (ACS B25064 median rent × 12) ÷ (BLS QCEW average wage) × 100
+
+* **Housing Growth Index:** Are new housing permits keeping pace with metro size and 5-year population growth? (Higher = building enough to meet demand.)
+  * Indexed to national average (100)
+
+* **Awards** scale with improvement vs. national average and each city's five-year baseline.
+
+**Program Safeguards:**
+
+* **Accountability:** Public dashboards track results; independent audits verify spending; five-year sunset forces evaluation before renewal, with expectations in a rise in building permits (years 2-3), increases in local construction jobs (years 3-4), and measurable relief from high rents (years 4-5). 
+* **Community Protections:** Funded projects must include tenant protections, affordable unit preservation requirements, and prioritize development near jobs and transit.
+* **Administration:** Uses existing HUD competitive grant processes; no new bureaucracy required.
+
+---
+
+## **5. The Path Forward**
+
+This proposed bill is a sensible solution uniting business and labor: it creates 300K+ construction jobs, saves working families $2,400 annually, and helps employers fill positions. **Potential impact: $3 billion in restored wage power.** Also, by proposing it as a discretionary spending bill, it avoids the need for new budget authorization (existing line item in <a href="https://www.hud.gov/hud-partners/community-cdbg#eg" target="_blank"> HUD's Community Development Block Grant Program</a>).
+
+**Timeline:** Seeking co-sponsors for early 2026 introduction.
+
+**We urge you to co-sponsor the Federal YIMBY Housing Growth Incentive Bill.**
