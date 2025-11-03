@@ -1769,7 +1769,7 @@ sensitivity_2023 %>%
 
 **Urban Honolulu** metro shows a **114.2-point swing** between 50/50 (325.1) and 70/30 (210.9) weighting and has the largest sensitivity in this cohort. Although Honolulu excels at building for new arrivals (Metric 2) it falls extremely short for existing residents (Metric 1). The 50/50 weighting wrongly highlights this metro as a top performer despite neglecting the housing needs of its current residents. 
 
-Therefore, the **60/40** weight is the best option as it accurately reflects resident composition. Most of the analzyed metros consist of existing households needing stable supply, with population growth impacting a smaller share annually. This weighted balance recognizes and awards metros like Punta Gorda that are consistently building for *all* residents. 
+Therefore, the **60/40** weight is the best option as it accurately reflects resident composition. Most of the analzyed metros consist of existing households needing stable supply, with population growth impacting a smaller share annually. This weighted balance recognizes and awards metros like Punta Gorda that are consistently building for *all* residents.
 
 ---
 
@@ -2102,6 +2102,12 @@ datatable(
                                    c("#f5c6cb", "#f8d7da", "#fff3cd", "#ffffff"))
   )
 ```
+
+---
+
+Defining rent burden (Task 4) and housing growth (Task 5) metrics, the next section explores identifying the metros that successfully addressed affordability challenges through sustained construction.
+
+---
 
 ## Task 6: Rent Burden and Housing Growth Relationships
 
@@ -2495,10 +2501,10 @@ fig
 
 #### **The Q3 Quandary: Improving Without Building**
 
-Some metros became more affordable without building new homes, but this wasn't circumstance. It occured as a result of the following: 
+Some metros became more affordable without building new homes, but this wasn't circumstance. It occured due to two factors: 
 
-- **People Migrated**: Most of these metros (e.g., Rust Belt metros) lost population, reducing demand for housing.
-- **Wages Increased**: A few metros had sudden industry surges (like energy), raising salaries faster than rent.
+- **Population Loss**:  Metros like those in the Rust Belt lost residents, reducing housing demand. (Note: These metros technically fail C3 and should not appear in the 3/4 or 4/4 groups under analysis.)
+- **Wages Increased**: A few metros had sudden industry surges (like energy), raising salaries faster than rent, but these gains are volatile and sector-specific.
 
 However, these outcomes are unrealistic. A growing metro can't gamble on "losing people" to address housing issues. For metros experience population influxes, building more remains the only feasible solution. Therefore, Q4 (YIMBY success—building metros) remains the only sustainable model for identified growth metros.
 
@@ -2506,7 +2512,7 @@ However, these outcomes are unrealistic. A growing metro can't gamble on "losing
 
 ### **Visualization 2: Distribution by Criteria Met**
 
-This boxplot shows how rent burden change varies by the number of YIMBY criteria met across all metros. 
+This boxplot shows how rent burden change varies by the number of YIMBY criteria met across all metros.
 
 ```{r}
 
@@ -2590,7 +2596,7 @@ Across the sample, 12 metros meeting all 4 criteria cut rent burden by ~1.4 pp b
 - **Mechanism**: “Q4” metros (high building + improving burden) absorbed growth without proportional rent increases.
 - **Timing**: Gains materialize over ~7–9 years, and likely compound with continued permitting.
 
-A future policy implication is clear: regulatory reform that enables sustained construction may lead to improved affordability within a 7-9 year timeframe.
+The policy implication is clear: regulatory reform that enables sustained construction may lead to improved affordability within a 7-9 year timeframe.
 
 ## Task 7: Policy Brief - Sponsor City Selection
 
