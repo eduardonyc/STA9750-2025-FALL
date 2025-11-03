@@ -337,7 +337,7 @@ permits <- permits %>%
   
 ```
 
-The second transformation links Building Permits to BLS wage data by formatting the integer CBSA code into the BLS-specific FIPS string format.
+The second transformation links BLS wage data to Census tables by converting BLS FIPS format back to standard 5-digit CBSA codes. BLS codes like "C1018" need to be padded to match Census format "10180":
 
 ```r
 mutate(.digits  = sub("^C", "", FIPS), 
@@ -365,7 +365,7 @@ The Relationship Diagram below highlights these naming conventions, showing the 
 ```{r}
 
 #| label: fig-relationship-diagram
-#| fig-cap: "Data Integration Architecture: Entity Relationships & Transformation Logic Across Federal Data Sources"
+#| fig-cap: "Figure 1: Data Integration Architecture: Entity Relationships & Transformation Logic Across Federal Data Sources"
 #| out-width: "100%"
 #| results: 'asis'
 
@@ -406,7 +406,7 @@ As illustrated in Figure 1, each data source uses a different convention for ide
 
 - **Census ACS Tables** use alphanumeric `GEOID` strings (e.g., "CBSA10180" for Abilene, TX Metro Area)
 - **Census Building Permits** use integer `CBSA` codes (e.g., 10180)
-- **BLS Wage Data** use formatted `FIPS` strings with "C" prefix and that need zero-padding (e.g., "C1018" to normalize to "10180")
+- **BLS Wage Data** use formatted `FIPS` strings  strings with "C" prefix (e.g., "C1018" for what Census calls CBSA 10180 - note BLS drops the trailing zero)
 
 These differences represent significant data engineering challenges. A naive, or direct join would fail to match any records across these sources, despite all three referring to identical geographic areas.
 
@@ -2339,25 +2339,48 @@ This interactive scatterplot reveals the relationship between housing constructi
 #| fig.height: 9
 #| warning: false
 
-# Filter to only 3/4 and 4/4 metros for cleaner visualization
+# Background layer: ALL metros (for context)
+background_data <- combined_analysis %>%
+  mutate(
+    metro_clean = str_remove(NAME, " Metro Area"),
+    yimby_category = "0-2/4 (Other)",
+    hover_text = paste0(
+      "<b>", metro_clean, "</b><br>",
+      "YIMBY Score: ", yimby_score, "/4<br>",
+      "Housing Score: ", round(composite_score, 1), "<br>",
+      "Burden Change: ", round(rent_burden_change, 1), " pp"
+    )
+  )
+
+# Foreground layer: Only 3/4 and 4/4 metros (success stories)
 plot_data <- combined_analysis %>%
   filter(yimby_score >= 3) %>%
   mutate(
     metro_clean = str_remove(NAME, " Metro Area"),
     score_label = paste0(yimby_score, "/4"),
-    # Create rich hover text
+    yimby_category = if_else(yimby_score == 4, "4/4 (Complete)", "3/4 (Strong)"),
     hover_text = paste0(
       "<b>", metro_clean, "</b><br>",
-      "Population Growth: ", comma(abs(pop_change_5yr))
+      "YIMBY Score: ", yimby_score, "/4<br>",
+      "Population Growth: ", comma(abs(pop_change_5yr)), "<br>",
+      "Housing Score: ", round(composite_score, 1), "<br>",
+      "Burden Change: ", round(rent_burden_change, 1), " pp"
     )
   )
 
-# Create ggplot
-p <- ggplot(plot_data, aes(
-  x = composite_score, 
-  y = rent_burden_change,
-  text = hover_text
-)) +
+# Create ggplot with TWO layers
+p <- ggplot() +
+  # LAYER 1: Background - all metros in light gray
+  geom_point(
+    data = background_data,
+    aes(x = composite_score, 
+        y = rent_burden_change,
+        color = yimby_category,
+        text = hover_text),
+    size = 2,
+    alpha = 0.4
+  ) +
+  
   # Reference lines
   geom_hline(yintercept = 0, color = "gray30", linewidth = 0.8) +
   geom_vline(xintercept = 100, color = "gray30", linewidth = 0.8) +
@@ -2380,27 +2403,32 @@ p <- ggplot(plot_data, aes(
            label = "Q4: YIMBY SUCCESS", 
            size = 4, fontface = "bold", color = "darkgreen", hjust = 0.5) +
   
-  # Points with color and size
+  # LAYER 2: Foreground - success stories (3/4 and 4/4) in color
   geom_point(
-    aes(color = factor(yimby_score), 
-        size = abs(pop_change_5yr)),
-    alpha = 0.7
+    data = plot_data,
+    aes(x = composite_score, 
+        y = rent_burden_change,
+        color = yimby_category,
+        size = abs(pop_change_5yr),
+        text = hover_text),
+    alpha = 0.8
   ) +
   
-  # Color scale
+  # Color scale - now includes all three categories
   scale_color_manual(
     values = c(
-      "4" = "#006d2c",
-      "3" = "#a1d99b"
+      "0-2/4 (Other)" = "gray85",
+      "3/4 (Strong)" = "#a1d99b",
+      "4/4 (Complete)" = "#006d2c"
     ),
     name = "YIMBY Score",
-    labels = c("3" = "3/4 (Strong)", "4" = "4/4 (Complete)")
+    breaks = c("4/4 (Complete)", "3/4 (Strong)", "0-2/4 (Other)")
   ) +
   
-  # Size scale (won't show in legend, but controls visual size)
+  # Size scale (controls visual size, not in legend)
   scale_size_continuous(
     range = c(3, 16),
-    guide = "none"  # Accept it won't show, info is in hover
+    guide = "none"
   ) +
   
   # Scales
@@ -2435,7 +2463,7 @@ p <- ggplot(plot_data, aes(
     panel.grid.minor = element_blank()
   )
 
-# Convert to plotly with custom tooltip
+# Convert to plotly - it will handle both layers automatically
 fig <- ggplotly(p, tooltip = "text") %>%
   layout(
     title = list(
