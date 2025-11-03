@@ -3198,7 +3198,7 @@ Atlanta exemplifies the supply-constrained growth pattern federal YIMBY grants t
 
 ## Unlocking Atlanta Metro's Housing Supply and Job Growth
 
-The Atlanta metro currently employs 331,350 construction workers. If the metro matched Punta Gorda's proven construction intensity of 102.9 workers per 1,000 residents, it would sustain 648,834 construction jobs, representing a potential increase of 317,484 jobs (or 96% sector growth). More construction workers can lead to more housing built, placing more housing in the supply to reduce pressure on rents.
+The Atlanta metro currently employs 331,350 construction workers. If the metro matched Punta Gorda's proven construction intensity of 102.9 workers per 1,000 residents, it would sustain 648,834 construction jobs, representing a potential increase of approximately 317,000 jobs (or 96% sector growth). More construction workers can lead to more housing built, placing more housing in the supply to reduce pressure on rents.
 
 
 ```{r}
@@ -3475,7 +3475,7 @@ Our strategy pairs two districts to prove the model is effective and necessary.
 
 - Construction 17% below national average (Housing Growth Index: 84)
 - Despite 12.4% population growth, rent burden worsened by 3.0pp
-- Federal support can create **317,484 construction jobs** (96% increase from current 331K)
+- Federal support can create approximately **317,000 construction jobs** (96% increase from current 331K)
 
 **2023 Evidence (ACS B25064; BLS QCEW):**
 
