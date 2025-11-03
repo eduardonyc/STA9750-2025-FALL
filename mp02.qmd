@@ -3020,7 +3020,6 @@ Based on this comprehensive review, two sectors emerge as optimal for coalition-
 - 72, Accommodations & Food Services, and 
 - 44, Retail Trade.
 
-
 ---
 
 ```{r}
@@ -3193,13 +3192,14 @@ gt(gap_tbl) %>%
 ```
 ---
 
-Atlanta exemplifies the supply-constrained growth pattern federal YIMBY grants target: 6.3 million residents growing 12.4% over five years, yet rent burden worsened by 3.0 percentage points—the most among large metros—due to below-average housing construction (score: 84). This gap leaves 1.2 million service workers paying 4-10 percentage points more of wages to rent than workers in successful metros.
+Atlanta exemplifies the supply-constrained growth pattern federal YIMBY grants target: 6.3 million residents growing 12.4% over five years, yet rent burden worsened by 3.0 percentage points—the most among large metros—due to below-average housing construction (score: 84). This gap corresponds to 1.2 million service workers paying 4-10 percentage points more of their wages toward rent compared to workers in successful metros.
 
 ---
 
 ## Unlocking Atlanta Metro's Housing Supply and Job Growth
 
 The Atlanta metro currently employs 331,350 construction workers. If the metro matched Punta Gorda's proven construction intensity of 102.9 workers per 1,000 residents, it would sustain 648,834 construction jobs, representing a potential increase of 317,484 jobs (or 96% sector growth). More construction workers can lead to more housing built, placing more housing in the supply to reduce pressure on rents.
+
 
 ```{r}
 
@@ -3327,7 +3327,7 @@ gt(job_table) %>%
   ) %>%
   tab_header(
     title = md("**Table 7: Atlanta Construction Employment Projection**"),
-    subtitle = "Job creation potential if Atlanta matched Punta Gorda's construction jobs rate"
+    subtitle = "*Job creation potential if Atlanta matched Punta Gorda's construction jobs rate"
   ) %>%
   fmt_number(columns = c(`Current Jobs`, `Jobs at PG Rate`, `Job Gap (+)`), 
              decimals = 0, sep_mark = ",") %>%
@@ -3351,9 +3351,11 @@ gt(job_table) %>%
 
 ```
 
+*Note:  This projection is likely high based on a simple "linear" assumption that the number of construction jobs will increase at similar rates as population.*
+
 ---
 
-This outcome is plausible as Punta Gorda has sustained a high building rate for years while keeping housing affordable for workers. The relationship between construction intensity, housing supply, and worker affordability is clearer when comparing these two growing metros using the table below:
+This outcome is plausible as Punta Gorda has sustained a high building rate for years while keeping housing affordable for workers. The relationship between construction intensity, housing supply, and worker affordability is clearer when comparing these two growing metros using the table below.
 
 ---
 
@@ -3486,13 +3488,13 @@ Our strategy pairs two districts to prove the model is effective and necessary.
 
 This data provides a powerful, targeted message for local supporters:
 
-- **For Construction Trades** (AFL-CIO Building Trades, National Association of Home Builders): Atlanta matching Punta Gorda's building rate creates **317,484 additional jobs**, higher-paying, non-outsourceable employment that supports local trade unions and contractors.
+- **For Construction Trades** (AFL-CIO Building Trades, National Association of Home Builders): Atlanta matching Punta Gorda's building rate creates approximately **317,000 additional jobs**, higher-paying, non-outsourceable employment that supports local trade unions and contractors.
 
-- **For Service Workers** (UNITE HERE, United Food and Commercial Workers): Reduces the 9.6pp rent-burden gap for Hospitality workers (**$2,619 savings**) and 4.0pp for Retail workers (**$1,976 savings**). **Scale:** 1.2 million workers in Atlanta, 38K in Punta Gorda (BLS QCEW 2023). **Total wage power restored: ~$3 billion.**
+- **For Service Workers** (UNITE HERE, United Food and Commercial Workers): Reduces the 9.6pp rent-burden gap for Hospitality workers (**$2,619 savings**) and 4.0pp for Retail workers (**$1,976 savings**). **Scale:** 1,200,000 workers in Atlanta, 38K in Punta Gorda (BLS QCEW 2023). **Total wage power restored: ~$3 billion.**
 
 - **For Business** (Chambers of Commerce, employers): This bill tackles the primary barrier to employee hiring and retention: high housing costs. By increasing housing supply, it helps ensure workers can afford to live in the communities where they work. 
 
-This bill creates 300K+ jobs, saves workers $2,400 annually, and restores $3B in wages, resulting in a pro-worker, pro-business solution with no mandates.
+This bill creates approximately 317,000 jobs, saves workers $2,400 annually, and restores $3 billion in aggregate wages, resulting in a pro-worker, pro-business solution with no mandates.
 
 ---
 
