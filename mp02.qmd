@@ -1334,11 +1334,11 @@ datatable(
 
 ---
 
-This Sunbelt tightening is happening because affordable areas experienced a variety of challenges during the observed period. 
+Sunbelt metros face this tightening as a result of several converging factors during the study period.
 
-- Mass Migration: An increase in new residents, many with high-earning potential, migrated to these areas.
-- Slow Building: Existing housing and zoning rules prevented developers from increasing the supply of new housing.
-- Wage-Rent Gap: Rents increased for everyone over this period, but wages have not caught up.
+- Migration Surge: Many high-earning residents migrated to these areas.
+- Constrained Supply: Existing housing and zoning rules prevented developers from increasing the supply of new housing.
+- Wage Stagnation: Rents rose faster than local wages, widening the affordability gap.
 
 ---
 
@@ -1391,9 +1391,9 @@ datatable(
 
 #### **Context: National Rent Burden Extremes**
 
-Colorado Springs is on a slippery path. While it's still more affordable than metros on the edge of an affordability gap, like Florida (as shown in Table 3), it's catching up fast. It has already lost 5.6 points of affordability since 2009. If this trend continues, it will become another unaffordable metro within the next two decades.
+While Colorado Springs is on a slippery path, it's still more affordable than metros on the edge of an affordability gap like Florida (as shown in Table 3). However, this metro is catching up fast. It has already lost 5.6 points of affordability since 2009. If this trend continues, it will become another unaffordable metro within the next two decades.
 
-This shows that rapid growth without enough building can lead to an affordability crisis. 
+Table 3 highlights that metros with rapid growth lacking sufficient building can lead to potential affordability gaps.
 
 ```{r}
 
@@ -1499,6 +1499,12 @@ datatable(
   )
 
 ```
+
+---
+
+By establishing how to measure rent burden, the next section focuses on the supply side of the affordability equation by addressing how intensively metros are building housing.
+
+---
 
 ## Task 5: Housing Growth
 
@@ -1661,7 +1667,7 @@ $$\text{Metric 2 Index} = \frac{\text{Permits per Growth}}{0.4} \times 100$$
 
 **Metric Note:** This metric is not applicable to metros with declining or stable populations (defined as five-year population change ≤ 100 people). For these metros, Metric 2 is recorded as NA, and their composite score is based solely on Metric 1.
 
-**Data Note:** Population growth includes both net migration and natural increase (births minus deaths). Housing demand is typically higher for growth driven by inward migration, as new households form immediately, compared to natural increase where housing needs develop gradually as families expand.
+**Data Note:** Population growth includes both net migration and natural increase (births minus deaths). Housing demand is typically higher when there are higher levels of inward migration, as new households form immediately, compared to natural increase where housing needs develop gradually as families expand. Consequently, Metric 2 might make a metro's housing supply look fine if its population growth is mostly from births, even if it's not building enough.
 
 ---
 
