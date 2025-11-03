@@ -2598,6 +2598,8 @@ Across the sample, 12 metros meeting all 4 criteria cut rent burden by ~1.4 pp b
 
 The policy implication is clear: regulatory reform that enables sustained construction may lead to improved affordability within a 7-9 year timeframe.
 
+---
+
 ## Task 7: Policy Brief - Sponsor City Selection
 
 ### Primary Sponsor: YIMBY Success City
@@ -2863,7 +2865,7 @@ $$
 
 ---
 
-The coalition centers on 72, Accommodations & Food Services, and 44, Retail Trade. These represent large worker bases having clear affordability gains from YIMBY policy, and strong, organized industry partners.
+To identify the most compelling occupations for coalition-building, the rent burden analysis in the table below shows all major economic sectors ranked by the size of the Atlanta-Punta Gorda rent burden gap.
 
 ```{r}
 
@@ -3010,6 +3012,16 @@ gt(rent_gap_tbl) %>%
   tab_options(table.font.size = "small")
 
 ```
+
+---
+
+Based on this comprehensive review, two sectors emerge as optimal for coalition-building:
+
+- 72, Accommodations & Food Services, and 
+- 44, Retail Trade.
+
+
+---
 
 ```{r}
 
