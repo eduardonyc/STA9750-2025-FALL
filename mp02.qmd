@@ -668,7 +668,7 @@ top_10_states <- state_income %>%
                                          nsmall = 2)),
     note = case_when(
       state == "DC" ~ "⚠️ 100% Multi-State ⚠️",
-      state %in% c("NY", "MD", "VA", "PA", "NJ") ~ "Contains Multi-State CBSAs",
+      state %in% c("NY", "MD", "VA", "PA", "NJ") ~ "⚠️ Contains Multi-State CBSAs",
       TRUE ~ ""
     )
   ) %>%
@@ -706,13 +706,12 @@ top_10_states %>%
     md("Source: **U.S. Census Bureau, American Community Survey (ACS), 2015**")
     )
 
-
 ```
 
 **Answer:** **`r top_state_name`** appears highest in 2015 at $`r format(round(top_state_income, 2), big.mark = ",")`, **but** that result is inflated by:
 
 - **Multi-state Washington CBSA** attribution
-- **CBSA-only coverage**excludes rural areas
+- **CBSA-only coverage** excludes rural areas
 
 **Most comparable state-to-state finding:** Excluding the mentioned artifacts and using states with strong single-state CBSA coverage, **Massachusetts** ranks highest, followed by **Connecticut**.
 
