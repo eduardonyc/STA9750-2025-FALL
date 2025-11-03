@@ -1274,6 +1274,16 @@ This metric shows how many percentage points a metro's rent-to-income ratio is a
 
 The formula is more intuitive than a raw ratio and directly answers the policy question: "How far from the affordability standard is this metro?"
 
+**Metric Justification:** 
+
+This metric measures how many percentage points a city is above or below the 30% HUD threshold, or an official government definition of "affordability." Also:
+
+- Easy to Grasp: It's intuitive. A city at 37% is "7 points" over the line.
+- Fair: It treats cities 5 points above the line and 5 points below it equally.
+- Directly Comparable: All cities are measured against the same 30% benchmark, unlike a "national average" which changes every year.
+
+Most importantly, this metric makes it easy to answer a simple question: "Is this city affordable?"
+
 **Note:** Analysis covers all U.S. metropolitan areas, excluding Puerto Rico. 2020 data is omitted due to pandemic anomalies.
 
 ---
@@ -2058,7 +2068,7 @@ datatable(
 
 ---
 
-Several metros in Tables 3a and 3b show "—" or "Not Applicable" for Metric 2 (Growth Accommodation Index). This occurs when five-year population change is ≤100 people, indicating population stability or decline. For these metros:
+Several metros in Tables 3a and 3b show "—" or "Not Applicable" for Metric 2. This occurs when five-year population change is ≤100 people, indicating overall stability or decline. For these metros:
 
 - **There is no growth to accommodate**, making a "permits per new resident" ratio meaningless.
 - **Their Composite Score = Metric 1 only**, reflecting how they're building relative to their current population.
@@ -3487,9 +3497,7 @@ gt(affordability_table) %>%
 ## **The Federal YIMBY Housing Growth Incentive Bill: A Policy Brief**
 
 **TO:** Interested Congressional Members 
-
 **RE:** Proposed Sponsors: A primary sponsor from Punta Gorda, FL (YIMBY Success) and a co-sponsor from Atlanta, GA (Opportunity City)
-
 **ASK:** Join as a co-sponsor of the Federal YIMBY Housing Growth Incentive Bill, a **voluntary, no-mandates** $500M competitive-grant program that rewards cities for adding homes and lowering rent burden.
 
 ---
@@ -3532,9 +3540,7 @@ Our strategy pairs two districts to prove the model is effective and necessary.
 This data provides a powerful, targeted message for local supporters:
 
 - **For Construction Trades** (AFL-CIO Building Trades, National Association of Home Builders): Atlanta matching Punta Gorda's building rate creates approximately **317,000 additional jobs**, higher-paying, non-outsourceable employment that supports local trade unions and contractors.
-
 - **For Service Workers** (UNITE HERE, United Food and Commercial Workers): Reduces the 9.6pp rent-burden gap for Hospitality workers (**$2,619 savings**) and 4.0pp for Retail workers (**$1,976 savings**). **Scale:** 1,200,000 workers in Atlanta, 38K in Punta Gorda (BLS QCEW 2023). **Total wage power restored: ~$3 billion.**
-
 - **For Business** (Chambers of Commerce, employers): This bill tackles the primary barrier to employee hiring and retention: high housing costs. By increasing housing supply, it helps ensure workers can afford to live in the communities where they work. 
 
 This bill creates approximately 317,000 jobs, saves workers $2,400 annually, and restores $3 billion in aggregate wages, resulting in a pro-worker, pro-business solution with no mandates.
@@ -3555,7 +3561,7 @@ This bill creates approximately 317,000 jobs, saves workers $2,400 annually, and
 
 **Program Safeguards:**
 
-- **Accountability:** Public dashboards track results; independent audits verify spending; five-year sunset forces evaluation before renewal, with expectations in a rise in building permits (years 2-3), increases in local construction jobs (years 3-4), and measurable relief from high rents (years 4-5). 
+- **Accountability:** Public dashboards track results; independent audits verify spending; five-year sunset forces evaluation before renewal, with expectations for rising building permits (years 2-3), increases in local construction jobs (years 3-4), and measurable relief from high rents (years 4-5). 
 - **Community Protections:** Funded projects must include tenant protections, affordable unit preservation requirements, and prioritize development near jobs and transit.
 - **Administration:** Uses existing <a href="https://www.hudexchange.info/programs/grants-management/#grants-management-lifecycle" target="_blank">HUD competitive grant processes </a>, simplifying the application process. 
 
@@ -3566,5 +3572,3 @@ This bill creates approximately 317,000 jobs, saves workers $2,400 annually, and
 This proposed bill is a sensible solution uniting business and labor: it creates 300K+ construction jobs, saves working families $2,400 annually, and helps employers fill positions. **Potential impact: $3 billion in restored wage power.** Also, by proposing it as a discretionary spending bill, it avoids the need for new budget authorization (existing line item in <a href="https://www.hud.gov/hud-partners/community-cdbg#eg" target="_blank"> HUD's Community Development Block Grant Program</a>).
 
 **Timeline:** Seeking co-sponsors for early 2026 introduction.
-
-**We urge you to co-sponsor the Federal YIMBY Housing Growth Incentive Bill!**
