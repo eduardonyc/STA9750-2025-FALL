@@ -365,9 +365,8 @@ The Relationship Diagram below highlights these naming conventions, showing the 
 ```{r}
 
 #| label: fig-relationship-diagram
-#| fig-cap: "Figure 1: Data Integration Architecture: Entity Relationships & Transformation Logic Across Federal Data Sources"
+#| fig-cap: "Data Integration Architecture: Entity Relationships & Transformation Logic Across Federal Data Sources"
 #| out-width: "100%"
-#| results: 'asis'
 
 grViz("
 digraph MP02_ERD {
