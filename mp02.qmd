@@ -62,7 +62,7 @@ Following the guidelines for Mini Project #02, this section executes the instruc
 3. **BLS Industry Codes**: NAICS classification system for occupation analysis
 4. **BLS QCEW Data** (2009-2023): Employment and wages by industry and CBSA
 
-These datasets are part of all subsequent tasks to analyze housing affordability across metropolitan areas in the United States.
+These datasets integrate into all subsequent tasks to analyze housing affordability across metropolitan areas in the United States.
 
 ```{r}
 
@@ -1441,8 +1441,7 @@ datatable(
     style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 1.1em;',
     HTML(paste0("Table 3: Top 5 Highest Rent Burden Metro Areas — ", latest_year, 
         "<br><span style='font-size: 0.85em; font-weight: normal; color: #666;'>",
-        "Note: Cape Coral-Fort Myers and Miami are statistically tied at 0.1 pp above the affordability threshold (both 30.1% RTI). ",
-        "Miami is highlighted due to its larger population (6.1M vs 830K) and greater policy significance.</span>"))
+        "Note: Miami and Cape Coral tie at 30.1% RTI. Miami is highlighted as the larger metro (6.1M residents vs. 830K).</span>"))
   )
 ) %>%
   formatRound(c("Affordability Gap (pp)", "RTI (%)"), digits = 1) %>%
@@ -1782,7 +1781,7 @@ sensitivity_2023 %>%
 
 **Urban Honolulu** metro shows a **114.2-point swing** between 50/50 (325.1) and 70/30 (210.9) weighting and has the largest sensitivity in this cohort. Although Honolulu excels at building for new arrivals (Metric 2) it falls extremely short for existing residents (Metric 1). The 50/50 weighting wrongly highlights this metro as a top performer despite neglecting the housing needs of its current residents. 
 
-Therefore, the **60/40** weight is the best option as it accurately reflects resident composition. Most of the analzyed metros consist of existing households needing stable supply, with population growth impacting a smaller share annually. This weighted balance recognizes and awards metros like Punta Gorda that are consistently building for *all* residents.
+Therefore, the **60/40** weight is the best option as it accurately reflects resident composition. Most of the analyzed metros consist of existing households needing stable supply, with population growth impacting a smaller share annually. This weighted balance recognizes and awards metros like Punta Gorda that are consistently building for *all* residents.
 
 ---
 
@@ -2470,6 +2469,7 @@ p <- ggplot() +
   # Labels
   labs(
     title = "Housing Growth vs. Rent Burden Outcomes",
+    subtitle = "Policy Brief sponsors: Punta Gorda, FL (Success) at x=291.7, y=-0.3 | Atlanta, GA (Opportunity) at x=84, y=+3.0",
     x = "Housing Growth Composite Score (100 = National Average)",
     y = "Change in Rent Burden (pp), 2023 vs 2014-2016\nNegative = Improvement"
   ) +
