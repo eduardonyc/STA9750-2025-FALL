@@ -2058,6 +2058,14 @@ datatable(
 
 ---
 
+Several metros in Tables 3a and 3b show "—" or "Not Applicable" for Metric 2 (Growth Accommodation Index). This occurs when five-year population change is ≤100 people, indicating population stability or decline. For these metros:
+
+- **There is no growth to accommodate**, making a "permits per new resident" ratio meaningless.
+- **Their Composite Score = Metric 1 only**, reflecting how they're building relative to their current population.
+- **This is not a flaw** as it correctly recognizes that metros losing population face different housing challenges than booming metros.
+
+The table below shows the 10 metros with the most substantial population decline, illustrating why Metric 2 cannot apply.
+
 ---
 
 ```{r}
@@ -2089,8 +2097,8 @@ datatable(
   rownames = FALSE,
   options = list(
     pageLength = 5,
-    dom = 't', 
-    ordering = FALSE,
+    dom = 'ltp', 
+    ordering = TRUE,
     columnDefs = list(
       list(className = 'dt-left', targets = '_all')
       )
