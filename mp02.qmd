@@ -55,7 +55,14 @@ library(rlang)
 
 ### Data Acquistion
 
-Following the guidelines for Mini Project #02, the code below contains all the essential content that addresses Tasks 2 through 7. 
+Following the guidelines for Mini Project #02, this section executes the instructor-provided data acquisition code. The code downloads and prepares five critical datasets:
+
+1. **ACS Data** (2009-2023): Household income, rent, population, and households by CBSA
+2. **Building Permits** (2009-2023): New housing units permitted by CBSA
+3. **BLS Industry Codes**: NAICS classification system for occupation analysis
+4. **BLS QCEW Data** (2009-2023): Employment and wages by industry and CBSA
+
+These datasets are part of all subsequent tasks to analyze housing affordability across metropolitan areas in the United States.
 
 ```{r}
 
@@ -329,12 +336,12 @@ To connect ACS to the Building Permits database, we standardize both to a common
 
 ```r
 acs <- acs %>%
-  mutate(cbsa_str = GEOID, 
-  CBSA = as.integer(GEOID)
+  mutate(
+    cbsa_str = GEOID, 
+    CBSA = as.integer(str_extract(GEOID, "[0-9]+"))
   )
 permits <- permits %>%
   mutate(cbsa_str = sprintf("%05d", CBSA))
-  
 ```
 
 The second transformation links BLS wage data to Census tables by converting BLS FIPS format back to standard 5-digit CBSA codes. BLS codes like "C1018" need to be padded to match Census format "10180":
@@ -343,7 +350,6 @@ The second transformation links BLS wage data to Census tables by converting BLS
 mutate(.digits  = sub("^C", "", FIPS), 
 cbsa_str = ifelse(nchar(.digits) == 4, paste0(.digits, "0"), .digits)) %>%
 select(-.digits)
-
 ```
 
 Additionally, there is a different naming convention for "year." Specifically, ACS and Census tables use lowercase `year`, while BLS tables use uppercase `YEAR`. Join operations must explicitly map these columns:
@@ -401,11 +407,11 @@ digraph MP02_ERD {
 
 ### Geographic Identification Challenges
 
-As illustrated in Figure 1, each data source uses a different convention for identifying the same geographic units:
+As illustrated in the diagram above, each data source uses a different convention for identifying the same geographic units:
 
 - **Census ACS Tables** use alphanumeric `GEOID` strings (e.g., "CBSA10180" for Abilene, TX Metro Area)
 - **Census Building Permits** use integer `CBSA` codes (e.g., 10180)
-- **BLS Wage Data** use formatted `FIPS` strings  strings with "C" prefix (e.g., "C1018" for what Census calls CBSA 10180 - note BLS drops the trailing zero)
+- **BLS Wage Data** use formatted `FIPS` strings with "C" prefix (e.g., "C1018" for what Census calls CBSA 10180 - note BLS drops the trailing zero)
 
 These differences represent significant data engineering challenges. A naive, or direct join would fail to match any records across these sources, despite all three referring to identical geographic areas.
 
@@ -600,8 +606,7 @@ albuquerque_permits %>%
 
 **Answer:** Albuquerque, NM (CBSA 10740) permitted the most new housing units in **`r peak_year`** with **`r format(peak_units, big.mark = ",")`** units.
 
-**COVID-19 Artifact Note:** 2021’s big jump is a result of 2020’s delayed permits catching up after lockdowns. In other words, this is a data “blip,” not a new trend, seen across several metro areas.
-
+**COVID-19 Artifact Note:** The 2021 spike in construction permits is misleading. It represents a backlog of delayed 2020 permits receiving approval after pandemic shutdowns ended. Many metros show this same "2020 dip, 2021 rebound" trend. As a result, it is not indicative of real change in demand for housing.
 
 ### Question 3: Highest Average Individual Income by State (2015)
 
@@ -789,7 +794,7 @@ gt(metrics) %>%
 
 ### Question 4: Data Scientists by CBSA Over Time
 
-What is the last year in which the NYC CBSA had the most data scientists in the country? In recent, the San Francisco CBSA has had the most data scientists.
+What is the last year in which the NYC CBSA had the most data scientists in the country? In recent years, the San Francisco CBSA has had the most data scientists.
 
 ```{r}
 
@@ -1208,7 +1213,7 @@ This long-term national decline reflects documented demographic and economic fac
 
 ## Task 4: Rent Burden Analysis
 
-### Change of Rent Burden Over Time 
+### Changes in Rent Burden Over Time 
 
 ```{r}
 
@@ -2052,6 +2057,9 @@ datatable(
 ```
 
 ---
+
+---
+
 ```{r}
 
 #| label: task5-declining-metros
