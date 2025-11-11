@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Eduardo Alarcon">
 
-<title>Practice – STA 9750 Submission Material</title>
+<title>STA 9750 Mini-Project #03: Visualizing and Maintaining the Green Canopy of NYC – STA 9750 Submission Material</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -119,13 +120,19 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Practice</h1>
+<h1 class="title">STA 9750 Mini-Project #03: Visualizing and Maintaining the Green Canopy of NYC</h1>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Eduardo Alarcon </p>
+          </div>
+  </div>
     
   
     
@@ -136,248 +143,9 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<hr>
-<section id="your-solution-strategy-summary" class="level2">
-<h2 class="anchored" data-anchor-id="your-solution-strategy-summary">Your Solution Strategy Summary</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 26%">
-<col style="width: 35%">
-<col style="width: 38%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Challenge</th>
-<th>Your Solution</th>
-<th>Implementation</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Time lag</strong></td>
-<td>Use lag to your advantage - ensures clean pre/post separation</td>
-<td>Pre: 2015-2019 ACS; Post: 2019-2023 ACS</td>
-</tr>
-<tr class="even">
-<td><strong>Overlapping years</strong></td>
-<td>Standard practice; conservative approach</td>
-<td>Frame as methodological strength</td>
-</tr>
-<tr class="odd">
-<td><strong>Margins of error</strong></td>
-<td>CDs large enough for reliable estimates</td>
-<td>Report MOEs; flag unreliable estimates if needed</td>
-</tr>
-<tr class="even">
-<td><strong>Need current data</strong></td>
-<td>2019-2023 ACS published Dec 2024</td>
-<td>Available now; use 2018-2022 if needed sooner</td>
-</tr>
-</tbody>
-</table>
-<hr>
-</section>
-<section id="part-2-updated-specific-questions" class="level1">
-<h1>PART 2: Updated Specific Questions</h1>
-<section id="overarching-question" class="level2">
-<h2 class="anchored" data-anchor-id="overarching-question">Overarching Question:</h2>
-<p><strong>“Did COVID-19 reshape the drivers of housing affordability differently across NYC neighborhoods, revealing distinct local market dynamics?”</strong></p>
-<hr>
-</section>
-<section id="refined-specific-questions-final-version" class="level2">
-<h2 class="anchored" data-anchor-id="refined-specific-questions-final-version">Refined Specific Questions (Final Version)</h2>
-<section id="transportation-accessibility-tiffany" class="level3">
-<h3 class="anchored" data-anchor-id="transportation-accessibility-tiffany"><strong>1. Transportation Accessibility (Tiffany)</strong></h3>
-<p><strong>“Did the relationship between transit accessibility and property values weaken post-COVID (2020-2025) compared to pre-COVID (2015-2019) across NYC’s Community Districts, and did this weakening vary spatially?”</strong></p>
-<p><strong>Operationalization:</strong> - <strong>Unit of analysis</strong>: 59 Community Districts - <strong>Transit accessibility</strong>: Average distance to nearest 3 subway stations per CD - <strong>Property values</strong>: Median sale price per CD from DOF Rolling Sales - <strong>Time periods</strong>: Pre (2015-2019) vs.&nbsp;Post (2021-2025) - <strong>Test</strong>: <code>Price ~ TransitDistance × PostCOVID × Borough + Controls</code></p>
-<p><strong>Expected finding</strong>: Transit-price correlation weakened more in Manhattan/Downtown Brooklyn than outer boroughs</p>
-<hr>
-</section>
-<section id="crime-and-safety-kelly" class="level3">
-<h3 class="anchored" data-anchor-id="crime-and-safety-kelly"><strong>2. Crime and Safety (Kelly)</strong></h3>
-<p><strong>“How did crime’s impact on housing costs change from pre-COVID (2015-2019) to post-COVID (2021-2025) across NYC’s Community Districts, and did this shift vary by initial crime levels?”</strong></p>
-<p><strong>Operationalization:</strong> - <strong>Unit of analysis</strong>: 59 Community Districts - <strong>Crime measure</strong>: Major felony rate per 1,000 residents per CD (from NYPD data) - <strong>Property values</strong>: Median sale price per CD - <strong>Test</strong>: <code>Price ~ CrimeRate × PostCOVID × InitialCrimeLevel + Controls</code></p>
-<p><strong>Expected finding</strong>: Crime became a stronger predictor of prices post-COVID, especially in previously low-crime areas</p>
-<hr>
-</section>
-<section id="educational-attainment-eduardo" class="level3">
-<h3 class="anchored" data-anchor-id="educational-attainment-eduardo"><strong>3. Educational Attainment (Eduardo)</strong></h3>
-<p><strong>“Did the strength of the relationship between neighborhood educational attainment and median home prices change post-COVID, and did this change differ across NYC’s Community Districts?”</strong></p>
-<p><strong>Operationalization:</strong> - <strong>Unit of analysis</strong>: 59 Community Districts<br>
-- <strong>Education measure</strong>: % Bachelor’s degree or higher from ACS - Pre-COVID: 2015-2019 ACS - Post-COVID: 2019-2023 ACS (or 2018-2022 ACS) - <strong>Property values</strong>: Median sale price per CD - <strong>Test</strong>: <code>Price ~ EducationLevel × PostCOVID × Borough + Controls</code></p>
-<p><strong>Expected finding</strong>: Education premium weakened in Manhattan but strengthened or stayed stable in outer boroughs</p>
-<hr>
-</section>
-<section id="commercial-corridor-vitality-madison" class="level3">
-<h3 class="anchored" data-anchor-id="commercial-corridor-vitality-madison"><strong>4. Commercial Corridor Vitality (Madison)</strong></h3>
-<p><strong>“How did the relationship between commercial corridor vitality and nearby residential property values shift post-COVID across NYC’s Community Districts?”</strong></p>
-<p><strong>Operationalization:</strong> - <strong>Unit of analysis</strong>: 59 Community Districts - <strong>Commercial vitality</strong>: - Active businesses per square mile (from Business Licenses) - OR commercial property density from PLUTO - <strong>Property values</strong>: Median residential sale price per CD - <strong>Test</strong>: <code>ResidentialPrice ~ CommercialDensity × PostCOVID × Borough + Controls</code></p>
-<p><strong>Expected finding</strong>: Commercial vitality became less important for residential values in Manhattan, more important in outer boroughs</p>
-<hr>
-</section>
-<section id="residential-density-jonathan" class="level3">
-<h3 class="anchored" data-anchor-id="residential-density-jonathan"><strong>5. Residential Density (Jonathan)</strong></h3>
-<p><strong>“Did high residential density become a penalty for property values post-COVID across NYC’s Community Districts, and did this ‘density penalty’ vary by baseline density level?”</strong></p>
-<p><strong>Operationalization:</strong> - <strong>Unit of analysis</strong>: 59 Community Districts - <strong>Density measure</strong>: Residential units per acre from PLUTO - <strong>Property values</strong>: Median sale price per CD - <strong>Test</strong>: <code>Price ~ Density × PostCOVID × InitialDensityLevel + Controls</code></p>
-<p><strong>Expected finding</strong>: Density penalty emerged in highest-density CDs (Manhattan core) but not in moderate-density areas</p>
-<hr>
-</section>
-</section>
-<section id="how-these-sqs-answer-the-oq" class="level2">
-<h2 class="anchored" data-anchor-id="how-these-sqs-answer-the-oq">How These SQs Answer the OQ</h2>
-<p><strong>The OQ asks</strong>: Did COVID reshape <strong>drivers</strong> differently across <strong>neighborhoods</strong>, revealing <strong>distinct markets</strong>?</p>
-<p><strong>Each SQ tests one driver:</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 5%">
-<col style="width: 18%">
-<col style="width: 36%">
-<col style="width: 39%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>SQ</th>
-<th>Driver Tested</th>
-<th>Spatial Variation Expected?</th>
-<th>Market Fragmentation Evidence</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>1</td>
-<td>Transit access</td>
-<td>YES (weakened in core, stable elsewhere)</td>
-<td>CBD-periphery decoupling</td>
-</tr>
-<tr class="even">
-<td>2</td>
-<td>Public safety</td>
-<td>YES (more important post-COVID, varies by baseline)</td>
-<td>Safety-seeking segmentation</td>
-</tr>
-<tr class="odd">
-<td>3</td>
-<td>Education quality</td>
-<td>YES (matters differently by borough)</td>
-<td>Family-priority segmentation</td>
-</tr>
-<tr class="even">
-<td>4</td>
-<td>Commercial amenities</td>
-<td>YES (less important in Manhattan)</td>
-<td>Amenity preference shifts</td>
-</tr>
-<tr class="odd">
-<td>5</td>
-<td>Density</td>
-<td>YES (penalty in core, neutral elsewhere)</td>
-<td>Density preference restructuring</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Integration logic:</strong> - If <strong>0-1</strong> relationships changed differently → Weak fragmentation - If <strong>2-3</strong> relationships changed differently → Moderate fragmentation (your likely finding) - If <strong>4-5</strong> relationships changed differently → Strong fragmentation - <strong>Pattern</strong> of which changed where reveals nature of new market structure</p>
-<hr>
-</section>
-</section>
-<section id="part-3-geographic-scale-decision-slide" class="level1">
-<h1>PART 3: Geographic Scale Decision Slide</h1>
-<p>Here’s content for your presentation slide:</p>
-<hr>
-<section id="slide-content-geographic-scale-from-boroughs-to-neighborhoods" class="level2">
-<h2 class="anchored" data-anchor-id="slide-content-geographic-scale-from-boroughs-to-neighborhoods">SLIDE CONTENT: “Geographic Scale: From Boroughs to Neighborhoods”</h2>
-<section id="title-slide" class="level3">
-<h3 class="anchored" data-anchor-id="title-slide"><strong>Title Slide:</strong></h3>
-<pre><code>Refining Our Analytical Approach:
-Why We Analyze Community Districts, Not Boroughs</code></pre>
-</section>
-<section id="visual-layout" class="level3">
-<h3 class="anchored" data-anchor-id="visual-layout"><strong>Visual Layout:</strong></h3>
-<p><strong>[Left Side - Problem]</strong></p>
-<p><strong>Initial Proposal: Borough-Level Analysis</strong> - 5 Boroughs = 5 Observations ❌ - Insufficient statistical power - Cannot detect meaningful patterns - Masks within-borough variation</p>
-<p>[Visual: Simple map showing 5 boroughs in solid colors]</p>
-<p><strong>[Right Side - Solution]</strong></p>
-<p><strong>Refined Approach: Community District Analysis</strong> - 59 Community Districts = 59 Observations ✅ - 10x increase in statistical power - Captures neighborhood-level variation - Enables robust spatial analysis</p>
-<p>[Visual: Map showing 59 CDs in varied colors]</p>
-<hr>
-</section>
-<section id="middle-section---justification" class="level3">
-<h3 class="anchored" data-anchor-id="middle-section---justification"><strong>Middle Section - Justification:</strong></h3>
-<p><strong>Why Community Districts?</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 23%">
-<col style="width: 28%">
-<col style="width: 47%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Criterion</th>
-<th>Boroughs ❌</th>
-<th>Community Districts ✅</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Sample Size</strong></td>
-<td>n = 5</td>
-<td>n = 59</td>
-</tr>
-<tr class="even">
-<td><strong>Statistical Power</strong></td>
-<td>Inadequate for regression</td>
-<td>Sufficient for interaction models</td>
-</tr>
-<tr class="odd">
-<td><strong>Spatial Granularity</strong></td>
-<td>Too coarse</td>
-<td>Captures neighborhood variation</td>
-</tr>
-<tr class="even">
-<td><strong>Policy Relevance</strong></td>
-<td>Limited actionability</td>
-<td>City planning uses CDs</td>
-</tr>
-<tr class="odd">
-<td><strong>Data Availability</strong></td>
-<td>All sources available</td>
-<td>Most sources aggregate to CD</td>
-</tr>
-</tbody>
-</table>
-<hr>
-</section>
-<section id="bottom-section---methods-note" class="level3">
-<h3 class="anchored" data-anchor-id="bottom-section---methods-note"><strong>Bottom Section - Methods Note:</strong></h3>
-<p><strong>Analytical Implications:</strong></p>
-<p>✅ <strong>Enables difference-in-differences approach</strong> (instructor’s suggestion) - Compare similar CDs that experienced different changes</p>
-<p>✅ <strong>Tests spatial heterogeneity rigorously</strong> - Can statistically test if relationships vary across space</p>
-<p>✅ <strong>Sub-borough granularity without excessive complexity</strong> - More than census tracts (2,100) but meaningful units</p>
-<p>✅ <strong>Aligns with instructor feedback</strong> &gt; “Try to go sub-borough. If you work on a borough-level basis, you really only have 5 observations, which isn’t much…”</p>
-<hr>
-</section>
-<section id="alternative-slide-version-more-visual" class="level3">
-<h3 class="anchored" data-anchor-id="alternative-slide-version-more-visual"><strong>Alternative Slide Version (More Visual):</strong></h3>
-<p><strong>[Top Half]</strong></p>
-<p><strong>The Problem with Borough-Level Analysis</strong></p>
-<p>Borough Analysis: n = 5</p>
-<p>Regression with 5 observations: - Cannot control for confounders - Cannot detect interaction effects<br>
-- Results not statistically reliable - Masks neighborhood differences</p>
-<p>Example: Manhattan - Upper East Side ≠ Washington Heights - But borough-level treats them the same</p>
-<pre><code>
-**[Bottom Half]**
-
-**Our Solution: Community District Analysis**
-
-[Graphic showing]:</code></pre>
-<p>Community District Analysis: n = 59</p>
-<p>Enables robust statistical analysis: ✓ Proper regression with controls ✓ Interaction models (Factor × COVID × Space) ✓ Captures within-borough variation ✓ Sufficient power to detect effects</p>
-<p>Example: Manhattan’s 12 CDs - Upper East Side (CD 8): High income, transit-rich - Washington Heights (CD 12): Working class, transit-dependent - Can now compare their different COVID responses</p>
-<p>install.packages</p>
+<p>Test content</p>
 
 
-</section>
-</section>
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

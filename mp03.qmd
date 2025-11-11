@@ -1,4 +1,13 @@
 ---
-title: "mp03"
+title: "STA 9750 Mini-Project #03: Visualizing and Maintaining the Green Canopy of NYC"
+author: "Eduardo Alarcon"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+execute:
+  message: false
+  warning: false
 ---
 
+Test content
