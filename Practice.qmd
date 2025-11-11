@@ -1,0 +1,234 @@
+---
+title: "Practice"
+---
+
+---
+
+## Your Solution Strategy Summary
+
+| Challenge | Your Solution | Implementation |
+|-----------|---------------|----------------|
+| **Time lag** | Use lag to your advantage - ensures clean pre/post separation | Pre: 2015-2019 ACS; Post: 2019-2023 ACS |
+| **Overlapping years** | Standard practice; conservative approach | Frame as methodological strength |
+| **Margins of error** | CDs large enough for reliable estimates | Report MOEs; flag unreliable estimates if needed |
+| **Need current data** | 2019-2023 ACS published Dec 2024 | Available now; use 2018-2022 if needed sooner |
+
+---
+
+# PART 2: Updated Specific Questions
+
+## Overarching Question:
+**"Did COVID-19 reshape the drivers of housing affordability differently across NYC neighborhoods, revealing distinct local market dynamics?"**
+
+---
+
+## Refined Specific Questions (Final Version)
+
+### **1. Transportation Accessibility (Tiffany)**
+
+**"Did the relationship between transit accessibility and property values weaken post-COVID (2020-2025) compared to pre-COVID (2015-2019) across NYC's Community Districts, and did this weakening vary spatially?"**
+
+**Operationalization:**
+- **Unit of analysis**: 59 Community Districts
+- **Transit accessibility**: Average distance to nearest 3 subway stations per CD
+- **Property values**: Median sale price per CD from DOF Rolling Sales
+- **Time periods**: Pre (2015-2019) vs. Post (2021-2025)
+- **Test**: `Price ~ TransitDistance × PostCOVID × Borough + Controls`
+
+**Expected finding**: Transit-price correlation weakened more in Manhattan/Downtown Brooklyn than outer boroughs
+
+---
+
+### **2. Crime and Safety (Kelly)**
+
+**"How did crime's impact on housing costs change from pre-COVID (2015-2019) to post-COVID (2021-2025) across NYC's Community Districts, and did this shift vary by initial crime levels?"**
+
+**Operationalization:**
+- **Unit of analysis**: 59 Community Districts
+- **Crime measure**: Major felony rate per 1,000 residents per CD (from NYPD data)
+- **Property values**: Median sale price per CD
+- **Test**: `Price ~ CrimeRate × PostCOVID × InitialCrimeLevel + Controls`
+
+**Expected finding**: Crime became a stronger predictor of prices post-COVID, especially in previously low-crime areas
+
+---
+
+### **3. Educational Attainment (Eduardo)**
+
+**"Did the strength of the relationship between neighborhood educational attainment and median home prices change post-COVID, and did this change differ across NYC's Community Districts?"**
+
+**Operationalization:**
+- **Unit of analysis**: 59 Community Districts  
+- **Education measure**: % Bachelor's degree or higher from ACS
+  - Pre-COVID: 2015-2019 ACS
+  - Post-COVID: 2019-2023 ACS (or 2018-2022 ACS)
+- **Property values**: Median sale price per CD
+- **Test**: `Price ~ EducationLevel × PostCOVID × Borough + Controls`
+
+**Expected finding**: Education premium weakened in Manhattan but strengthened or stayed stable in outer boroughs
+
+---
+
+### **4. Commercial Corridor Vitality (Madison)**
+
+**"How did the relationship between commercial corridor vitality and nearby residential property values shift post-COVID across NYC's Community Districts?"**
+
+**Operationalization:**
+- **Unit of analysis**: 59 Community Districts
+- **Commercial vitality**: 
+  - Active businesses per square mile (from Business Licenses)
+  - OR commercial property density from PLUTO
+- **Property values**: Median residential sale price per CD
+- **Test**: `ResidentialPrice ~ CommercialDensity × PostCOVID × Borough + Controls`
+
+**Expected finding**: Commercial vitality became less important for residential values in Manhattan, more important in outer boroughs
+
+---
+
+### **5. Residential Density (Jonathan)**
+
+**"Did high residential density become a penalty for property values post-COVID across NYC's Community Districts, and did this 'density penalty' vary by baseline density level?"**
+
+**Operationalization:**
+- **Unit of analysis**: 59 Community Districts
+- **Density measure**: Residential units per acre from PLUTO
+- **Property values**: Median sale price per CD
+- **Test**: `Price ~ Density × PostCOVID × InitialDensityLevel + Controls`
+
+**Expected finding**: Density penalty emerged in highest-density CDs (Manhattan core) but not in moderate-density areas
+
+---
+
+## How These SQs Answer the OQ
+
+**The OQ asks**: Did COVID reshape **drivers** differently across **neighborhoods**, revealing **distinct markets**?
+
+**Each SQ tests one driver:**
+
+| SQ | Driver Tested | Spatial Variation Expected? | Market Fragmentation Evidence |
+|----|---------------|-----------------------------|-------------------------------|
+| 1 | Transit access | YES (weakened in core, stable elsewhere) | CBD-periphery decoupling |
+| 2 | Public safety | YES (more important post-COVID, varies by baseline) | Safety-seeking segmentation |
+| 3 | Education quality | YES (matters differently by borough) | Family-priority segmentation |
+| 4 | Commercial amenities | YES (less important in Manhattan) | Amenity preference shifts |
+| 5 | Density | YES (penalty in core, neutral elsewhere) | Density preference restructuring |
+
+**Integration logic:**
+- If **0-1** relationships changed differently → Weak fragmentation
+- If **2-3** relationships changed differently → Moderate fragmentation (your likely finding)
+- If **4-5** relationships changed differently → Strong fragmentation
+- **Pattern** of which changed where reveals nature of new market structure
+
+---
+
+# PART 3: Geographic Scale Decision Slide
+
+Here's content for your presentation slide:
+
+---
+
+## SLIDE CONTENT: "Geographic Scale: From Boroughs to Neighborhoods"
+
+### **Title Slide:**
+```
+Refining Our Analytical Approach:
+Why We Analyze Community Districts, Not Boroughs
+```
+
+### **Visual Layout:**
+
+**[Left Side - Problem]**
+
+**Initial Proposal: Borough-Level Analysis**
+- 5 Boroughs = 5 Observations ❌
+- Insufficient statistical power
+- Cannot detect meaningful patterns
+- Masks within-borough variation
+
+[Visual: Simple map showing 5 boroughs in solid colors]
+
+**[Right Side - Solution]**
+
+**Refined Approach: Community District Analysis**
+- 59 Community Districts = 59 Observations ✅
+- 10x increase in statistical power
+- Captures neighborhood-level variation
+- Enables robust spatial analysis
+
+[Visual: Map showing 59 CDs in varied colors]
+
+---
+
+### **Middle Section - Justification:**
+
+**Why Community Districts?**
+
+| Criterion | Boroughs ❌ | Community Districts ✅ |
+|-----------|-------------|----------------------|
+| **Sample Size** | n = 5 | n = 59 |
+| **Statistical Power** | Inadequate for regression | Sufficient for interaction models |
+| **Spatial Granularity** | Too coarse | Captures neighborhood variation |
+| **Policy Relevance** | Limited actionability | City planning uses CDs |
+| **Data Availability** | All sources available | Most sources aggregate to CD |
+
+---
+
+### **Bottom Section - Methods Note:**
+
+**Analytical Implications:**
+
+✅ **Enables difference-in-differences approach** (instructor's suggestion)
+- Compare similar CDs that experienced different changes
+
+✅ **Tests spatial heterogeneity rigorously**
+- Can statistically test if relationships vary across space
+
+✅ **Sub-borough granularity without excessive complexity**
+- More than census tracts (2,100) but meaningful units
+
+✅ **Aligns with instructor feedback**
+> "Try to go sub-borough. If you work on a borough-level basis, you really only have 5 observations, which isn't much..."
+
+---
+
+### **Alternative Slide Version (More Visual):**
+
+**[Top Half]**
+
+**The Problem with Borough-Level Analysis**
+
+[Graphic showing]:
+```
+Borough Analysis: n = 5
+
+Regression with 5 observations:
+- Cannot control for confounders
+- Cannot detect interaction effects  
+- Results not statistically reliable
+- Masks neighborhood differences
+
+Example: Manhattan
+- Upper East Side ≠ Washington Heights
+- But borough-level treats them the same
+```
+
+**[Bottom Half]**
+
+**Our Solution: Community District Analysis**
+
+[Graphic showing]:
+```
+Community District Analysis: n = 59
+
+Enables robust statistical analysis:
+✓ Proper regression with controls
+✓ Interaction models (Factor × COVID × Space)
+✓ Captures within-borough variation
+✓ Sufficient power to detect effects
+
+Example: Manhattan's 12 CDs
+- Upper East Side (CD 8): High income, transit-rich
+- Washington Heights (CD 12): Working class, transit-dependent
+- Can now compare their different COVID responses
+
+install.packages

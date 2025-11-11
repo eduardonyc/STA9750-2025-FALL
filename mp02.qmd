@@ -2553,10 +2553,10 @@ fig
 
 **Looking Ahead: Connection to Policy Brief (Task 7):** The two sponsor cities for the proposed Federal YIMBY Housing Growth Incentive Bill are visible in this plot:
 
-- **Punta Gorda, FL** (Success Sponsor): Located at x≈292, y≈-0.3 in the success quadrant (Q4)
-- **Atlanta, GA** (Opportunity Sponsor): Located at x≈84, y≈+3.0 in the challenging quadrant (Q1)
+- **Punta Gorda, FL** (Success Sponsor): Located in the success quadrant (Q4) (at x≈292, y≈-0.3)
+- **Atlanta, GA** (Opportunity Sponsor): Locatedin the challenging quadrant (Q1) (at x≈84, y≈+3.0)
 
-These positions demonstrate why they were selected: Punta Gorda shows proven success in building and maintaining affordability, while Atlanta shows an urgent need for federal housing support.
+These positions demonstrate why they were selected: Punta Gorda demonstrates success in building and maintaining affordability, while Atlanta shows an urgent need for federal housing support.
 
 ---
 
