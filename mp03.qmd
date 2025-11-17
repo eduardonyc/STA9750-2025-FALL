@@ -1934,7 +1934,7 @@ queens_focus_analysis <- trees_slf_focused |>
 #| code-fold: true
 #| code-summary: "Focus species breakdown by district"
 
-# Create Table 3 with focus species
+# Create Table 2 with focus species
 coalition_focus_breakdown <- queens_focus_analysis |>
   filter(council_district %in% coalition_districts_focus) |>
   mutate(
@@ -1965,24 +1965,26 @@ coalition_focus_with_totals <- bind_rows(
   focus_totals
 )
 
-# Create table with unique ID for CSS targeting
+# Create table
 dt_focus_breakdown <- datatable(
   coalition_focus_with_totals,
-  elementId = "task5_table3", 
   rownames = FALSE,
   class = "compact stripe hover",
   options = list(
     pageLength = 6,
     lengthChange = FALSE,
     dom = 't',
-    autoWidth = TRUE,  
+    autoWidth = FALSE,
     columnDefs = list(
+      list(width = '60px', targets = 0),
+      list(width = '70px', targets = 1:7),
+      list(width = '85px', targets = 8),
       list(className = 'dt-center', targets = "_all")
     ),
     scrollX = FALSE
   ),
   caption = tags$caption(
-    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.05em; margin-bottom: 8px;",
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.1em; margin-bottom: 8px;",
     "Table 3: Coalition Comparison — SLF Focus Host Species, Queens, NY"
   )
 ) |>
@@ -2003,27 +2005,7 @@ dt_focus_breakdown <- datatable(
       c("bold", "bold")
     )
   )
-
-# Custom CSS to reduce font size and eliminate scroll
-dt_focus_breakdown <- htmlwidgets::prependContent(
-  dt_focus_breakdown,
-  tags$style(HTML("
-    #task5_table3 table.dataTable {
-      font-size: 11px;  /* Reduced from default ~14px */
-    }
-    #task5_table3 table.dataTable thead th {
-      font-size: 10.5px;  /* Smaller header font */
-      padding: 6px 4px;  /* Tighter padding */
-    }
-    #task5_table3 table.dataTable tbody td {
-      padding: 5px 4px;  /* Tighter cell padding */
-    }
-    #task5_table3 .dataTables_wrapper {
-      overflow-x: visible !important;  /* Prevent scroll */
-    }
-  "))
-)
-
+ 
 # Footnote
 dt_focus_breakdown <- appendContent(
   dt_focus_breakdown,
