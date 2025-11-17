@@ -18,7 +18,7 @@ execute:
 
 ```{r}
 
-#| label: helpers
+#| label: helpers and all required packages
 #| message: false
 #| echo: false
 
@@ -2387,7 +2387,7 @@ p_zoomed_19 <- ggplot() +
       "{comma(toh_count)} Tree of Heaven (primary host)"
     ),
     caption = paste0(
-      "Six priority species for targeted monitoring. Tree of Heaven is primary SLF egg-laying driver\n",
+      "Six priority species for targeted monitoring. Tree of Heaven is primary SLF egg-laying driver.\n",
       "Sources: CCE (2023), NYC Parks (2024), PSE (2020)"
     )
   ) +
