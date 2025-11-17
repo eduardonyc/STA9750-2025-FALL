@@ -1443,7 +1443,7 @@ q3_dt
 #| message: false
 #| warning: false
 #| code-fold: true
-#| code-summary: "Table 4: Species × District Coverage in Manhattan Heatmap"
+#| code-summary: "Table 4: Species × District (D) Coverage in Manhattan Heatmap"
 
 # Inputs
 species_col <- intersect(
