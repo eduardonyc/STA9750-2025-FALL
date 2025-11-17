@@ -2180,6 +2180,10 @@ The scope of this project is two-fold:
 
 - **Protect High-Value Hosts**: Implement a targeted treatment and monitoring plan (e.g., non-toxic dormant oil spray for egg masses) for the 107,886, including London Planetrees, Maples, Oaks, and Cherries, which the SLF uses for feeding.
 
+**Estimated Program Cost**
+
+We propose a three-year, data-driven pilot program that commences with a **$3.2 million** investment in Year 1. This initial phase is designed to measure the impact of three key strategies: (1) the removal of all 709 "Tree of Heaven" trees ($850,000), (2) coalition-wide egg mass surveys and removal ($400,000), and (3) targeted treatment of 30,514 high-risk trees in District 19 ($2.3 million at roughly $75/tree). The results from Year 1 will provide the necessary data to design a cost-effective and evidence-based expansion plan. This approach and its cost structure align with <a href="https://extension.psu.edu/spotted-lanternfly-management-guide" target="_blank">Penn State Extension municipal management guidelines</a>.
+
 ---
 
 **Quantitative & Visual Justification**
