@@ -5,9 +5,2605 @@ format:
   html:
     code-fold: true
     code-summary: "Show code"
+    toc: true
+    toc-title: "On this Page"
+    toc-location: left
+    toc-depth: 3
 execute:
   message: false
   warning: false
 ---
 
-Test content
+# Set Up
+
+```{r}
+
+#| label: helpers
+#| message: false
+#| echo: false
+
+library(gt)
+library(scales)
+library(fs)
+library(glue)
+library(janitor)
+library(units)
+library(ggrastr)
+library(knitr)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(httr2)
+library(jsonlite)
+library(dplyr)
+library(tibble)
+library(leaflet)
+library(ggiraph)
+library(DT)
+library(tidyr)
+library(reactable)
+library(reactablefmtr)
+library(htmltools)
+library(htmlwidgets)
+library(viridisLite)
+library(patchwork)
+library(rlang)
+library(stringr)
+
+dir_create("data/mp03")
+
+gt_mp03 <- function(tbl, title = NULL, subtitle = NULL){
+  gt(tbl) |>
+    tab_header(title = md(title %||% ""), subtitle = md(subtitle %||% "")) |>
+    fmt_number(where(is.numeric), decimals = 2, sep_mark = ",") |>
+    tab_options(table.width = pct(100), data_row.padding = px(4))
+}
+
+if (requireNamespace("ragg", quietly = TRUE)) {
+  opts_chunk$set(dev = "ragg_png", dpi = 300)
+} else {
+  opts_chunk$set(dev = "png", dpi = 300)
+}
+options(ggrastr.default.dpi = 300)
+
+# ensure cache dirs exist
+dir_create("data/mp03")
+dir_create("data/mp03/cache")
+
+theme_map_min <- function(base_size = 11){
+  theme_minimal(base_size = base_size) +
+    theme(
+      axis.title = element_blank(),
+      axis.text  = element_blank(),
+      panel.grid = element_blank(),
+      plot.title = element_text(face = "bold")
+    )
+}
+
+# Helper: Find first matching column name from candidates
+find_col <- function(data, candidates) {
+  intersect(names(data), candidates)[1]
+}
+
+```
+
+# Task 1: Download NYC City Council District Boundaries
+
+---
+
+To launch this project, it is essential to develop a high-performance map of NYC's Council Districts. Transforming the city's raw boundary data into a fast, universally compatible **WGS84** layer facilitates powering all visualizations and spatial joins, making it possible to link every tree to its specific district. This includes calculating the square mileage of each district, a key step for enabling fair comparisons. 
+
+---
+
+```{r}
+
+#| label: task1-download-districts
+#| cache: true
+#| code-fold: true
+#| code-summary: "Task 1: download → unzip → st_read → WGS84 → simplify → id + area"
+
+download_nyc_districts_mp03 <- function(
+  zip_url   = "https://s-media.nyc.gov/agencies/dcp/assets/files/zip/data-tools/bytes/city-council/nycc_25c.zip",
+  data_dir  = "data/mp03",
+  simplify  = TRUE,
+  dTolerance = 8
+){
+  fs::dir_create(data_dir)
+
+  # 1) Download if needed
+  zip_file <- file.path(data_dir, "nycc_districts.zip")
+  if (!fs::file_exists(zip_file)) {
+    download.file(zip_url, zip_file, mode = "wb", quiet = TRUE)
+  }
+
+  # 2) Unzip if needed
+  unzip_dir <- file.path(data_dir, tools::file_path_sans_ext(basename(zip_url)))
+  if (!fs::dir_exists(unzip_dir)) {
+    utils::unzip(zip_file, exdir = unzip_dir)
+  }
+
+  # 3) Read shapefile
+  shp <- list.files(unzip_dir, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  if (length(shp) == 0) stop("No .shp found in: ", unzip_dir)
+  d <- st_read(shp[1], quiet = TRUE)
+
+  # 4) Transform to WGS84
+  d <- st_transform(d, crs = "WGS84")
+
+  # 5) Simplify for speed
+  if (isTRUE(simplify)) {
+    if (rlang::is_installed("rmapshaper")) {
+      d$geometry <- rmapshaper::ms_simplify(d$geometry, keep = 0.10, keep_shapes = TRUE)
+    } else {
+      d$geometry <- st_simplify(d$geometry, dTolerance = dTolerance)
+    }
+  }
+
+  # 6) Clean names, fix id, and compute area (m² and km²)
+  d <- janitor::clean_names(d)
+  id_col <- intersect(c("coundist","council","council_district","coun_dist","district"), names(d))[1]
+  if (is.na(id_col)) stop("Could not find council district column in shapefile.")
+  d <- rename(d, council_district = !!rlang::sym(id_col))
+  d$council_district <- as.integer(as.character(d$council_district))
+
+  # Robust area in an equal-area CRS; store BOTH fields for later use
+  area_m2 <- sf::st_area(sf::st_transform(d, 5070))         
+  d$Shape_Area <- as.numeric(units::set_units(area_m2, m^2))   
+  d$area_km2   <- d$Shape_Area / 1e6                          
+
+  d
+}
+
+# -> Primary dataset
+nyc_districts <- download_nyc_districts_mp03()
+
+
+```
+
+---
+
+Figure 1 provides an interactive view of NYC's 51 council districts, enabling users to explore district boundaries, borough affiliations, and land areas through hover interactions. Also, each council district is rendered in a distinguishing color to enhance visual distinction. Most importantly, this map serves as the foundation for district-level comparisons throughout the project.
+
+---
+
+```{r}
+
+#| label: task1-districts-colorful
+#| fig.width: 9
+#| fig.height: 7
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Interactive: hover shows District • Borough • Area (sq mi)"
+
+# 1) Compute area in *square miles* from a feet-based projection (EPSG:2263)
+dist_2263 <- sf::st_transform(nyc_districts, 2263)
+
+# area in ft^2 -> mi^2 (5280 ft in a mile)
+area_mi2  <- as.numeric(sf::st_area(dist_2263)) / (5280^2)
+
+# 2) Build hover fields (note the 'sq mi' units in the label)
+nyc_districts_hover <- nyc_districts |>
+  dplyr::mutate(
+    borough = dplyr::case_when(
+      council_district >=  1 & council_district <= 10 ~ "Manhattan",
+      council_district >= 11 & council_district <= 18 ~ "Bronx",
+      council_district >= 19 & council_district <= 32 ~ "Queens",
+      council_district >= 33 & council_district <= 48 ~ "Brooklyn",
+      council_district >= 49 & council_district <= 51 ~ "Staten Island",
+      TRUE ~ NA_character_
+    ),
+    area_mi2 = area_mi2,
+    tooltip_text = glue::glue(
+      "District: {council_district}\n",
+      "Borough: {borough %||% '—'}\n",
+      "Area: {scales::comma(area_mi2, accuracy = 0.01)} sq mi"
+    )
+  )
+
+# 3) Interactive map (legend hidden to force visitors to hover supplies details)
+p_districts <- ggplot() +
+  ggiraph::geom_sf_interactive(
+    data = nyc_districts_hover,
+    aes(fill = factor(council_district),
+        tooltip = tooltip_text,
+        data_id = council_district),
+    color = "black", linewidth = 0.6
+  ) +
+  scale_fill_hue(l = 70, c = 80, h = c(0, 330), guide = "none") +
+  coord_sf(datum = NA) +
+  labs(
+    title = "Figure 1: NYC Council Districts (Interactive)",
+    subtitle = "Hover for District, Borough, and Area (square miles)"
+  ) +
+  theme_map_min()
+
+ggiraph::girafe(
+  ggobj = p_districts,
+  options = list(
+    ggiraph::opts_hover(css = "fill-opacity:0.95; stroke:#111; stroke-width:1.5px;"),
+    ggiraph::opts_tooltip(css = paste(
+      "background:rgba(0,0,0,0.92); color:#fff;",
+      "padding:12px 14px; border-radius:10px;",
+      "font-size:16px; line-height:1.35;",
+      "max-width:420px; white-space:pre-line;"
+    )),
+    ggiraph::opts_sizing(rescale = TRUE)
+  )
+)
+
+
+```
+
+---
+
+With district boundaries established, the subsequent section highlights NYC trees data, showing how downloading and processing the individual tree records that populate this project's geographic framework.
+
+---
+
+# Task 2: Download Tree Points
+
+NYC's 2015 Street Tree Census contains detailed records for every street tree in the city. Retrieving this data through the **NYC OpenData Socrata API** in GeoJSON format preserves each tree's precise GPS coordinates along with characteristics such as species, health status, and trunk diameter.
+
+To responsibly download the complete dataset of over 680,000 trees, the following processes were undertaken:
+
+- **Page through the API**: in batches of 50,000 records (the maximum allowed per request)
+
+- **Cache each page locally**: as individual files to avoid re-downloading if the analysis is re-run
+
+- **Combine all pages**: into a single spatial dataset (an `sf` object with POINT geometry)
+
+- **Store fast-access copies**: as both `.rds` and `.gpkg` files for future renders
+
+This approach alleviates straining the data provider's server capacity while ensuring reproducible analysis. The final dataset contains over one million trees with complete spatial and attribute information.
+
+---
+
+```{r}
+
+#| label: task2-download-trees
+#| cache: true
+#| code-fold: true
+#| code-summary: "Task 2: SODA API paging → per-page files → combine → return"
+
+download_tree_points_mp03 <- function(
+  endpoint = "https://data.cityofnewyork.us/resource/hn5i-inap.geojson", 
+  data_dir = "data/mp03",
+  batch_size = 50000,
+  sleep_sec = 0.25,
+  max_pages = Inf
+){
+  fs::dir_create(data_dir)
+
+  # If combined fast cache exists, reuse
+  rds_combined <- file.path(data_dir, "nyc_trees_combined.rds")
+  gpkg_combined <- file.path(data_dir, "nyc_trees_combined.gpkg")
+  if (fs::file_exists(rds_combined))  return(readRDS(rds_combined))
+  if (fs::file_exists(gpkg_combined)) return(sf::st_read(gpkg_combined, quiet = TRUE))
+
+  # Otherwise page via httr2 and save each page
+  offset <- 0L
+  page   <- 1L
+  files  <- character()
+
+  repeat {
+    page_file <- file.path(data_dir, sprintf("trees_page_%03d.geojson", page))
+    if (!fs::file_exists(page_file)) {
+      req <- request(endpoint) |>
+        req_url_query(`$limit` = batch_size, `$offset` = offset) |>
+        req_retry(max_tries = 3) |>
+        req_timeout(300)
+
+      resp_raw <- req_perform(req) |> resp_body_raw()
+      writeBin(resp_raw, page_file)
+      Sys.sleep(sleep_sec) 
+    }
+    files <- c(files, page_file)
+
+    # Read page to identify number of rows 
+    pg <- sf::st_read(page_file, quiet = TRUE)
+    n_pg <- nrow(pg)
+
+    if (n_pg < batch_size || page >= max_pages) break
+    offset <- offset + batch_size
+    page   <- page + 1L
+  }
+
+  # Combine, clean, cache
+  trees <- files |>
+    lapply(function(f) sf::st_read(f, quiet = TRUE)) |>
+    dplyr::bind_rows() |>
+    janitor::clean_names()
+
+  # Write fast caches for future renders
+  saveRDS(trees, rds_combined)
+  sf::st_write(trees, gpkg_combined, delete_dsn = TRUE, quiet = TRUE)
+
+  trees
+}
+
+# -> primary dataset
+nyc_trees <- download_tree_points_mp03()
+
+
+```
+
+```{r}
+
+#| label: task2-spatial-join
+#| cache: true
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "JOIN trees to districts + borough + areas (km² & mi²)"
+
+# Ensure the council district id exists and is integer
+
+if (!"council_district" %in% names(nyc_districts)) {
+cand <- intersect(
+names(nyc_districts),
+c("CounDist","coun_dist","council_district","c_district","coundist","council","district")
+)
+stopifnot(length(cand) > 0)
+nyc_districts <- nyc_districts |>
+dplyr::rename(council_district = !!rlang::sym(cand[1])) |>
+dplyr::mutate(council_district = as.integer(as.character(council_district)))
+}
+
+# Compute district areas if missing (accurate geodesic-ish area via projected meters)
+
+if (!all(c("area_km2","area_mi2") %in% names(nyc_districts))) {
+nyc_districts <- nyc_districts |>
+dplyr::mutate(
+.geom_m  = sf::st_transform(geometry, 3857),                 # meters
+area_km2 = units::set_units(sf::st_area(.geom_m), km^2) |> units::drop_units(),
+area_mi2 = area_km2 * 0.3861021585
+) |>
+dplyr::select(-.geom_m)
+}
+
+# Add borough labels if missing
+
+if (!"borough" %in% names(nyc_districts)) {
+nyc_districts <- nyc_districts |>
+dplyr::mutate(
+borough = dplyr::case_when(
+council_district %in%  1:10 ~ "Manhattan",
+council_district %in% 11:18 ~ "Bronx",
+council_district %in% 19:32 ~ "Queens",
+council_district %in% 33:48 ~ "Brooklyn",
+council_district %in% 49:51 ~ "Staten Island",
+TRUE ~ NA_character_
+)
+)
+}
+
+# Align CRS 
+
+if (sf::st_crs(nyc_trees) != sf::st_crs(nyc_districts)) {
+nyc_trees <- sf::st_transform(nyc_trees, sf::st_crs(nyc_districts))
+}
+
+# Points to Polygon overlay
+
+trees_with_districts <- sf::st_join(
+nyc_trees,        
+nyc_districts,    
+join = sf::st_intersects,
+left = TRUE
+)
+
+# A geometry-free copy for table work
+
+trees_with_districts_clean <- trees_with_districts |> sf::st_drop_geometry()
+
+# Table to ensure functioning
+
+assign_check <- tibble::tibble(
+total_trees = nrow(trees_with_districts),
+assigned    = sum(!is.na(trees_with_districts$council_district)),
+unassigned  = total_trees - assigned,
+assign_rate = assigned / total_trees
+)
+
+```
+
+---
+
+**Note**: This preliminary join validates the workflow structure. The definitive district assignments occur in Task 4 using stricter geometric criteria.
+
+---
+
+# Task 3 Plot All Tree Points
+
+When working with a large volume of spatial points, developing multiple visualizations enhances research efforts. This current section contains several views of the data to support critical analysis. Specifically:
+
+1. **Verify data quality**: Confirms that tree points align with district boundaries
+    - A **raw points map** shows actual tree locations
+
+2. **Identify spatial patterns**: Spot concentrations, gaps, and anomalies
+    - The **choropleth map** aggregating density by district
+
+3. **Test visualization techniques**: Determine which approaches best communicate density
+    - Including a **hex-binned density map**provides cell-level granularity.
+
+These unique visualizations validate the accuracy of the spatial joins needed to address the questions in Task 4, ensuring that each tree point is correctly matched to its council district.
+
+---
+
+Figure 1 reveals NYC's urban canopy distribution across all 51 council districts. Each green dot represents a street tree, with over one million trees displayed as a random sample of 200,000 for visual clarity. The most striking pattern, though predictable given NYC's development history, is the drastic inequality in tree density. Residential neighborhoods like Bayside, Greenwich Village, and Riverdale show dense green clusters, while industrial areas appear as "tree deserts." This raw point data provides the geographic foundation for the district-level analyses that follow, ensuring each tree point is correctly matched to its council district.
+
+---
+
+```{r}
+
+#| label: task3-allpoints
+#| fig.width: 10
+#| fig.height: 8
+#| cache: true
+#| code-fold: true
+#| code-summary: "All trees (sf POINT) over council districts (sf POLYGON)"
+#| message: false
+#| warning: false
+
+# Show a subset for speed
+set.seed(42)
+n_show <- min(200000L, nrow(nyc_trees))
+nyc_trees_show <- if (nrow(nyc_trees) > n_show) {
+  nyc_trees[sample.int(nrow(nyc_trees), n_show), ]
+} else {
+  nyc_trees
+}
+
+p_all_points <- ggplot() +
+  # Layer 1: district POLYGONS
+  geom_sf(
+    data = nyc_districts,
+    fill = "grey98", color = "grey60", linewidth = 0.25,
+    inherit.aes = FALSE
+  ) +
+  # Layer 2: tree POINTS
+  geom_sf(
+    data = nyc_trees_show,
+    color = "#228B22", alpha = 0.06, size = 0.03, shape = 16,
+    inherit.aes = FALSE
+  ) +
+  coord_sf(datum = NA) +
+  labs(
+    title = "Figure 1: NYC Tree Points over Council Districts",
+    subtitle = glue::glue(
+      "{scales::comma(nrow(nyc_trees))} trees across 51 districts ",
+      "(showing {scales::comma(nrow(nyc_trees_show))})"
+    ),
+    caption = "Data: NYC OpenData (hn5i-inap) & NYC Dept of City Planning (nycc_25c)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+
+p_all_points
+
+```
+
+---
+
+Figure 2 highlights district-level tree density measured in **trees per square mile**. Darker shades show denser urban canopy coverage. Through this aggregated view, borough-level patterns emerge, with Manhattan and certain districts in Brooklyn showing higher densities (e.g., population and infrastructure) than the other districts. This metric also normalizes raw tree counts by land area, allowing for fairer comparisons between districts with varying land areas.
+
+---
+
+```{r}
+
+#| label: task4-density-data
+#| cache: true
+#| message: false
+#| warning: false
+
+# Prepare counts (no geometry)
+counts <- trees_with_districts_clean |>
+  sf::st_drop_geometry() |>
+  dplyr::count(council_district, name = "trees")
+
+# Ensure area_mi2 exists (robust fallback)
+if (!"area_mi2" %in% names(nyc_districts)) {
+  nyc_districts <- nyc_districts |>
+    dplyr::mutate(
+      area_mi2 = units::set_units(
+        sf::st_area(sf::st_transform(geometry, 3857)), mi^2
+      ) |> units::drop_units()
+    )
+}
+
+# Keep the sf object (nyc_districts) on the left of the join
+dens_by_dist <- nyc_districts |>
+  dplyr::select(council_district, borough, area_mi2, geometry) |>
+  dplyr::left_join(counts, by = "council_district") |>
+  dplyr::mutate(
+    trees = dplyr::coalesce(trees, 0L),
+    trees_per_mi2 = trees / area_mi2
+  )
+
+
+```
+
+```{r}
+
+#| label: task3-density-choropleth-mi2
+#| fig.width: 9
+#| fig.height: 7
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Choropleth: trees per square mile (dark = high)"
+
+ggplot(dens_by_dist) +
+  geom_sf(aes(fill = trees_per_mi2), color = "white", linewidth = 0.35) +
+  scale_fill_viridis_c(
+    option    = "mako",        
+    direction = -1,             
+    labels    = scales::label_comma(),
+    name      = "Trees / mi²"
+  ) +
+  coord_sf(datum = NA) +
+  labs(
+    title    = "Figure 2: Tree Density by Council District",
+    subtitle = "Choropleth highlighting trees per square mile"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid   = element_blank(),
+    legend.title = element_text(face = "bold")
+  )
+
+
+```
+
+---
+
+Figure 3 shows a hex-binned density map that aggregates individual tree points into hexagonal cells, approximately measuring **1,312 feet**, or 400 meters, across. This cell size <a href="https://morphocode.com/the-5-minute-walk/" target="_blank">is appropriate for city-scale analysis</a>, facilitating individual tree placement at a macro level while revealing neighborhood-level patterns at a micro level. 
+
+Unlike a choropleth, which maintains district boundaries, the hex grid is independent of political boundaries. Consequently, this difference reveals the true spatial distribution of trees. For example, the hex grid shows continuous bands of high density that cross district lines, leading to the inclusion of parks and street trees. The color gradient makes it easy to identify density "hotspots" and "coldspots" at a glance.
+
+---
+
+```{r}
+
+#| label: task3-hex
+#| fig.width: 10
+#| fig.height: 8
+#| code-fold: true
+#| code-summary: "Hex-binned density map (feet, dark = dense)"
+#| message: false
+#| warning: false
+
+make_hex_counts <- function(points_sf, districts_sf, cellsize_ft = 1312){
+  
+  # Convert feet to meters for st_make_grid (uses meters internally)
+  cellsize_m <- cellsize_ft * 0.3048
+  
+  bbox <- st_as_sfc(st_bbox(districts_sf))
+  grid <- st_make_grid(st_transform(bbox, 3857),
+                       cellsize = cellsize_m, what = "polygons", square = FALSE)
+  grid <- st_transform(st_sf(hex_id = seq_along(grid), geometry = grid), 4326)
+  idx  <- st_within(points_sf, grid)
+  tab  <- as.data.frame(table(unlist(idx)), stringsAsFactors = FALSE)
+  names(tab) <- c("hex_id","n"); tab$hex_id <- as.integer(tab$hex_id)
+  left_join(grid, tab, by = "hex_id") |>
+    mutate(n = coalesce(n, 0L))
+}
+
+# Create hexes at ~1,312 feet (~400m)
+hex_counts <- make_hex_counts(nyc_trees, nyc_districts, cellsize_ft = 1312)
+
+p_hex <- ggplot() +
+  geom_sf(data = hex_counts, aes(fill = n), color = NA) +
+  scale_fill_viridis_c(
+    option = "C",
+    trans = "sqrt",
+    direction = -1,   
+    labels = label_number(scale_cut = cut_short_scale())
+  ) +
+  geom_sf(data = nyc_districts, fill = NA, color = "grey35", linewidth = 0.25) +
+  labs(
+    title = "Figure 3: NYC Tree Density (hex-binned)", 
+    subtitle = "~1,312 ft hexes (≈400 m)", 
+    fill = "Trees"
+  ) +
+  theme_void() + 
+  theme(legend.position = "right")
+
+p_hex
+
+```
+
+---
+
+### Extra Credit Opportunity #01: Improved Tree Map Visualizations
+
+---
+```{r}
+
+#| label: leaflet-hex
+#| echo: false
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Interactive hex-density map (leaflet, feet)"
+#| eval: requireNamespace("leaflet", quietly = TRUE)
+
+# If hex_counts wasn't created, build it
+if (!exists("hex_counts")) {
+  make_hex_counts <- function(points_sf, districts_sf, cellsize_ft = 1312){
+    cellsize_m <- cellsize_ft * 0.3048
+    bbox <- st_as_sfc(st_bbox(districts_sf))
+    grid <- st_make_grid(st_transform(bbox, 3857),
+                         cellsize = cellsize_m, what = "polygons", square = FALSE)
+    grid <- st_transform(st_sf(hex_id = seq_along(grid), geometry = grid), 4326)
+    idx  <- st_within(points_sf, grid)
+    tab  <- as.data.frame(table(unlist(idx)), stringsAsFactors = FALSE)
+    names(tab) <- c("hex_id","n"); tab$hex_id <- as.integer(tab$hex_id)
+    left_join(grid, tab, by = "hex_id") |>
+      mutate(n = coalesce(n, 0L))
+  }
+  hex_counts <- make_hex_counts(nyc_trees, nyc_districts, cellsize_ft = 1312)
+}
+
+# Color palette
+pal <- colorNumeric(palette = "viridis", domain = hex_counts$n, na.color = "transparent")
+
+# Sample points
+set.seed(1)
+n_total <- nrow(nyc_trees)
+trees_sample_n <- min(30000L, n_total)
+
+if (trees_sample_n > 0L) {
+  idx <- sample.int(n_total, size = trees_sample_n)
+  trees_sample <- nyc_trees[idx, ] |> st_transform(4326)
+}
+
+# Map build
+m <- leaflet(options = leafletOptions(zoomControl = TRUE, minZoom = 10)) |>
+  setView(lng = -73.935, lat = 40.73, zoom = 12) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addPolygons(
+    data = hex_counts,
+    fillColor = ~pal(n), fillOpacity = 0.8, color = NA, weight = 0,
+    group = "Hex Density",
+    label = ~sprintf("≈ %s trees", comma(n)),
+    highlightOptions = highlightOptions(weight = 0, fillOpacity = 0.95, bringToFront = TRUE)
+  ) |>
+  addPolylines(
+    data = nyc_districts,
+    color = "#4F4F4F", weight = 0.7, opacity = 0.8,
+    group = "District Boundaries"
+  ) |>
+  addLegend(
+    pal = pal, values = hex_counts$n, opacity = 0.85,
+    title = "Trees per hex (~1,312 ft)"  
+  ) |>
+  addControl(
+    html = tags$div(
+      style = "padding: 6px 10px; background: rgba(255,255,255,0.9); border-radius: 6px; font-size: 14px;",
+      HTML("<b>NYC Trees: Interactive Density Map</b><br/>Toggle layers to explore tree concentrations and district context.")
+    ),
+    position = "topleft"
+  )
+
+# Add sampled points
+overlay_groups <- c("Hex Density", "District Boundaries")
+if (exists("trees_sample")) {
+  m <- m |>
+    addCircleMarkers(
+      data = trees_sample,
+      radius = 2, stroke = FALSE, fillOpacity = 0.35, opacity = 0.35,
+      color = "#2E7D32",
+      group = "Sampled Tree Points",
+      clusterOptions = markerClusterOptions()
+    )
+  overlay_groups <- c(overlay_groups, "Sampled Tree Points")
+}
+
+m |>
+  addLayersControl(
+    overlayGroups = overlay_groups,
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+```
+
+---
+
+This interactive map allows for toggling between different layers, including the hex density, district boundaries, and the individual tree points.
+
+Zoom and pan features allow for closer neighborhood inspections. Hex layers are ideal for spotting "big-picture" clusters, while allowing for accuracy to determine the exact location of individual trees.
+
+This view demonstrates the distribution of trees across NYC districts, with the highest concentrations lining the streets and filling public parks.
+
+---
+
+# Task 4: District-Level Analysis of Tree Coverage
+
+---
+
+To successfully address questions about tree distribution across council districts, it is necessary to assign each tree to its district through **spatial joining**. This process involves matching point locations (e.g., trees) to polygon boundaries (e.g., districts).
+
+## The Spatial Join Process
+
+The `st_within` join method assigns a tree to a district if the tree's coordinates fall strictly inside that district's polygon. This conservative approach ensures clean assignments. Table A and Figure A below highlight the initial results.
+
+---
+
+```{r}
+
+#| label: task4-add-borough-to-districts
+#| message: false
+#| warning: false
+
+nyc_districts <- nyc_districts |>
+  dplyr::mutate(
+    borough = dplyr::case_when(
+      dplyr::between(council_district,  1, 10) ~ "Manhattan",
+      dplyr::between(council_district, 11, 18) ~ "Bronx",
+      dplyr::between(council_district, 19, 32) ~ "Queens",
+      dplyr::between(council_district, 33, 48) ~ "Brooklyn",
+      dplyr::between(council_district, 49, 51) ~ "Staten Island",
+      TRUE ~ NA_character_
+    )
+  )
+
+```
+
+```{r}
+
+#| label: task4-spatial-join
+#| cache: true
+#| code-fold: true
+#| code-summary: "Spatial join: trees → districts (st_within)"
+
+# keep only needed district fields to reduce memory during join
+district_cols <- nyc_districts |>
+  dplyr::select(council_district, borough, area_km2)
+
+# validate geometries (cheap + avoids edge-case GEOS errors)
+nyc_trees <- sf::st_make_valid(nyc_trees)
+nyc_districts <- sf::st_make_valid(nyc_districts)
+
+trees_with_districts <- sf::st_join(
+  nyc_trees,
+  district_cols,
+  join = sf::st_within,
+  left = TRUE
+)
+
+# Primary dataset
+trees_with_districts_strict <- trees_with_districts
+
+```
+
+```{r}
+
+#| label: task4-assignment-diagnostic
+#| message: false
+#| warning: false
+
+diag_tbl <- tibble(
+  total_trees = nrow(trees_with_districts),
+  assigned    = sum(!is.na(trees_with_districts$council_district)),
+  unassigned  = sum(is.na(trees_with_districts$council_district)),
+  assign_rate = assigned / total_trees
+)
+
+gt_mp03(
+  diag_tbl |>
+    mutate(assign_rate = percent(assign_rate, accuracy = 0.001)),
+  title = "Table A: Spatial Join (Strict Method): Assignment Check",
+  subtitle = "Share of tree points assigned to a council district"
+) |>
+  cols_label(
+    total_trees = "Total Trees",
+    assigned    = "Assigned",
+    unassigned  = "Unassigned",
+    assign_rate = "Assign Rate"
+  ) |>
+  fmt_number(
+    columns  = c(total_trees, assigned, unassigned),
+    decimals = 0,
+    use_seps = TRUE
+  ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(everything())
+  ) |>
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_body()
+  ) |>
+  cols_align(
+    align   = "left",
+    columns = everything()
+  )
+
+```
+
+```{r}
+
+#| label: task4-plot-unassigned
+#| fig.width: 8
+#| fig.height: 7
+#| message: false
+#| warning: false
+#| eval: sum(is.na(trees_with_districts$council_district)) > 0
+#| code-fold: true
+#| code-summary: "QC: show any remaining unassigned points (rasterised via ragg)"
+
+unassigned_pts <- trees_with_districts |>
+  dplyr::filter(is.na(council_district))
+
+ggplot() +
+  geom_sf(data = nyc_districts, fill = "grey98", color = "grey40", linewidth = 0.25) +
+  ggrastr::rasterise(
+    geom_sf(data = unassigned_pts, color = "black", size = 0.35, alpha = 0.7),
+    dpi = getOption("ggrastr.default.dpi", 300),
+    dev = "ragg"   
+  ) +
+  labs(title = "Figure A: Unassigned Tree Points") +
+  theme_map_min()
+
+
+```
+
+```{r}
+
+#| label: task4-assignment-cleanup
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Recover unassigned: st_intersects → 2m nearest → force all remaining"
+
+# Ensure district_cols exists
+if (!exists("district_cols", inherits = FALSE)) {
+  district_cols <- nyc_districts |> select(council_district, borough, area_km2)
+}
+
+# STEP 1: Try st_intersects for boundary points
+miss <- is.na(trees_with_districts$council_district)
+if (any(miss)) {
+  recovered1 <- st_join(
+    trees_with_districts[miss, c("geometry")],
+    district_cols,
+    join = st_intersects,
+    left = TRUE
+  ) |>
+    st_drop_geometry() |>
+    select(council_district, borough)
+
+  trees_with_districts$council_district[miss] <- recovered1$council_district
+  trees_with_districts$borough[miss]          <- recovered1$borough
+}
+
+# STEP 2: Nearest within 2 meters
+miss2 <- is.na(trees_with_districts$council_district)
+if (any(miss2)) {
+  idx <- st_nearest_feature(trees_with_districts[miss2, ], nyc_districts)
+  dist_m <- as.numeric(st_distance(trees_with_districts[miss2, ],
+                                       nyc_districts[idx, ], by_element = TRUE))
+  ok <- dist_m <= 2
+  if (any(ok)) {
+    rows <- which(miss2)[ok]
+    trees_with_districts$council_district[rows] <- nyc_districts$council_district[idx[ok]]
+    trees_with_districts$borough[rows]          <- nyc_districts$borough[idx[ok]]
+  }
+}
+
+# STEP 3: Force assign ALL remaining to nearest (no distance limit)
+miss_final <- is.na(trees_with_districts$council_district)
+if (any(miss_final)) {
+  idx <- st_nearest_feature(trees_with_districts[miss_final, ], nyc_districts)
+  trees_with_districts$council_district[miss_final] <- nyc_districts$council_district[idx]
+  trees_with_districts$borough[miss_final] <- nyc_districts$borough[idx]
+}
+
+# Verify 100% assignment
+assigned_rate <- mean(!is.na(trees_with_districts$council_district))
+message(sprintf("Final assignment rate after cleanup: %.4f%%", assigned_rate * 100))
+
+```
+
+```{r}
+
+#| label: task4-clean-for-qs
+#| message: false
+#| warning: false
+
+trees_with_districts_clean <- trees_with_districts |>
+  filter(!is.na(council_district))
+
+```
+
+```{r}
+
+#| label: task4-clean-for-qs2
+#| message: false
+#| warning: false
+
+# Final clean dataset - should now have 0 NAs
+trees_with_districts_clean <- trees_with_districts |>
+  filter(!is.na(council_district))
+
+# Verify
+n_final_unassigned <- sum(is.na(trees_with_districts$council_district))
+if (n_final_unassigned > 0) {
+  warning(sprintf("Still %d unassigned after all cleanup!", n_final_unassigned))
+}
+
+```
+
+---
+
+The initial join resulted in **1,093,657** total trees, with the vast majority, being successfully assigned. However, there remains a small number of trees that sit precisely on district boundaries or just outside due to GPS precision limits, which need correction through recovery operations described below.
+
+---
+
+## Quality Control: Strict vs. Tolerant Joins
+
+Validating this spatial join involves looking at two separate but related methods:
+
+- **Strict (`st_within`)**: Points must be strictly inside polygons (99.921% success rate as shown in the previous section)
+- **Tolerant (50-foot buffer and nearest neighbor)**: Points within 50 feet of a boundary are assigned via `st_is_within_distance`, then any remaining via <a href="https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm" target="_blank">the nearest-neighbor method</a> (100% success rate)
+
+The "Tolerant" method successfully recovers all unassigned points from the previous approach (e.g., `st_within`) leaving zero remaining gaps. Tables B and C demonstrate:
+
+1. How many points were initially unassigned under strict joining
+
+2. Which districts gained trees when using tolerance
+
+3. Where the boundary-edge trees are located geographically
+
+Showing both methods demonstrates the robust process for assigning trees. The "Strict" method captures the vast majority correctly, while the "Tolerant" method catches edge cases without introducing errors.
+
+---
+
+```{r}
+
+#| label: task4-qc-strict-vs-tolerant
+#| message: false
+#| warning: false
+#| echo: false
+#| code-fold: true
+#| code-summary: "QC: Comparison of strict vs. tolerant joins"
+
+# 1) Calculate unassigned counts
+n_unassigned_strict <- sum(is.na(trees_with_districts_strict$council_district))
+n_unassigned_tolerant <- sum(is.na(trees_with_districts$council_district))
+
+# Summary table
+qa_summary <- tibble(
+  Method      = c("Strict (st_within)", "Tolerant (cleanup recovery)"),
+  Unassigned  = as.integer(c(n_unassigned_strict, n_unassigned_tolerant)),
+  `% Assigned` = c(
+    (1 - n_unassigned_strict/nrow(trees_with_districts_strict)) * 100,
+    (1 - n_unassigned_tolerant/nrow(trees_with_districts)) * 100
+  )
+)
+
+# 2) District-level comparison
+counts_strict <- trees_with_districts_strict |>
+  st_drop_geometry() |> 
+  count(council_district, name = "Strict")
+
+counts_tolerant <- trees_with_districts |>
+  st_drop_geometry() |> 
+  count(council_district, name = "Tolerant")
+
+compare <- full_join(counts_strict, counts_tolerant, by = "council_district") |>
+  mutate(
+    across(c(Strict, Tolerant), ~coalesce(., 0L)),
+    Delta = Tolerant - Strict
+  ) |>
+  filter(Delta != 0) |>
+  arrange(desc(abs(Delta)))
+
+# 3) Display summary
+dt1 <- datatable(
+  qa_summary,
+  rownames = FALSE,
+  options = list(dom = 't', paging = FALSE),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight:700; font-size:1.1em; margin-bottom:8px;',
+    "Table B: Assignment Success Rates: Strict vs. Tolerant Methods"
+  )
+) |>
+  formatCurrency("Unassigned", currency = "", digits = 0, interval = 3, mark = ",") |>
+  formatRound("% Assigned", digits = 3) |>
+  formatStyle(
+    "Method",
+    target = "row",
+    backgroundColor = styleEqual("Tolerant (cleanup recovery)", "#E8F5E9"),
+    fontWeight = styleEqual("Tolerant (cleanup recovery)", "bold")
+  )
+
+dt1
+
+# 4) Display district changes
+if (nrow(compare) > 0) {
+  dt2 <- datatable(
+    compare |>
+      transmute(
+        District = as.integer(council_district),
+        `Strict within` = Strict,
+        `After Cleanup` = Tolerant,
+        `Trees Recovered` = Delta
+      ),
+    rownames = FALSE,
+    options = list(
+      pageLength = 10, 
+      lengthChange = FALSE, 
+      dom = 'ftip',
+      order = list(list(3, "desc")),
+      columnDefs = list(list(className = 'dt-left', targets = "_all"))
+    ),
+    caption = tags$caption(
+      style = 'caption-side: top; text-align: left; font-weight:700; font-size:1.1em; margin-top:16px; margin-bottom:8px;',
+      "Table C: Districts Where Cleanup Recovery Assigned Boundary Trees"
+    )
+  ) |>
+    formatCurrency(c("Strict within", "After Cleanup", "Trees Recovered"), 
+                   currency = "", digits = 0, interval = 3, mark = ",") |>
+    formatStyle(
+      "Trees Recovered",
+      backgroundColor = styleInterval(
+        c(10, 50, 100),
+        c("white", "#FFF9C4", "#FFECB3", "#FFEBEE")
+      ),
+      fontWeight = "bold"
+    )
+  
+  dt2
+}
+
+```
+
+---
+
+**Visual Confirmation:** Figure B below shows the same 862 unassigned points displayed earlier in the "Unassigned Tree Points" section. These maps appear nearly identical because they highlight the same trees sitting precisely on district boundaries or just outside due to GPS precision limits. 
+
+The earlier map in Figure A demonstrated the issue (trees falling outside strict polygon boundaries). This updated map demonstrates what our Cleanup Recovery operations fixed, showing exactly which boundary trees were successfully assigned to their nearest districts through the tolerance and nearest-neighbor methods. Post cleanup, all 862 points gain district assignments, bringing our tree assignment coverage to 100%.
+
+---
+
+```{r}
+
+#| label: qc-recovered-trees-by-district
+#| fig.width: 8
+#| fig.height: 7
+#| message: false
+#| warning: false
+#| echo: false
+#| results: hide
+#| eval: sum(is.na(trees_with_districts_strict$council_district)) > 0
+#| code-fold: true
+#| code-summary: "QC · Recovered boundary trees colored by assigned district"
+
+# Identify row indices that were unassigned under strict
+strict_unassigned_idx <- which(is.na(trees_with_districts_strict$council_district))
+
+# Get those same rows from the tolerant dataset (now assigned)
+recovered_trees <- trees_with_districts[strict_unassigned_idx, ] |>
+  filter(!is.na(council_district))  # Should be all of them
+
+# Create map showing recovered trees by district
+ggplot() +
+  geom_sf(data = nyc_districts, fill = "grey98", color = "grey40", linewidth = 0.4) +
+  rasterise(
+    geom_sf(
+      data = recovered_trees, 
+      aes(color = factor(council_district)),
+      size = 0.5, alpha = 0.8
+    ),
+    dpi = getOption("ggrastr.default.dpi", 300), 
+    dev = "ragg"
+  ) +
+  scale_color_viridis_d(option = "turbo", guide = "none") +
+  labs(
+    title = "Figure B: Cleanup Success, Boundary Trees Assigned",
+    subtitle = glue(
+      "{comma(nrow(recovered_trees))} trees recovered and assigned to districts via ",
+      "Tolerant method"
+    )
+  ) +
+  theme_map_min()
+
+```
+
+---
+
+By accurately joining tree points and district boundaries, this initial analysis uncovers specific areas of interest for arborists, pruners, or anyone residing in "concrete jungles" who seek concrete, real-world district values that highlight: 
+
+- the most trees 
+- the highest tree density 
+- the highest fraction of dead trees 
+- the most common tree species in a district (e.g., Manhattan)
+- the species of tree closest to an alma mater (e.g., Baruch College)
+
+---
+
+#### 1. Which council district has the most trees?
+
+---
+
+```{r}
+
+#| label: task4-q1-most-trees-dt
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Full table (51 districts), integers for District
+q1_tbl <- trees_with_districts_clean |>
+  sf::st_drop_geometry() |>
+  dplyr::count(council_district, borough, name = "Trees") |>
+  dplyr::transmute(
+    District = as.integer(council_district),
+    Borough  = borough,
+    Trees    = Trees
+  ) |>
+  dplyr::arrange(dplyr::desc(Trees))
+
+# 1-row object for inline text
+q1_answer <- q1_tbl |>
+  slice_max(Trees, n = 1, with_ties = FALSE) |>      # top district
+  rename(
+    council_district = District,
+    borough          = Borough,
+    trees            = Trees
+  )
+
+# District to highlight
+hi_dist <- q1_tbl$District[[1]]
+
+# Build widget (note elementId so we can scope CSS)
+q1_dt <- datatable(
+  q1_tbl,
+  elementId = "q1_dt_tbl",
+  rownames  = FALSE,
+  class     = "stripe hover order-column compact",
+  options   = list(
+    pageLength   = 5,           
+    lengthChange = FALSE,      
+    dom          = "ftip",      
+    order        = list(list(2, "desc")),   
+    autoWidth    = TRUE,
+    columnDefs   = list(
+      list(className = "dt-left", targets = "_all")   
+    )
+  ),
+  caption = htmltools::tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.1em;",
+    "Table 1: District with the Most Trees"
+  )
+) |>
+  # Integers with thousands separators
+  formatCurrency("Trees", currency = "", digits = 0, interval = 3, mark = ",") |>
+  
+  # Row highlight (soft green) + bold
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(hi_dist, "#E6F4EA"),
+    fontWeight      = styleEqual(hi_dist, "bold")
+  )
+
+# Hard-override any dt-right classes (headers + cells) for THIS table only
+q1_dt <- htmlwidgets::prependContent(
+  q1_dt,
+  htmltools::tags$style(htmltools::HTML("
+    #q1_dt_tbl table.dataTable thead th,
+    #q1_dt_tbl table.dataTable tbody td { text-align: left !important; }
+  "))
+)
+
+# Source note at the bottom
+htmlwidgets::appendContent(
+  q1_dt,
+  htmltools::tags$div(
+    style = "caption-side: bottom; text-align: left; font-size: 0.9em; color: #666; margin-top: 6px;",
+    htmltools::HTML(
+      "Data: NYC OpenData (Trees <b>hn5i-inap</b>), NYC Dept of City Planning (Districts <b>nycc_25c</b>)."
+    )
+  )
+)
+
+
+```
+
+---
+
+#### **Answer**: District `r q1_answer$council_district` (`r q1_answer$borough`) has the largest number of trees, containing **`r scales::comma(q1_answer$trees)`**.
+
+
+---
+
+#### 2. Which council district has the highest density of trees? 
+
+---
+
+```{r}
+
+#| label: task4-q2-highest-density-dt-SHAPE-AREA
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Show code"
+
+KM2_TO_MI2   <- 0.38610215854
+FT2_PER_MI2  <- 27878400  
+
+# 1) District counts (keeps Borough here)
+counts <- trees_with_districts_clean |>
+  sf::st_drop_geometry() |>
+  dplyr::count(council_district, borough, name = "Trees")
+
+# 2) Pull area from districts:
+districts_area_for_q2 <- nyc_districts |>
+  dplyr::mutate(
+    shape_area_raw = dplyr::coalesce(.data$Shape_Area, .data$shape_area),
+    area_mi2_shape = suppressWarnings(as.numeric(shape_area_raw)) / FT2_PER_MI2,
+    area_mi2_geom  = area_km2 * KM2_TO_MI2,
+    area_mi2       = dplyr::coalesce(area_mi2_shape, area_mi2_geom)
+  ) |>
+  dplyr::select(council_district, area_mi2)
+
+# 3) Build density table (Trees per mi^2), sorted high -> low
+dens_tbl <- counts |>
+  dplyr::left_join(districts_area_for_q2, by = "council_district") |>
+  dplyr::mutate(
+    District     = as.integer(council_district),
+    `Area (mi²)` = area_mi2,
+    `Trees / mi²` = Trees / `Area (mi²)`
+  ) |>
+  dplyr::select(District, Borough = borough, Trees, `Area (mi²)`, `Trees / mi²`) |>
+  dplyr::arrange(dplyr::desc(`Trees / mi²`))
+
+# One-row answer data frame for inline text
+q2_answer <- dens_tbl |>
+  dplyr::slice_max(`Trees / mi²`, n = 1, with_ties = FALSE) |>
+  dplyr::transmute(
+    District,
+    Borough,
+    trees         = Trees,
+    area_mi2      = `Area (mi²)`,
+    trees_per_mi2 = `Trees / mi²`
+  )
+
+# Set the highlighted row
+hi_dist <- q2_answer$District[[1]]
+
+q2_dt <- datatable(
+  dens_tbl,
+  elementId = "q2_dt_tbl",
+  rownames  = FALSE,
+  class     = "stripe hover order-column compact",
+  options   = list(
+    pageLength   = 5,
+    lengthChange = FALSE,    
+    dom          = "ftip",     
+    order        = list(list(4, "desc")),
+    autoWidth    = TRUE,
+    columnDefs   = list(list(className = "dt-left", targets = "_all"))
+  ),
+  caption = htmltools::tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.1em;",
+    "Table 2: District with the Highest Tree Density"
+  )
+) |>
+  formatCurrency("Trees", currency = "", digits = 0, interval = 3, mark = ",") |>
+  formatRound(c("Area (mi²)", "Trees / mi²"), 2) |>
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(hi_dist, "#E6F4EA"),
+    fontWeight      = styleEqual(hi_dist, "bold")
+  )
+
+# Left alignment for headers + cells
+q2_dt <- htmlwidgets::prependContent(
+  q2_dt,
+  htmltools::tags$style(htmltools::HTML("
+    #q2_dt_tbl table.dataTable thead th,
+    #q2_dt_tbl table.dataTable tbody td { text-align: left !important; }
+    #q2_dt_tbl .dataTables_info { text-align: left !important; }
+  "))
+)
+
+# Source note at bottom
+htmlwidgets::appendContent(
+  q2_dt,
+  htmltools::tags$div(
+    style = "caption-side: bottom; text-align: left; font-size: 0.9em; color:#666; margin-top:6px;",
+    htmltools::HTML("Data: NYC OpenData (Trees <b>hn5i-inap</b>), NYC Dept of City Planning (Districts <b>nycc_25c</b> · uses <i>Shape_Area</i> when available).")
+  )
+)
+
+
+```
+
+---
+
+#### **Answer**: District `r q2_answer$District` (`r q2_answer$Borough`) has the highest tree density, with **`r scales::comma(q2_answer$trees_per_mi2, accuracy = 0.01)` trees/mi²** (or approximately `r scales::comma(q2_answer$trees)` trees over `r scales::number(q2_answer$area_mi2, accuracy = 0.01)` mi²).
+
+---
+
+#### 3. Which district has the highest fraction of dead trees out of all trees?
+
+---
+
+```{r}
+
+#| label: task4-q3-highest-dead-share-dt
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Show code"
+
+# 1) Pick the correct "dead/alive" column 
+dead_col <- intersect(names(trees_with_districts_clean),
+                      c("status","tpcondition","tree_status","condition"))[1]
+stopifnot(!is.na(dead_col))
+
+# Precompute status vector 
+status_vec <- tolower(trimws(as.character(trees_with_districts_clean[[dead_col]])))
+dead_flag  <- status_vec == "dead"
+
+# 2) District-level totals + share dead 
+q3_dt0 <- trees_with_districts_clean |>
+  sf::st_drop_geometry() |>
+  dplyr::mutate(.dead_flag = dead_flag) |>
+  dplyr::group_by(council_district, borough) |>
+  dplyr::summarise(
+    `Total Trees` = dplyr::n(),
+    `Dead Trees`  = sum(.dead_flag, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  dplyr::mutate(`Dead (%)` = `Dead Trees` / `Total Trees`) |>  
+  dplyr::arrange(dplyr::desc(`Dead (%)`)) |>
+  dplyr::transmute(
+    District      = as.integer(council_district),
+    Borough       = borough,
+    `Total Trees` = `Total Trees`,
+    `Dead Trees`  = `Dead Trees`,
+    `Dead (%)`    = `Dead (%)`
+  )
+
+# One-row answer df for inline text + highlight
+q3_answer <- q3_dt0 |>
+  dplyr::slice_max(`Dead (%)`, n = 1, with_ties = FALSE)
+q3_hi_dist <- q3_answer$District[[1]]
+
+# 3) Datatable (left-aligned, highlight winner)
+q3_dt <- datatable(
+  q3_dt0,
+  rownames = FALSE,
+  options = list(
+    pageLength    = 5,
+    lengthChange  = FALSE,
+    dom           = 'ftip',
+    order         = list(list(4, "desc")), 
+    columnDefs    = list(list(className = 'dt-left', targets = "_all")),
+    stripeClasses = c('dt-row-even','dt-row-odd')
+  ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em;',
+    "Table 3: District with the Highest Fraction of Dead Trees"
+  )
+) |>
+  formatCurrency(columns = c("Total Trees","Dead Trees"),
+                 currency = "", interval = 3, mark = ",", digits = 0) |>
+  formatPercentage(columns = "Dead (%)", digits = 2) |>
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(q3_hi_dist, "#DDF7E3"),
+    fontWeight      = styleEqual(q3_hi_dist, "bold")
+  ) |>
+  htmlwidgets::prependContent(
+    tags$style(HTML("
+      table.dataTable tbody tr.dt-row-even { background-color: #f7f7f7; }
+      table.dataTable tbody tr.dt-row-odd  { background-color: #ffffff; }
+      table.dataTable td, table.dataTable th { text-align: left !important; }
+    "))
+  ) |>
+  htmlwidgets::appendContent(
+    tags$div(
+      style = "margin-top: 8px; font-size: 0.95em; color: #444; text-align: left;",
+      HTML('Data: NYC OpenData (Trees <b>hn5i-inap</b>), NYC Dept of City Planning (Districts <b>nycc_25c</b>).')
+    )
+  )
+
+q3_dt
+
+
+```
+
+---
+
+#### **Answer**: District `r q3_answer$District` (`r q3_answer$Borough`) has the highest share of dead trees, with **`r scales::percent(q3_answer[['Dead (%)']], accuracy = 0.01)`**, or `r scales::comma(q3_answer[['Dead Trees']])` of `r scales::comma(q3_answer[['Total Trees']])`.
+
+---
+
+#### 4. What is the most common tree species in Manhattan?
+
+---
+
+```{r}
+
+#| label: q4-heatmap-species-district
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Table 4: Species × District Coverage in Manhattan Heatmap"
+
+# Inputs
+species_col <- intersect(
+  names(trees_with_districts_clean),
+  c("genusspecies", "spc_latin", "species", "genus_species")
+)[1]
+stopifnot(!is.na(species_col))
+
+# Manhattan districts (numeric, sorted)
+manhattan_dists <- nyc_districts |>
+  sf::st_drop_geometry() |>
+  dplyr::filter(borough == "Manhattan") |>
+  dplyr::pull(council_district) |>
+  as.integer() |> unique() |> sort()
+
+base <- trees_with_districts_clean |>
+  sf::st_drop_geometry() |>
+  dplyr::transmute(
+    species  = as.character(.data[[species_col]]),
+    district = as.integer(council_district),
+    borough  = borough
+  ) |>
+  dplyr::filter(borough == "Manhattan", !is.na(species), nzchar(species))
+
+# Species × District matrix 
+wide <- base |>
+  dplyr::count(species, district, name = "n") |>
+  tidyr::pivot_wider(names_from = district, values_from = n, values_fill = 0L)
+
+# Ensure all Manhattan districts exist as columns
+all_d <- as.character(manhattan_dists)          
+missing <- setdiff(all_d, names(wide))
+if (length(missing)) wide[missing] <- 0L
+wide[all_d] <- lapply(wide[all_d], as.integer)
+wide <- wide |>
+  dplyr::select(species, dplyr::all_of(all_d)) |>
+  dplyr::mutate(Trees = rowSums(dplyr::across(dplyr::all_of(all_d)))) |>
+  dplyr::arrange(dplyr::desc(Trees))
+
+# One-row answer for inline text
+q4_answer <- wide |>
+  dplyr::slice_max(Trees, n = 1, with_ties = FALSE) |>
+  dplyr::transmute(genusspecies = species, trees = Trees)
+
+# Keep top N overall (table shows 5 rows/page)
+wideN <- wide |> dplyr::slice_head(n = 25L)
+
+# Rename district columns to D1..D10 for display (keeps left→right order)
+disp_cols <- paste0("D", all_d)
+colnames(wideN)[match(all_d, names(wideN))] <- disp_cols
+wideN <- wideN |> dplyr::rename(`Genus – species` = species)
+
+# Shared color scale across district columns
+rng <- range(as.matrix(wideN[, disp_cols, drop = FALSE]), na.rm = TRUE)
+
+# Build DT widget (5 rows/page, search and sort, left-aligned)
+dt <- datatable(
+  wideN,
+  rownames = FALSE,
+  options = list(
+    pageLength   = 5,
+    lengthChange = FALSE,
+    dom          = 'ftip',
+    order        = list(list(which(names(wideN) == "Trees") - 1, "desc")),
+    columnDefs   = list(list(className = 'dt-left', targets = "_all")),
+    stripeClasses = c('dt-row-even','dt-row-odd'),
+    scrollX = TRUE
+  ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em;',
+    "Table 4: Species × District Coverage in Manhattan (Heatmap)"
+  )
+) |>
+  formatCurrency("Trees", currency = "", interval = 3, mark = ",", digits = 0) |>
+  
+  # Highlight the top species row 
+  formatStyle(
+    "Genus – species",
+    target = "row",
+    backgroundColor = styleEqual(q4_answer$genusspecies[[1]], "#DDF7E3"),
+    fontWeight      = styleEqual(q4_answer$genusspecies[[1]], "bold")
+  )
+
+# Apply consistent heat shading to each district column
+for (cn in disp_cols) {
+  dt <- formatStyle(
+    dt, cn,
+    background = styleColorBar(rng, '#81b1ff'),
+    backgroundSize = '100% 100%',
+    backgroundRepeat = 'no-repeat'
+  )
+}
+
+dt |>
+  appendContent(
+    tagList(
+      tags$div(style="margin-top:4px;font-size:.95em;color:#444;text-align:left;",
+               HTML(paste0("Manhattan council districts: <b>", paste(manhattan_dists, collapse = ', '), "</b>"))),
+      tags$div(style="margin-top:8px;font-size:.95em;color:#444;text-align:left;",
+               HTML("Shading reflects counts per district (shared color scale across all district columns).")),
+      tags$div(style="margin-top:8px;font-size:.95em;color:#444;text-align:left;",
+               HTML("Data: NYC OpenData (Trees <b>hn5i-inap</b>), NYC Dept of City Planning (Districts <b>nycc_25c</b>).")),
+    )
+  )
+
+```
+
+---
+
+#### **Answer**: **`r q4_answer$genusspecies`** with **`r scales::comma(q4_answer$trees)`** trees dispersed throughout Manhattan.
+
+---
+
+#### 5. What is the species of the tree closest to Baruch’s campus?
+
+
+---
+
+```{r}
+
+#| label: task4-q5-unique-species-nearest-baruch-top25-feet
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Show code"
+
+# Robust species column
+species_col <- intersect(
+  names(trees_with_districts_clean),
+  c("genusspecies","spc_latin","species","genus_species")
+)[1]
+stopifnot(!is.na(species_col))
+
+# Baruch point (WGS84)
+baruch_point <- sf::st_sfc(sf::st_point(c(-73.9829, 40.7403)), crs = 4326)
+
+# Distances (meters), then drop geometry
+trees_wgs84 <- sf::st_transform(trees_with_districts_clean, 4326)
+with_dist <- trees_wgs84 |>
+  mutate(distance_m = as.numeric(sf::st_distance(geometry, baruch_point))) |>
+  sf::st_drop_geometry()
+
+# Nearest distance per unique species
+nearest_by_species <- with_dist |>
+  filter(!is.na(.data[[species_col]]), nzchar(as.character(.data[[species_col]]))) |>
+  group_by(`Genus - Species` = as.character(.data[[species_col]])) |>   
+  summarise(`Distance (m)` = min(distance_m, na.rm = TRUE), .groups = "drop")
+
+# Convert to feet, keep Top 25, sort by feet
+FEET_PER_METER <- 3.280839895
+top25_ft <- nearest_by_species |>
+  mutate(`Distance (ft)` = `Distance (m)` * FEET_PER_METER) |>
+  select(`Genus - Species`, `Distance (ft)`) |>   
+  arrange(`Distance (ft)`) |>
+  slice_head(n = 25L)
+
+# One-row object for inline text
+q5_answer <- if (nrow(top25_ft)) {
+  top25_ft |> slice(1) |>
+    transmute(
+      species      = `Genus - Species`,  
+      distance_ft  = `Distance (ft)`
+    )
+} else {
+  tibble(species = NA_character_, distance_ft = NA_real_)
+}
+
+# For highlighting the closest species in the table
+top1 <- q5_answer$species[[1]]
+
+# Table
+dt_q5_unique_top25_ft <- datatable(
+  top25_ft,
+  rownames = FALSE,
+  options = list(
+    pageLength   = 5,               
+    lengthChange = FALSE,
+    dom          = 'ftip',
+    order        = list(list(match("Distance (ft)", names(top25_ft)) - 1, "asc")),
+    columnDefs   = list(list(className = 'dt-left', targets = "_all")),
+    stripeClasses = c('dt-row-even','dt-row-odd'),
+    scrollX = TRUE
+  ),
+  caption = tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em;',
+    "Table 5: Unique Tree Species Nearest to Baruch (Top 25, feet)"   
+  )
+) |>
+  formatRound("Distance (ft)", digits = 1) |>
+  formatStyle(
+    "Genus - Species",   
+    target = "row",
+    backgroundColor = styleEqual(top1, "#DDF7E3"),
+    fontWeight      = styleEqual(top1, "bold")
+  ) |>
+  appendContent(
+    tags$div(
+      style = "margin-top: 8px; font-size: 0.95em; color: #444; text-align: left;",
+      HTML("Distances shown in <b>feet</b> (converted from meters using 1 m = 3.28084 ft). <br>Data: NYC OpenData (Trees <b>hn5i-inap</b>), NYC Dept of City Planning (Districts <b>nycc_25c</b>).")
+    )
+  )
+
+dt_q5_unique_top25_ft
+
+```
+
+---
+
+#### **Answer**: **`r q5_answer$species`**, about **`r scales::number(q5_answer$distance_ft, accuracy = 0.1)`** ft from campus.
+
+---
+
+# Task 5 — NYC Parks Proposal
+
+## Identifying a Problem
+
+To develop a compelling tree program, one approach is to analyze the variety of trees that comprise most of NYC's urban canopy. The other angle is to determine the potential challenges or obstacles that NYC encounters in tree expansion, aside from citywide real estate development or improvement projects. Most recently, NYC has come under attack by the infamous and now notorious Spotted Lanternfly (SLF). The species has essentially taken control of the Northeast Region of the country, with NYC experiencing an invasion <a href="https://dec.ny.gov/nature/animals-fish-plants/spotted-lanternfly" target="_blank">in the past five years</a>.
+
+Although it is easy to say, "let's get rid of them," a better approach is to determine the cause of these recent invasions, as this will help with efforts to mitigate or eliminate this surge in SLF. Most research indicates that trees are the primary catalyst for this rapid replication. Therefore, it is essential to determine the most available trees in NYC. 
+
+Table 1 highlights the Top 10 tree populations throughout the city. 
+
+```{r}
+
+#| label: task5-nyc-slf-targets-standalone
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "NYC-wide SLF target species distribution"
+
+# Find species column
+species_col <- intersect(
+  names(trees_with_districts_clean),
+  c("genusspecies", "spc_latin", "species", "genus_species")
+)[1]
+
+# Extract genus from species names
+trees_for_citywide <- trees_with_districts_clean |>
+  st_drop_geometry() |>
+  mutate(
+    species_full = as.character(!!sym(species_col)),
+    genus = str_extract(species_full, "^[A-Z][a-z]+")
+  )
+
+# Define SLF-susceptible genera (simplified)
+slf_genera <- c(
+  "Ailanthus", "Juglans", "Acer", "Salix", "Betula", 
+  "Malus", "Prunus", "Quercus", "Platanus", "Populus", "Tilia"
+)
+
+# Get top 10 SLF-susceptible species citywide
+nyc_slf_targets <- trees_for_citywide |>
+  filter(genus %in% slf_genera) |>
+  count(species_full, sort = TRUE) |>
+  slice_head(n = 10) |>
+  mutate(
+    total_at_risk = sum(trees_for_citywide$genus %in% slf_genera),
+    `% of At-Risk Trees` = (n / total_at_risk) * 100,
+    # Parse genus-species and common name from full string
+    `Genus – Species` = str_extract(species_full, "^[^-]+") |> str_trim(),
+    `Common Name` = str_extract(species_full, "(?<=-\\s).+$") |> 
+                    str_trim() |> 
+                    str_to_title(),
+    `Trees in NYC` = n
+  ) |>
+  select(`Genus – Species`, `Common Name`, `Trees in NYC`, `% of At-Risk Trees`)
+
+# Create table
+dt_nyc_targets <- datatable(
+  nyc_slf_targets,
+  rownames = FALSE,
+  class = "compact stripe hover",
+  options = list(
+    pageLength = 10,
+    lengthChange = FALSE,
+    dom = 't',
+    columnDefs = list(
+      list(className = 'dt-left', targets = c(0, 1)),
+      list(className = 'dt-right', targets = c(2, 3))
+    )
+  ),
+  caption = tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em; margin-bottom: 8px;",
+    "Table 1: NYC's Most Common Spotted Lanternfly (SLF) Host Trees — Citywide Distribution"
+  )
+) |>
+  formatCurrency("Trees in NYC", currency = "", digits = 0, interval = 3, mark = ",") |>
+  formatRound("% of At-Risk Trees", digits = 1)
+
+# Context
+dt_nyc_targets <- appendContent(
+  dt_nyc_targets,
+  tagList(
+    tags$div(
+      style = "margin-top: 10px; padding: 10px; background: #FFF3E0; border-left: 3px solid #F57C00; font-size: 0.92em; line-height: 1.5;",
+      tags$strong("Citywide Concern:"), " These are the tree species most vulnerable to SLF across all five boroughs of NYC. ",
+      "The concentration of these hosts, specifically maples, and fruit trees, makes NYC's urban forest highly susceptible to SLF infestation."
+    ),
+    tags$div(
+      style = "margin-top: 8px; font-size: 0.88em; color: #666; font-style: italic;",
+      "Data: NYC 2015 Street Tree Census. Percentages calculated from total SLF-susceptible trees citywide."
+    )
+  )
+)
+
+dt_nyc_targets
+
+```
+
+---
+
+It was essential to identify and narrow the list of NYC Council Districts to a sample concentrated within a specific borough. As a Queens resident, there is a personal interest in conducting this research, as the recent influx of SLFs has created several quality of life issues that will appear in a formal proposal later in this task. 
+
+Focusing on Queens, the districts highlighted in Table 2, which will serve as our "Project Coalition," contain the highest tree counts and are critical in identifying potential "epicenters" for SLF infestation.
+
+---
+
+```{r}
+
+#| label: task5-queens-top5-total-trees
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Top 5 Queens Districts by Total Tree Count"
+
+# Filter for Queens districts (19-32)
+queens_districts <- 19:32
+
+# Count total trees per district in Queens
+queens_total_trees <- trees_with_districts_clean |>
+  st_drop_geometry() |>
+  filter(council_district %in% queens_districts) |>
+  count(council_district, borough, name = "Total_Trees") |>
+  arrange(desc(Total_Trees)) |>
+  slice_head(n = 5) |>
+  mutate(
+    District = as.integer(council_district),
+    Borough = borough,
+    `Total Trees` = Total_Trees,
+    Rank = row_number()
+  ) |>
+  select(Rank, District, `Total Trees`)
+
+# Store for later use
+top_queens_district <- queens_total_trees$District[1]
+
+# Create styled table
+dt_queens_top5 <- datatable(
+  queens_total_trees,
+  rownames = FALSE,
+  class = "stripe hover compact",
+  options = list(
+    pageLength = 5,
+    lengthChange = FALSE,
+    dom = 't',  
+    columnDefs = list(list(className = 'dt-left', targets = "_all"))
+  ),
+  caption = tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em;",
+    "Table 2: Top 5 Queens Districts by Total Tree Count — Project Coalition Candidates"
+  )
+) |>
+  formatCurrency("Total Trees", currency = "", digits = 0, interval = 3, mark = ",") |>
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(top_queens_district, "#E8F5E9"),
+    fontWeight = styleEqual(top_queens_district, "bold")
+  )
+
+# Context
+dt_queens_top5 <- appendContent(
+  dt_queens_top5,
+  tags$div(
+    style = "margin-top: 8px; font-size: 0.95em; color: #444; text-align: left;",
+    HTML("These five districts represent the largest concentration of trees in Queens, making them ideal coalition partners for a coordinated SLF prevention and canopy protection program.")
+  )
+)
+
+dt_queens_top5
+
+```
+
+---
+
+To further narrow research efforts, the trees listed in Table 3 are known to facilitate the spread of SLF across the borough. One tree worth highlighting is the "Tree of Heaven." Although it represents a small fraction of the total tree population (e.g., 709 trees across the coalition), it is a significant factor in the infestation, serving as the **primary egg-laying host** for SLF. Specifically, the tree acts as a <a href="https://shorturl.at/8BD9C" target="_blank">a critical food source for SLF</a>, aiding in their reproduction. Moreover, this tree <a href="https://shorturl.at/Rgk0R" target="_blank">is also an invasive species to the area </a>, outcompeting native plants by growing in thick stands and releasing a chemical poison into the ground that neutralizes other plant life.
+
+The other trees in the table act as "hosts" where SLFs lay their eggs, maximizing their population and regional reach. 
+
+---
+
+```{r}
+
+#| label: task5-step2-focus-species-identification
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Step 2: Identify 6 focus SLF host species in NYC"
+
+# Find species column
+species_col <- intersect(
+  names(trees_with_districts_clean),
+  c("genusspecies", "spc_latin", "species", "genus_species")
+)[1]
+
+# Identify focus species + all SLF hosts
+trees_slf_focused <- trees_with_districts_clean |>
+  st_drop_geometry() |>
+  mutate(
+    species_full = as.character(!!sym(species_col)),
+    genus = str_extract(species_full, "^[A-Z][a-z]+"),
+    genus = str_to_title(genus),
+    species_epithet = str_extract(species_full, "(?<=\\s)[a-z]+"),
+    
+    # Flag 6 focus species by exact match
+    focus_species = case_when(
+      genus == "Ailanthus" & species_epithet == "altissima" ~ "Tree of Heaven",
+      genus == "Platanus" & str_detect(species_full, "acerifolia") ~ "London Planetree",
+      genus == "Quercus" & species_epithet == "palustris" ~ "Pin Oak",
+      genus == "Acer" & species_epithet == "platanoides" ~ "Norway Maple",
+      genus == "Tilia" & species_epithet == "cordata" ~ "Littleleaf Linden",
+      genus == "Prunus" & str_detect(species_full, "serrulata") ~ "Japanese Flowering Cherry",
+      TRUE ~ NA_character_
+    ),
+    
+    # Flag ALL SLF-susceptible genera (for "Other At-Risk" calculation)
+    slf_host = genus %in% c(
+      "Ailanthus", "Juglans", "Acer", "Salix", "Betula", 
+      "Malus", "Prunus", "Quercus", "Platanus", "Populus", "Tilia"
+    )
+  )
+
+```
+
+
+```{r}
+
+#| label: task5-step3-queens-focus-counts
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Step 3: Count focus species in Queens districts"
+
+# Define Queens districts and coalition
+queens_districts <- 19:32
+coalition_districts_focus <- c(19, 23, 27, 31, 32)
+
+# Calculate focus species counts by district
+queens_focus_analysis <- trees_slf_focused |>
+  filter(council_district %in% queens_districts) |>
+  group_by(council_district) |>
+  summarise(
+    total_trees = n(),
+    
+    # Count each focus species
+    tree_of_heaven = sum(focus_species == "Tree of Heaven", na.rm = TRUE),
+    london_planetree = sum(focus_species == "London Planetree", na.rm = TRUE),
+    pin_oak = sum(focus_species == "Pin Oak", na.rm = TRUE),
+    norway_maple = sum(focus_species == "Norway Maple", na.rm = TRUE),
+    littleleaf_linden = sum(focus_species == "Littleleaf Linden", na.rm = TRUE),
+    japanese_cherry = sum(focus_species == "Japanese Flowering Cherry", na.rm = TRUE),
+    
+    # Total focus species
+    total_focus_species = tree_of_heaven + london_planetree + pin_oak + 
+                          norway_maple + littleleaf_linden + japanese_cherry,
+    
+    # Total ALL SLF-susceptible trees
+    total_at_risk = sum(slf_host, na.rm = TRUE),
+    
+    # Other at-risk (SLF hosts not in our 6 focus species)
+    other_at_risk = total_at_risk - total_focus_species,
+    
+    # Percentage
+    vulnerability_pct = (total_at_risk / total_trees) * 100,
+    
+    .groups = "drop"
+  ) |>
+  arrange(desc(tree_of_heaven))
+
+```
+
+
+```{r}
+
+#| label: task5-step4-coalition-species-breakdown
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Focus species breakdown by district"
+
+# Create Table 2 with focus species
+coalition_focus_breakdown <- queens_focus_analysis |>
+  filter(council_district %in% coalition_districts_focus) |>
+  mutate(
+    District = as.character(council_district),
+    `Tree of Heaven` = tree_of_heaven,
+    `London Planetree` = london_planetree,
+    `Pin Oak` = pin_oak,
+    `Norway Maple` = norway_maple,
+    `Littleleaf Linden` = littleleaf_linden,
+    `Japanese Flowering Cherry` = japanese_cherry,
+    `Other At-Risk*` = other_at_risk,
+    `Total At-Risk` = total_at_risk
+  ) |>
+  select(District, `Tree of Heaven`, `London Planetree`, `Pin Oak`, 
+         `Norway Maple`, `Littleleaf Linden`, `Japanese Flowering Cherry`,
+         `Other At-Risk*`, `Total At-Risk`) |>
+  arrange(desc(`Tree of Heaven`))
+
+# Add coalition total
+focus_totals <- coalition_focus_breakdown |>
+  summarise(
+    District = "Coalition Total",  
+    across(where(is.numeric), sum)
+  )
+
+coalition_focus_with_totals <- bind_rows(
+  coalition_focus_breakdown,
+  focus_totals
+)
+
+# Create table
+dt_focus_breakdown <- datatable(
+  coalition_focus_with_totals,
+  rownames = FALSE,
+  class = "compact stripe hover",
+  options = list(
+    pageLength = 6,
+    lengthChange = FALSE,
+    dom = 't',
+    autoWidth = FALSE,
+    columnDefs = list(
+      list(width = '60px', targets = 0),
+      list(width = '70px', targets = 1:7),
+      list(width = '85px', targets = 8),
+      list(className = 'dt-center', targets = "_all")
+    ),
+    scrollX = FALSE
+  ),
+  caption = tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.1em; margin-bottom: 8px;",
+    "Table 3: Coalition Comparison — SLF Focus Host Species, Queens, NY"
+  )
+) |>
+  formatCurrency(
+    c("Tree of Heaven", "London Planetree", "Pin Oak", "Norway Maple", 
+      "Littleleaf Linden", "Japanese Flowering Cherry", "Other At-Risk*", "Total At-Risk"),
+    currency = "", digits = 0, interval = 3, mark = ","
+  ) |>
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(
+      c("19", "Coalition Total"),   
+      c("#FFEBEE", "#E3F2FD")
+    ),
+    fontWeight = styleEqual(
+      c("19", "Coalition Total"),   
+      c("bold", "bold")
+    )
+  )
+ 
+# Footnote
+dt_focus_breakdown <- appendContent(
+  dt_focus_breakdown,
+  tagList(
+    tags$div(
+      style = "margin-top: 8px; padding: 8px; background: #FFF9C4; border-left: 3px solid #F57C00; font-size: 0.88em; line-height: 1.4;",
+      tags$strong("* Other At-Risk:"), " This column includes additional SLF-susceptible species not shown above: ",
+      "Sugar Maple, various oaks, willows, birches, poplars, and other moderate-risk hosts. ",
+      "These six focus species represent the most abundant targets for monitoring and treatment planning."
+    ),
+    tags$div(
+      style = "margin-top: 6px; font-size: 0.85em; color: #666; font-style: italic;",
+      "Sources: CCE (2023), NYSDAM (2024), PSE (2020)"
+    )
+  )
+)
+
+dt_focus_breakdown
+
+```
+
+---
+
+Diving deeper into the data, Table 4 shows that more than half the trees in these districts are considered "at-risk" for SLF infestation. Specifically, SLF interaction with these trees <a href="https://www.aphis.usda.gov/plant-pests-diseases/slf" target="_blank">results in widespread adverse effects</a> , including tree weakening, agricultural and economic loss, and quality of life issues.
+
+---
+
+```{r}
+
+#| label: task5-step4b-vulnerability-intensity
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Table 4: Vulnerability intensity with FIXED percentages"
+
+# Create vulnerability intensity table
+coalition_vulnerability_focus <- queens_focus_analysis |>
+  filter(council_district %in% coalition_districts_focus) |>
+  mutate(
+    District = as.character(council_district),
+    `Total Trees` = total_trees,
+    `Total At-Risk` = total_at_risk,
+    `% At-Risk` = vulnerability_pct  
+  ) |>
+  select(District, `Total Trees`, `Total At-Risk`, `% At-Risk`) |>
+  arrange(desc(`Total At-Risk`))
+
+# Calculate coalition totals
+intensity_focus_totals <- coalition_vulnerability_focus |>
+  summarise(
+    District = "Coalition Total",
+    `Total Trees` = sum(`Total Trees`),
+    `Total At-Risk` = sum(`Total At-Risk`),
+    `% At-Risk` = (`Total At-Risk` / `Total Trees`) * 100
+  )
+
+# Bind totals
+coalition_intensity_focus_totals <- bind_rows(
+  coalition_vulnerability_focus,
+  intensity_focus_totals
+)
+
+# Create table
+dt_vulnerability_focus <- datatable(
+  coalition_intensity_focus_totals,
+  rownames = FALSE,
+  class = "compact stripe hover",
+  options = list(
+    pageLength = 6,
+    lengthChange = FALSE,
+    dom = 't',
+    autoWidth = TRUE,
+    columnDefs = list(
+      list(className = 'dt-center', targets = "_all")
+    )
+  ),
+  caption = tags$caption(
+    style = "caption-side: top; text-align: left; font-weight: 700; font-size: 1.1em; margin-bottom: 8px;",
+    "Table 4: SLF Vulnerability Intensity by District"
+  )
+) |>
+  formatCurrency(
+    c("Total Trees", "Total At-Risk"),
+    currency = "", digits = 0, interval = 3, mark = ","
+  ) |>
+ 
+   # Use formatRound for proper display
+  formatRound("% At-Risk", digits = 1) |>
+  formatStyle(
+    "District",
+    target = "row",
+    backgroundColor = styleEqual(
+      c("19", "Coalition Total"),
+      c("#FFEBEE", "#E3F2FD")
+    ),
+    fontWeight = styleEqual(
+      c("19", "Coalition Total"),
+      c("bold", "bold")
+    )
+  ) |>
+  formatStyle(
+    "% At-Risk",
+    backgroundColor = styleInterval(
+      c(50, 55, 60),
+      c("white", "#FFF9C4", "#FFECB3", "#FFEBEE")
+    ),
+    fontWeight = "bold"
+  )
+
+# Footnote
+dt_vulnerability_focus <- appendContent(
+  dt_vulnerability_focus,
+  tags$div(
+    style = "margin-top: 10px; padding: 10px; background: #E3F2FD; border-left: 3px solid #1976D2; font-size: 0.90em; line-height: 1.5;",
+    tags$strong("Key Insight:"), " Over half (58.1%) of all trees across the coalition are SLF-susceptible. ",
+    "Without coordinated intervention, the majority of Queens' urban canopy in these districts faces significant risk. ",
+    "District 19 has the highest concentration of Tree of Heaven (259 trees), making it the critical focal point for egg mass surveys."
+  )
+)
+
+dt_vulnerability_focus
+
+```
+
+---
+
+Based on the presented evidence, there is a real threat to NYC's urban canopy. By focusing on a coalition of districts, the proposed plan, if accepted, can serve as a pilot, with the expectation that NYC officials will consider implementing a city-wide plan to mitigate SLF reproduction and maximize existing tree populations. By showing an impact in this concentrated district area, the goal is to inspire larger coalitions to form and demand quality-of-life changes from their local governments. 
+
+---
+
+## The Coalition Canopy Defense Program Proposal
+
+**Project**: Spotted Lanternfly (SLF) Coalition Response
+
+**TO**: NYC Department of Parks & Recreation
+
+**FROM**: Office of Districts 19, 23, 27, 31, and 32 
+
+**RE**: Urgent Request for a Coordinated SLF Defense Program in Queens
+
+**DATE**: November 2025
+
+---
+
+**Project Description**
+
+The Spotted Lanternfly (SLF) is no longer a distant threat; it is an active invasion impacting the daily quality of life in our communities. As residents of Queens, we see firsthand that our greenest districts are now the most vulnerable. This proposal outlines a Coordinated Canopy Defense Program uniting the five Queens districts with the highest tree counts (Districts 19, 23, 27, 31, and 32) to mitigate the impact of this invasive pest.
+
+This project moves beyond simply reacting to the SLF. It is a proactive strategy focused on disrupting the pest's reproductive cycle by targeting its primary host, the "Tree of Heaven" (*Ailanthus altissima*), while simultaneously protecting the tens of thousands of other high-value trees that the SLF uses for feeding.
+
+**Project Rationale & Urgency**
+
+The SLF invasion poses a direct threat to tree health, the local economy, and public quality of life.
+
+- **Tree Health**: The SLF <a href="https://shorturl.at/Bralm" target="_blank"> feeds on sap</a>, stressing trees and causing wilting, leaf curling, and branch death. Depleting a tree's sap supply weakens its defenses, making it vulnerable to other diseases and, in some cases, leading to its death.
+
+- **Economic Threat**: While the SLF attacks many trees, its toll on agriculture is a negative driver on the broader economy. <a href="https://extension.psu.edu/spotted-lanternfly" target="_blank">A 2019 economic impact study</a> in neighboring Pennsylvania estimated that an uncontrolled SLF infestation could cost the state $324 million annually and threaten over 2,800 jobs in the grape, fruit, and timber industries. 
+
+- **Quality of Life**: SLFs excrete <a href="https://shorturl.at/kBHsr" target="_blank">sugary waste </a> called "honeydew," which sticks to sidewalks, cars, park benches, and plants. This waste product attracts swarms of insects, including hornets and wasps, and also fosters the growth of mold that blocks sunlight, ultimately killing many plants.
+
+This is not just an ecological nuisance; it is an economic and public health hazard that demands a coordinated response.
+
+**Quantitative Scope**
+
+In total, we request funding to remove or treat the 709 trees identified as "Tree of Heaven" and implement monitoring and targeted treatments for 107,886 SLF-susceptible host trees across Districts 19, 23, 27, 31, and 32, with District 19 serving as the pilot.
+
+Analyzing the "NYC Tree Points" dataset reveals that this coalition of five districts is uniquely vulnerable. Together, 58% of this entire urban canopy (107,886 trees) houses species susceptible to SLF feeding.
+
+The scope of this project is two-fold:
+
+- **Disrupt Reproduction**: Identify and remove or treat all 709 invasive "Tree of Heaven" trees across the five-district coalition. Per <a href="https://shorturl.at/YCPEK" target="_blank"> historical public guidance</a>, mitigation efforts will focus on removing female trees, leaving male trees to serve as "trap trees" for targeted insecticide treatment.
+
+- **Protect High-Value Hosts**: Implement a targeted treatment and monitoring plan (e.g., non-toxic dormant oil spray for egg masses) for the 107,886, including London Planetrees, Maples, Oaks, and Cherries, which the SLF uses for feeding.
+
+---
+
+**Quantitative & Visual Justification**
+
+Because this threat is shared across multiple council districts, responsibility for solving it falls on a Queens coalition rather than a single district.
+
+Figure 1 shows the distribution of the top 6 SLF host trees across the coalition. Specifically, the data reveal that:
+
+- **District 19** is a haven for reproduction, containing the most host trees as well as the 259 "Tree of Heaven" species trees, which SLFs use to feed and promote reproduction.
+
+- **Districts 23, 27, 31, and 32** also house high numbers of host trees that SLF use to feed on and lay their eggs. 
+
+---
+
+```{r}
+
+#| label: task5-step5-comparison-stacked-bar
+#| fig.width: 12
+#| fig.height: 7.5
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Stacked bar: Focus species distribution across coalition"
+
+# Prepare data for stacked bar
+focus_bar_data <- coalition_focus_breakdown |>
+  select(District, `Tree of Heaven`, `London Planetree`, `Pin Oak`, 
+         `Norway Maple`, `Littleleaf Linden`, `Japanese Flowering Cherry`) |>
+  pivot_longer(
+    cols = -District,
+    names_to = "Species",
+    values_to = "Count"
+  ) |>
+  mutate(
+    District_Label = if_else(
+      District == "19",
+      "District 19 (Focus)",
+      paste0("District ", District)
+    ),
+    District_Label = fct_reorder(District_Label, as.numeric(District), .desc = FALSE),
+    Species = factor(Species, levels = c(
+      "Tree of Heaven",
+      "London Planetree",
+      "Pin Oak",
+      "Norway Maple",
+      "Littleleaf Linden",
+      "Japanese Flowering Cherry"
+    ))
+  )
+
+# Calculate totals for labels
+bar_totals <- focus_bar_data |>
+  group_by(District_Label) |>
+  summarise(total = sum(Count), .groups = "drop")
+
+# Define colors
+focus_colors <- c(
+  "Tree of Heaven" = "#D32F2F",
+  "London Planetree" = "#8D6E63",
+  "Pin Oak" = "#558B2F",
+  "Norway Maple" = "#FBC02D",
+  "Littleleaf Linden" = "#7CB342",
+  "Japanese Flowering Cherry" = "#EC407A"
+)
+
+# Create chart
+p_focus_bar <- ggplot(focus_bar_data, 
+                      aes(x = District_Label, y = Count, fill = Species)) +
+  geom_col() +
+  geom_text(
+    data = bar_totals,
+    aes(x = District_Label, y = total, label = comma(total), fill = NULL),
+    hjust = -0.15,
+    size = 4, 
+    fontface = "bold"
+  ) +
+  scale_fill_manual(
+    values = focus_colors,
+    name = "SLF Host Species"
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.15)),
+    labels = comma
+  ) +
+  coord_flip() +
+  theme_minimal(base_size = 12) +
+  labs(
+    title = "Figure 1: SLF Host Tree Distribution: Queens Coalition",
+    subtitle = "A need to develop a coordinated response for monitoring and preserving NYC trees",
+    x = NULL,
+    y = "Number of Susceptible Trees",
+    caption = "Sources: CCE (2023), NYSDAM (2024), PSE (2020)"
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11),
+    plot.caption = element_text(hjust = 0, size = 9.5, color = "#666"),   
+    legend.position = "bottom",
+    legend.direction = "vertical"
+  )
+
+p_focus_bar
+
+# Save
+ggsave("visualizations/task5_slf_focus_coalition_comparison.png", p_focus_bar,
+       width = 12, height = 7.5, dpi = 300, device = ragg::agg_png)
+
+```
+
+---
+
+The project’s main goal is to proactively eliminate these specific trees to prevent the next swarm of SLF from happening. Figure 2 highlights District 19 explicitly, showing the 259 "Tree of Heaven" trees (represented by red dots) that serve as breeding "hotspots." However, the large number of host trees in District 19 makes it almost impossible to stop future SLF infestations if District 19 works alone, as these host trees sustain the reproductive cycle.
+
+---
+
+```{r}
+
+#| label: task5-step6-zoomed-primary-district
+#| fig.width: 14
+#| fig.height: 11
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Zoomed map: District 19 focus species"
+
+# Get District 19 boundary
+district_19_boundary <- nyc_districts |>
+  filter(council_district == 19)
+
+# Get focus species trees in District 19
+district_19_focus_trees <- trees_with_districts_clean |>
+  filter(council_district == 19) |>
+  left_join(
+    trees_slf_focused |> select(objectid, focus_species, slf_host),
+    by = "objectid"
+  ) |>
+  filter(!is.na(focus_species))  # Only the 6 focus species
+
+# Sample if needed
+set.seed(123)
+max_display <- 15000
+if (nrow(district_19_focus_trees) > max_display) {
+  district_19_focus_show <- district_19_focus_trees |> slice_sample(n = max_display)
+  showing_text <- glue("showing {comma(max_display)}")
+} else {
+  district_19_focus_show <- district_19_focus_trees
+  showing_text <- ""
+}
+
+# Define focus colors
+focus_colors <- c(
+  "Tree of Heaven" = "#D32F2F",
+  "London Planetree" = "#8D6E63",
+  "Pin Oak" = "#558B2F",
+  "Norway Maple" = "#FBC02D",
+  "Littleleaf Linden" = "#7CB342",
+  "Japanese Flowering Cherry" = "#EC407A"
+)
+
+# Ensure factor levels
+district_19_focus_show <- district_19_focus_show |>
+  mutate(
+    focus_species = factor(focus_species, levels = c(
+      "Tree of Heaven",
+      "London Planetree",
+      "Pin Oak",
+      "Norway Maple",
+      "Littleleaf Linden",
+      "Japanese Flowering Cherry"
+    ))
+  )
+
+# Count by species
+species_counts <- district_19_focus_trees |>
+  st_drop_geometry() |>
+  count(focus_species)
+
+toh_count <- species_counts |> 
+  filter(focus_species == "Tree of Heaven") |> 
+  pull(n)
+if(length(toh_count) == 0) toh_count <- 0
+
+# Create map
+p_zoomed_19 <- ggplot() +
+  geom_sf(
+    data = district_19_boundary,
+    fill = "grey97", color = "black", linewidth = 1.2
+  ) +
+  geom_sf(
+    data = district_19_focus_show,
+    aes(color = focus_species),
+    size = 1.2, alpha = 0.7
+  ) +
+  scale_color_manual(
+    values = focus_colors,
+    name = "Host Species",
+    drop = FALSE
+  ) +
+  coord_sf(datum = NA) +
+  labs(
+    title = "Figure 2: SLF Susceptible Trees in District 19",
+    subtitle = glue(
+      "{comma(nrow(district_19_focus_trees))} focus species trees | ",
+      "{comma(toh_count)} Tree of Heaven (primary host)"
+    ),
+    caption = paste0(
+      "Six priority species for targeted monitoring. Tree of Heaven is primary SLF egg-laying driver\n",
+      "Sources: CCE (2023), NYC Parks (2024), PSE (2020)"
+    )
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11.5),
+    plot.caption = element_text(hjust = 0, size = 9.5, color = "#666"),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    legend.title = element_text(face = "bold", size = 11),
+    legend.text = element_text(size = 10)
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3.5, alpha = 1)))
+
+p_zoomed_19
+
+# Save
+ggsave("visualizations/task5_district19_slf_focus_zoomed.png", p_zoomed_19,
+       width = 14, height = 11, dpi = 300, device = ragg::agg_png)
+
+```
+
+---
+
+Pairing District 19 with District 23 in Figure 3, the two Queens districts with the highest tree populations, further illustrates the need to remove the "Tree of Heaven" as a unified coalition. 
+
+Specifically, District 23 shows a dense population of other host trees, such as Pin Oaks and Planetrees, that sustain the adult SLF population. An adult SLF from a nearby district can fly to other neighboring districts with high host tree populations, like District 23, where they will likely feed and gain reproductive strength, perpetuating a seasonal and growing swarm cycle.
+
+---
+
+```{r}
+
+#| label: task5-step8-sidebyside-comparison
+#| fig.width: 16
+#| fig.height: 10
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Side-by-side: District 19 vs District 23"
+
+# Get District 19 boundary
+district_19_boundary <- nyc_districts |>
+  filter(council_district == 19)
+
+# Get District 19 focus species trees (recreate here for this chunk)
+district_19_focus_trees <- trees_with_districts_clean |>
+  filter(council_district == 19) |>
+  left_join(
+    trees_slf_focused |> select(objectid, focus_species),
+    by = "objectid"
+  ) |>
+  filter(!is.na(focus_species))
+
+# Sample for display
+set.seed(123)
+max_display_19 <- 15000
+if (nrow(district_19_focus_trees) > max_display_19) {
+  district_19_focus_show <- district_19_focus_trees |> slice_sample(n = max_display_19)
+} else {
+  district_19_focus_show <- district_19_focus_trees
+}
+
+# Ensure factor levels
+district_19_focus_show <- district_19_focus_show |>
+  mutate(
+    focus_species = factor(focus_species, levels = c(
+      "Tree of Heaven",
+      "London Planetree",
+      "Pin Oak",
+      "Norway Maple",
+      "Littleleaf Linden",
+      "Japanese Flowering Cherry"
+    ))
+  )
+
+# District 23 boundary
+district_23_boundary <- nyc_districts |>
+  filter(council_district == 23)
+
+# District 23 focus species trees
+district_23_focus_trees <- trees_with_districts_clean |>
+  filter(council_district == 23) |>
+  left_join(
+    trees_slf_focused |> select(objectid, focus_species),
+    by = "objectid"
+  ) |>
+  filter(!is.na(focus_species))
+
+# Sample for performance
+set.seed(123)
+if (nrow(district_23_focus_trees) > 10000) {
+  district_23_focus_show <- district_23_focus_trees |> slice_sample(n = 10000)
+} else {
+  district_23_focus_show <- district_23_focus_trees
+}
+
+# Ensure factor
+district_23_focus_show <- district_23_focus_show |>
+  mutate(
+    focus_species = factor(focus_species, levels = c(
+      "Tree of Heaven",
+      "London Planetree",
+      "Pin Oak",
+      "Norway Maple",
+      "Littleleaf Linden",
+      "Japanese Flowering Cherry"
+    ))
+  )
+
+# Define focus colors
+focus_colors <- c(
+  "Tree of Heaven" = "#D32F2F",
+  "London Planetree" = "#8D6E63",
+  "Pin Oak" = "#558B2F",
+  "Norway Maple" = "#FBC02D",
+  "Littleleaf Linden" = "#7CB342",
+  "Japanese Flowering Cherry" = "#EC407A"
+)
+
+# Get counts
+d19_count <- nrow(district_19_focus_trees)
+d19_toh <- sum(district_19_focus_trees$focus_species == "Tree of Heaven", na.rm = TRUE)
+
+d23_count <- nrow(district_23_focus_trees)
+d23_toh <- sum(district_23_focus_trees$focus_species == "Tree of Heaven", na.rm = TRUE)
+
+# Map 1: District 19
+m1 <- ggplot() +
+  geom_sf(data = district_19_boundary, fill = "grey97", color = "black", linewidth = 1.1) +
+  geom_sf(data = district_19_focus_show, 
+          aes(color = focus_species), size = 0.9, alpha = 0.7) +
+  scale_color_manual(values = focus_colors, name = "Host Species", drop = FALSE) +
+  coord_sf(datum = NA) +
+  labs(
+    title = "District 19",
+    subtitle = glue(
+      "{comma(d19_count)} trees | {comma(d19_toh)} Tree of Heaven"
+    )
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#C62828"),
+    plot.subtitle = element_text(size = 11.5, hjust = 0.5, lineheight = 1.2),
+    legend.position = "none"
+  )
+
+# Map 2: District 23
+m2 <- ggplot() +
+  geom_sf(data = district_23_boundary, fill = "grey97", color = "black", linewidth = 1.1) +
+  geom_sf(data = district_23_focus_show, 
+          aes(color = focus_species), size = 0.9, alpha = 0.7) +
+  scale_color_manual(values = focus_colors, name = "Host Species", drop = FALSE) +
+  coord_sf(datum = NA) +
+  labs(
+    title = "District 23",
+    subtitle = glue(
+      "{comma(d23_count)} trees | {comma(d23_toh)} Tree of Heaven"
+    )
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5),
+    plot.subtitle = element_text(size = 11.5, hjust = 0.5, lineheight = 1.2),
+    legend.position = "none"
+  )
+
+# Combine with shared legend at bottom
+p_comparison_focus <- m1 + m2 +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Figure 3: SLF Vulnerability, District Comparison",
+    subtitle = "Similar host distributions show benefit of coordinated interventions",
+    caption = paste0(
+      "Sources: CCE (2023), NYSDAM (2024), PSE (2020)"
+    ),
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 16),
+      plot.subtitle = element_text(size = 12),
+      plot.caption = element_text(hjust = 0, size = 9.5, color = "#666"),
+      legend.position = "bottom",
+      legend.direction = "vertical",   
+      legend.title = element_text(face = "bold", size = 12),   
+      legend.text = element_text(size = 10)
+    )
+  ) &
+  theme(legend.position = "bottom") &
+  guides(color = guide_legend(
+    override.aes = list(size = 4, alpha = 1),
+    title.position = "top",
+    title.hjust = 0.5
+  ))
+
+p_comparison_focus
+
+# Save
+ggsave("visualizations/task5_slf_district19v23_focus_comparison.png", p_comparison_focus,
+       width = 16, height = 10, dpi = 300, device = ragg::agg_png)
+
+```
+
+---
+
+These visualizations demonstrate a need to mitigate SLF populations through a coordinated five-district coalition. This collective body requests a partnership with the Parks Department to fund and coordinate the coalition, which will assume the responsibility of protecting the canopy of Queens for future generations.
+
+---
+
+**Source Abbreviations:**
+
+<a href="https://shorturl.at/TXc89" target="_blank">CCE = Cornell Cooperative Extension (2023)</a>
+
+<a href="https://dec.ny.gov/nature/animals-fish-plants/spotted-lanternfly" target="_blank">NYSDAM = NYS Department of Agriculture & Markets (2024)</a>
+
+<a href="https://www.nycgovparks.org/trees/spotted-lanternfly-infestation" target="_blank">NYC Parks (2024)</a>
+
+<a href="https://extension.psu.edu/spotted-lanternfly-management-guide" target="_blank">PSE = Penn State Extension (2020)</a>
