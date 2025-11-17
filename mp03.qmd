@@ -1514,7 +1514,7 @@ dt <- datatable(
   ),
   caption = tags$caption(
     style = 'caption-side: top; text-align: left; font-weight: 700; font-size: 1.15em;',
-    "Table 4: Species × District Coverage in Manhattan (Heatmap)"
+    "Table 4: Species × District (D) Coverage in Manhattan (Heatmap)"
   )
 ) |>
   formatCurrency("Trees", currency = "", interval = 3, mark = ",", digits = 0) |>
