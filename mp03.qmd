@@ -942,7 +942,7 @@ if (n_final_unassigned > 0) {
 
 ---
 
-The initial join resulted in **1,093,657** total trees, with the vast majority, being successfully assigned. However, there remains a small number of trees that sit precisely on district boundaries or just outside due to GPS precision limits, which need correction through recovery operations described below.
+The initial join resulted in **1,093,657** total trees, with the vast majority being successfully assigned. However, there remains a small number of trees that sit precisely on district boundaries or just outside due to GPS precision limits, which need correction through recovery operations described below.
 
 ---
 
@@ -1553,7 +1553,7 @@ dt |>
 
 ---
 
-#### **Answer**: **`r q4_answer$genusspecies`** with **`r scales::comma(q4_answer$trees)`** trees dispersed throughout Manhattan.
+#### **Answer**: **`r q4_answer$genusspecies`**, with **`r scales::comma(q4_answer$trees)`** trees dispersed throughout Manhattan.
 
 ---
 
@@ -1829,7 +1829,7 @@ dt_queens_top5
 
 ---
 
-To further narrow research efforts, the trees listed in Table 3 are known to facilitate the spread of SLF across the borough. One tree worth highlighting is the "Tree of Heaven." Although it represents a small fraction of the total tree population (e.g., 709 trees across the coalition), it is a significant factor in the infestation, serving as the **primary egg-laying host** for SLF. Specifically, the tree acts as a <a href="https://shorturl.at/8BD9C" target="_blank">a critical food source for SLF</a>, aiding in their reproduction. Moreover, this tree <a href="https://shorturl.at/Rgk0R" target="_blank">is also an invasive species to the area </a>, outcompeting native plants by growing in thick stands and releasing a chemical poison into the ground that neutralizes other plant life.
+To further narrow research efforts, the trees listed in Table 3 are known to facilitate the spread of SLF across the borough. One tree worth highlighting is the "Tree of Heaven." Although it represents a small fraction of the total tree population (e.g., 709 trees across the coalition), it is a significant factor in the infestation, serving as the **primary egg-laying host** for SLF. Specifically, the tree acts as <a href="https://shorturl.at/8BD9C" target="_blank">a critical food source for SLF</a>, aiding in their reproduction. Moreover, this tree <a href="https://shorturl.at/Rgk0R" target="_blank">is also an invasive species to the area</a>, outcompeting native plants by growing in thick stands and releasing a chemical poison into the ground that neutralizes other plant life.
 
 The other trees in the table act as "hosts" where SLFs lay their eggs, maximizing their population and regional reach. 
 
@@ -2170,15 +2170,15 @@ This is not just an ecological nuisance; it is an economic and public health haz
 
 **Quantitative Scope**
 
-In total, we request funding to remove or treat the 709 trees identified as "Tree of Heaven" and implement monitoring and targeted treatments for 107,886 SLF-susceptible host trees across Districts 19, 23, 27, 31, and 32, with District 19 serving as the pilot.
+In total, we request funding to remove or treat the 709 trees identified as "Tree of Heaven" and implement monitoring and targeted treatments for 108,095 SLF-susceptible host trees across Districts 19, 23, 27, 31, and 32, with District 19 serving as the pilot.
 
-Analyzing the "NYC Tree Points" dataset reveals that this coalition of five districts is uniquely vulnerable. Together, 58% of this entire urban canopy (107,886 trees) houses species susceptible to SLF feeding.
+Analyzing the "NYC Tree Points" dataset reveals that this coalition of five districts is uniquely vulnerable. Together, 58% of this entire urban canopy (108,095 trees) houses species susceptible to SLF feeding.
 
 The scope of this project is two-fold:
 
 - **Disrupt Reproduction**: Identify and remove or treat all 709 invasive "Tree of Heaven" trees across the five-district coalition. Per <a href="https://shorturl.at/YCPEK" target="_blank"> historical public guidance</a>, mitigation efforts will focus on removing female trees, leaving male trees to serve as "trap trees" for targeted insecticide treatment.
 
-- **Protect High-Value Hosts**: Implement a targeted treatment and monitoring plan (e.g., non-toxic dormant oil spray for egg masses) for the 107,886, including London Planetrees, Maples, Oaks, and Cherries, which the SLF uses for feeding.
+- **Protect High-Value Hosts**: Implement a targeted treatment and monitoring plan (e.g., non-toxic dormant oil spray for egg masses) for the 108,095, including London Planetrees, Maples, Oaks, and Cherries, which the SLF uses for feeding.
 
 **Estimated Program Cost**
 
@@ -2192,7 +2192,7 @@ Because this threat is shared across multiple council districts, responsibility 
 
 Figure 1 shows the distribution of the top 6 SLF host trees across the coalition. Specifically, the data reveal that:
 
-- **District 19** is a haven for reproduction, containing the most host trees as well as the 259 "Tree of Heaven" species trees, which SLFs use to feed and promote reproduction.
+- **District 19** is a haven for reproduction, containing the most host trees as well as the 259 "Tree of Heaven" species, which SLFs use to feed and promote reproduction.
 
 - **Districts 23, 27, 31, and 32** also house high numbers of host trees that SLF use to feed on and lay their eggs. 
 
