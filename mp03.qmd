@@ -414,7 +414,7 @@ assign_rate = assigned / total_trees
 
 ---
 
-# Task 3 Plot All Tree Points
+# Task 3: Plot All Tree Points
 
 When working with a large volume of spatial points, developing multiple visualizations enhances research efforts. This current section contains several views of the data to support critical analysis. Specifically:
 
