@@ -425,7 +425,7 @@ When working with a large volume of spatial points, developing multiple visualiz
     - The **choropleth map** aggregating density by district
 
 3. **Test visualization techniques**: Determine which approaches best communicate density
-    - Including a **hex-binned density map**provides cell-level granularity.
+    - Including a **hex-binned density map** provides cell-level granularity
 
 These unique visualizations validate the accuracy of the spatial joins needed to address the questions in Task 4, ensuring that each tree point is correctly matched to its council district.
 
