@@ -1,0 +1,15 @@
+---
+title: "STA 9750 Mini-Project #04: Just the Fact(-Check)s, Ma’am!"
+author: "Eduardo Alarcon"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    toc: true
+    toc-title: "On this Page"
+    toc-location: left
+    toc-depth: 3
+execute:
+  message: false
+  warning: false
+---
