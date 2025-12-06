@@ -1641,13 +1641,12 @@ comparison_stats |>
 
 **In Relative Terms:** These revisions represent an average of 0.0483% of total employment, with a typical (median) revision of just 0.0323%. Given current employment levels of approximately 159.4 million workers, this translates to an error margin of less than 0.04%—meaning BLS's initial estimates are accurate to within 99.96% of the actual value.
 
-To illustrate the scale, a 42K job revision in an economy with 159.4 million employed workers is equivalent to inaccuracies approximating 1 person in every 3,796 workers. This level of precision is remarkable for a real-time indicator covering the entire U.S. labor market, which includes over 1<a href="https://www.bls.gov/cew/publications/employment-and-wages-annual-averages/current/" target="_blank">10 million businesses and spans diverse industries </a>.
+To illustrate the scale, a 42K job revision in an economy with 159.4 million employed workers is equivalent to inaccuracies approximating 1 person in every 3,796 workers. This level of precision is remarkable for a real-time indicator covering the entire U.S. labor market, which includes over <a href="https://www.bls.gov/cew/publications/employment-and-wages-annual-averages/current/" target="_blank">110 million businesses and spans diverse industries</a>.
 
 ---
 
 ## Task 4: Statistical Inference
 
----
 
 While exploratory visualizations revealed potential patterns, they cannot definitively distinguish between meaningful trends and random sampling noise. Task 4 involves moving from observation to formal statistical inference. 
 
