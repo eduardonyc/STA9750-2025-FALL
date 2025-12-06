@@ -46,7 +46,7 @@ library(ggrepel)
 
 ## Task 1: Download CES Total Nonfarm Payroll
 
-To assess the stability of United States labor market data, it is essential to first acquire the official historical record of U.S. employment. Unlike static file downloads, the Bureau of Labor Statistics (BLS) serves this data dynamically rather than via static files. 
+To assess the stability of United States labor market data, it is essential to first acquire the official historical record of U.S. employment. Unlike static file repositories, the Bureau of Labor Statistics (BLS) serves this data dynamically rather than via static files. 
 
 In this task, it is beneficial to utilize `httr2` to construct a formal HTTP POST request to the BLS data servlet, and then leverage `rvest` to parse the returned HTML response, extracting the Seasonally Adjusted Total Nonfarm Payroll levels from 1979 through 2025.
 
@@ -213,7 +213,7 @@ This implementation achieves the same outcome (e.g., function design, iteration,
 
 ## Task 3: Data Exploration and Visualization
 
-Having acquired absolute employment levels (Task 1) and revision magnitudes (Task 2), this task focuses on data integration. By joining these datasets on their date index, we construct a comprehensive analytical dataframe. This approach enables the calculation of critical metrics, specifically the magnitude of revisions relative to the total labor force.
+With absolute employment levels (Task 1) and revision magnitudes acquired (Task 2), this task focuses on data integration. By joining these datasets on their date index, we construct a comprehensive analytical data frame. This approach enables the calculation of critical metrics, specifically the magnitude of revisions relative to the total labor force.
 
 The subsequent exploratory analysis utilizes this unified dataset to uncover historical outliers, seasonal anomalies, and long-term trends in BLS estimation accuracy.
 
@@ -281,7 +281,7 @@ ces_combined |>
 
 ---
 
-Tables 3A and 3B support initial data explorations that will address several project tasks. 
+Tables 3A and 3B support initial data explorations that will address several project tasks.
 
 ---
 
@@ -325,7 +325,7 @@ bind_rows(top_positive, top_negative) |>
                                 "Largest Negative Revisions" = "#A23B72")) +
   scale_x_continuous(
     labels = comma_format(suffix = "K"),
-    expand = expansion(mult = c(0.15, 0.15))  # Add 15% padding on both sides
+    expand = expansion(mult = c(0.15, 0.15))   
   ) +
   labs(
     title = "Figure 1: Largest CES Employment Revisions in History",
@@ -545,7 +545,7 @@ year_freq <- ces_combined |>
     `% Positive` = round((sum(revision > 0, na.rm = TRUE) / n()) * 100, 1),
     .groups = "drop"
   ) |>
-  arrange(year)  # Ascending order from 1979
+  arrange(year)   
 
 # Create interactive table
 datatable(
@@ -558,11 +558,11 @@ datatable(
   extensions = c('Buttons'),
   options = list(
     pageLength = 5,
-    lengthMenu = c(5, 15, 25, 35, 47),  # 47 is total years
+    lengthMenu = c(5, 15, 25, 35, 47),   
     dom = 'Blfrtip',
     buttons = c('copy', 'csv', 'excel'),
     ordering = TRUE,
-    order = list(list(0, 'asc')),  # Sort by year ascending
+    order = list(list(0, 'asc')),   
     columnDefs = list(
       list(className = 'dt-center', targets = 0),
       list(className = 'dt-right', targets = 1:4)
@@ -609,7 +609,7 @@ decade_freq <- ces_combined |>
   ) |>
   arrange(decade)
 
-# Create clean table (no buttons, search, or pagination)
+# Create clean table  
 datatable(
   decade_freq,
   caption = tags$caption(
@@ -618,8 +618,8 @@ datatable(
   ),
   rownames = FALSE,
   options = list(
-    dom = 't',  # ONLY show table
-    ordering = FALSE,  # Disable sorting to keep chronological order
+    dom = 't',   
+    ordering = FALSE,   
     columnDefs = list(
       list(className = 'dt-center', targets = c(0)),
       list(className = 'dt-right', targets = c(1, 2, 3, 4))
@@ -696,7 +696,7 @@ ggplot(decade_summary, aes(x = decade, y = pct_positive)) +
   ) +
   scale_fill_manual(
     values = c("TRUE" = "#2E86AB", "FALSE" = "#A23B72"),
-    labels = c("FALSE" = "Majority Negative", "TRUE" = "Majority Positive"),  # FIXED: Explicitly map labels
+    labels = c("FALSE" = "Majority Negative", "TRUE" = "Majority Positive"),   
     name = "Bias Direction"
   ) +
   scale_y_continuous(
@@ -744,7 +744,7 @@ q3_table_data <- ces_combined |>
   mutate(
     `Rev/Final %` = round((abs(revision) / abs(final)) * 100, 2)
   ) |>
-  arrange(date)  # Ascending order from 1979
+  arrange(date)   
 
 # Create interactive table
 datatable(
@@ -761,7 +761,7 @@ datatable(
     dom = 'Blfrtip',
     buttons = c('copy', 'csv', 'excel'),
     ordering = TRUE,
-    order = list(list(0, 'asc')),  # Sort by date ascending
+    order = list(list(0, 'asc')),   
     columnDefs = list(
       list(className = 'dt-center', targets = 0),
       list(className = 'dt-right', targets = 1:4)
@@ -816,7 +816,7 @@ q3_visual_data <- ces_combined |>
   ) |>
   filter(!is.na(revision_pct_of_final)) |>
   # Filter out extreme outliers for better visualization
-  filter(revision_pct_of_final <= 100)  # This removes April 1979's 580%
+  filter(revision_pct_of_final <= 100)   
 
 # Create the plot
 ggplot(q3_visual_data, aes(x = date, y = revision_pct_of_final)) +
@@ -919,7 +919,7 @@ datatable(
     dom = 'Blfrtip',
     buttons = c('copy', 'csv', 'excel'),
     ordering = TRUE,
-    order = list(list(0, 'asc')),  # Sort by date ascending
+    order = list(list(0, 'asc')),   
     columnDefs = list(
       list(className = 'dt-center', targets = 0),
       list(className = 'dt-right', targets = 1:6)
@@ -1137,7 +1137,7 @@ ggplot(ces_seasonal, aes(x = month, y = abs_revision, fill = season)) +
 #| label: q5-summary-table
 #| echo: false
 
-# Calculate monthly statistics (self-contained)
+# Calculate monthly statistics 
 monthly_stats <- ces_combined |>
   mutate(month = factor(month, levels = month.abb)) |>
   group_by(month) |>
@@ -1191,7 +1191,7 @@ monthly_stats |>
 
 library(DT)
 
-# Calculate seasonal statistics and SORT BY RANK
+# Calculate seasonal statistics and sort by rank
 seasonal_stats <- ces_combined |>
   mutate(
     season = case_when(
@@ -1313,7 +1313,7 @@ Part A: Average CES Revision in Absolute Terms
 
 Table 10 and Figure 8 show historic (1979-2925) absolute revision data. 
 
-***Note: There is an omission of two data points, March 2003 and April 2003, as the final estimate was 0, yielding an empty set for revision data. Please refer to Table 7 and type "2003" in search bar to view detailed results. Consequently, there will be 556 total observations examined in this section.***
+***Note: There is an omission of two data points, March 2003 and April 2003, as the final estimate was 0, yielding an empty set for revision data. Please refer to Table 7 and type "2003" in the search bar to view detailed results. Consequently, there will be 556 total observations examined in this section.***
 
 ---
 
@@ -1335,7 +1335,7 @@ absolute_stats <- ces_combined |>
     `75th Percentile` = quantile(abs_revision, 0.75, na.rm = TRUE),
     `Minimum` = min(abs_revision, na.rm = TRUE),
     `Maximum` = max(abs_revision, na.rm = TRUE),
-    `Standard Deviation` = sd(revision, na.rm = TRUE)  # CHANGED: Use signed revision
+    `Standard Deviation` = sd(revision, na.rm = TRUE)  
   ) |>
   pivot_longer(everything(), names_to = "Statistic", values_to = "Value") |>
   mutate(
@@ -1553,8 +1553,8 @@ ggplot(ces_combined, aes(x = revision_pct_of_level)) +
   ) +
   scale_x_continuous(
     labels = function(x) sprintf("%.2f%%", x),
-    breaks = seq(0, 0.50, by = 0.10),  # CHANGED: Break every 0.10% instead of 0.05%
-    minor_breaks = seq(0, 0.50, by = 0.05),  # Show minor gridlines at 0.05%
+    breaks = seq(0, 0.50, by = 0.10),  
+    minor_breaks = seq(0, 0.50, by = 0.05),   
     limits = c(0, NA),
     expand = c(0, 0)
   ) +
@@ -1577,7 +1577,7 @@ ggplot(ces_combined, aes(x = revision_pct_of_level)) +
   theme(
     plot.title = element_text(face = "bold", size = 14),
     plot.subtitle = element_text(size = 11),
-    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 11),  # Horizontal, no rotation needed
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 11),   
     panel.grid.minor.x = element_line(linetype = "dotted", color = "gray90"),
     panel.grid.major.x = element_line(linetype = "solid", color = "gray80")
   )
@@ -2344,7 +2344,7 @@ These three statistical tests work together to provide a complete picture of BLS
 #| label: task4-summary
 #| echo: false
 
-# Recreate all tests independently (self-contained)
+# Recreate all tests independently  
 ces_temp <- ces_combined |>
   mutate(
     period = ifelse(year >= 2020, "Post-2020", "Pre-2020"),
@@ -2486,7 +2486,7 @@ This shows whether errors are large relative to the size of the workforce.
 #| fig-width: 10
 #| fig-height: 7
 
-# REUSE the plot from Task 4, but update labels for Fact Check context
+# Reuse the plot from Task 4 with updated labels for Fact Check context
 plot_test3 +
   labs(
     title = "Figure 13 (Test 3): Absolute Revision Magnitude Before/After 2020",
@@ -2518,7 +2518,7 @@ Revisiting this box plot directly illustrates the hypothesis test, showing:
 #| fig-width: 10
 #| fig-height: 7
 
-# REUSE the plot from Task 4, but update labels
+# Resuing the plot from Task 4, but updated labels
 plot_test2 +
   labs(
     title = "Figure 14 (Test 2): Frequency of Large Revisions Before/After 2020",
@@ -2583,7 +2583,7 @@ percentile_rank <- mean(ces_combined$abs_revision < combined_may_june_2025, na.r
 #| fig-width: 12
 #| fig-height: 7
 
-# REUSE the plot from Task 3
+# Reuse the plot from Task 3
 plot_q4 +
   labs(
     title = "Figure 15: BLS Estimation Accuracy Over Time"
@@ -2680,7 +2680,7 @@ test2_result <- ces_combined |>
     alternative = "two.sided"
   )
 
-# Display results - FIXED: only 6 columns
+# Display results  
 test2_result |>
   kable(
     caption = "Table 20: (Test 2) Has the Proportion of Large Revisions (>0.1%) Changed Post-2020?",
@@ -2746,7 +2746,7 @@ Purpose: Establishes baseline - are revisions generally predictable or do they v
 **Additional Analysis**: Historical Percentile Ranking
 
 - Where does 258K rank among all 558 monthly revisions since 1979?
-- How many times have are revisions this large or larger?
+- How many times have revisions been this large or larger?
 
 **Addresses Task 2 Data**
 
@@ -2885,7 +2885,7 @@ q6_stats |>
 #| fig-width: 10
 #| fig-height: 6
 
-# Recalculate needed values (self-contained)
+# Recalculate needed values  
 combined_may_june_2025 <- ces_combined |>
   filter(date %in% as.Date(c("2025-05-01", "2025-06-01"))) |>
   summarise(combined = sum(abs(revision), na.rm = TRUE)) |>
@@ -3080,8 +3080,8 @@ mean_abs_rev <- mean(ces_combined$abs_revision, na.rm = TRUE)
 z_score_258 <- (combined_may_june_2025 - mean_abs_rev) / sd_revision
 
 # Determine rating using explicit logic
-percentile_exceptional <- percentile_rank_258 >= 98  # Top 2%
-sd_exceptional <- abs(z_score_258) > 2.5  # Beyond 2.5 SD
+percentile_exceptional <- percentile_rank_258 >= 98   
+sd_exceptional <- abs(z_score_258) > 2.5   
 
 if (percentile_exceptional & sd_exceptional) {
   politifact_rating <- "Mostly True"
@@ -3094,22 +3094,6 @@ if (percentile_exceptional & sd_exceptional) {
   rating_explanation <- "Neither criterion met (within normal variation)"
 }
 
-```
-
----
-
-### **PolitiFact Rating: `r politifact_rating`**
-
-**Rating Decision Logic**:
-
-```{r}
-#| echo: false
-cat("Criterion 1 - Percentile Test: ", percentile_rank_258, "th percentile\n")
-cat("  → Exceptional if ≥98th percentile: ", percentile_exceptional, "\n\n")
-cat("Criterion 2 - Standard Deviation Test: ", round(z_score_258, 2), " SD from mean\n")
-cat("  → Exceptional if >2.5 SD: ", sd_exceptional, "\n\n")
-cat("DECISION: ", rating_explanation, "\n")
-cat("RATING: ", politifact_rating, "\n")
 ```
 
 ---
