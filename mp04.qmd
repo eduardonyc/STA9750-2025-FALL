@@ -205,7 +205,7 @@ ces_revisions |>
 
 **Technical Note**
 
-The task rubric suggested implementing year-based iteration (e.g., `extract_year_data(2024)`), expecting separate HTML tables for each year. However, inspecting the actual BLS webpage revealed that revision data is stored in a single combined table rather than separate year-based tables. 
+The task recommended implementing year-based iteration (e.g., `extract_year_data(2024)`), expecting separate HTML tables for each year. However, inspecting the actual BLS webpage revealed that revision data is stored in a single combined table rather than separate year-based tables. 
 
 This implementation achieves the same outcome (e.g., function design, iteration, and error handling) while adapting to the actual data structure. Also, taking this approach uses content-based validation (checking for month names) to identify and clean relevant tables from the page. Consequently, this process is more robust than relying on potentially changing HTML IDs.
 
@@ -1028,32 +1028,32 @@ plot_q4
 
 **Key Findings**
 
-- Dramatic Long-Term Improvement (1979-2019):
+- Dramatic Long-Term Improvement (1979-2019)
   - Started at ~0.11-0.12% in early 1980s
   - Declined steadily to ~0.02-0.03% by 2010s
   - Represents 75% improvement in accuracy over 40 years
   - Dashed trend line shows clear downward trajectory
 
 
-- Sharp Post-2020 Deterioration:
+- Sharp Post-2020 Deterioration
   - 2024: ~0.12% (highest level since early 1980s)
   - 2023: ~0.09% (3× higher than 2010s average)
   - 2025: ~0.05% (still elevated, but improving)
   - Complete reversal of 40-year improvement trend
 
-- Historical Context:
+- Historical Context
   - 2024 revisions returned to 1980-level accuracy
   - Represents largest spike in error magnitude in decades
   - Pre-pandemic (2015-2019) average was ~0.025%
   - Post-pandemic (2020-2025) average appears ~0.08%
 
-**Answer**: When measured as a percentage of total employment, BLS accuracy showed remarkable improvement from 1979-2019, reducing error rates by 75%. However, **post-2020 accuracy has sharply deteriorated**, with 2024 revisions reaching levels not seen since the early 1980s.
+**Answer**: When measured as a percentage of total employment, BLS accuracy showed remarkable improvement from 1979-2019, reducing error rates by 75%. However, post-2020 accuracy has sharply deteriorated, with 2024 revisions reaching levels not seen since the early 1980s.
 
 This metric directly addresses claims about recent BLS reliability. The data confirms:
 
-1. **Long-term success**: BLS methods improved dramatically over 40 years
-2. **Recent challenges**: Post-pandemic period shows genuine accuracy decline
-3. **Magnitude**: 2024 revisions were 4-5× larger (relative to employment) than 2010s average
+1. Long-term success: BLS methods improved dramatically over 40 years
+2. Recent challenges: Post-pandemic period shows genuine accuracy decline
+3. Magnitude: 2024 revisions were 4-5× larger (relative to employment) than 2010s average
 
 ---
 
@@ -1285,14 +1285,14 @@ datatable(
 
 Typical Revision Size by Month
 
-- **Largest typical revisions**: Sep (median = 57K jobs)
-- **Smallest typical revisions**: Jan (median = 34K jobs)
-- **Difference**: 23K jobs
+- Largest typical revisions: Sep (median = 57K jobs)
+- Smallest typical revisions: Jan (median = 34K jobs)
+- Difference: 23K jobs
 
 Variability (Consistency) by Month
 
-- **Most variable**: Sep (IQR = 72.8K jobs) - least predictable
-- **Least variable**: Jan (IQR = 40K jobs) - most consistent
+- Most variable: Sep (IQR = 72.8K jobs) - least predictable
+- Least variable: Jan (IQR = 40K jobs) - most consistent
 
 Seasonal Patterns (Median)
 
@@ -1499,7 +1499,7 @@ percentage_stats |>
 
 ```{r}
 
-#| label: q6-visual-percentage-fewer-breaks
+#| label: q6-visual-percentage
 #| message: false
 #| warning: false
 #| fig-width: 12
@@ -1566,13 +1566,8 @@ ggplot(ces_combined, aes(x = revision_pct_of_level)) +
     subtitle = "How large are revisions relative to total employment? (1979-2025)",
     x = "Absolute Revision as % of Employment Level",
     y = "Number of Months",
-    caption = paste0(
-      "Source: Bureau of Labor Statistics Current Employment Statistics\n",
-      "Answer: On average, revisions represent ", sprintf("%.4f", mean_pct), 
-      "% of total employment; the typical revision is ", sprintf("%.4f", median_pct), 
-      "% of employment"
-    )
-  ) +
+    caption = "Source: Bureau of Labor Statistics Current Employment Statistics"
+  ) + 
   theme_minimal(base_size = 12) +
   theme(
     plot.title = element_text(face = "bold", size = 14),
@@ -1646,7 +1641,6 @@ To illustrate the scale, a 42K job revision in an economy with 159.4 million emp
 ---
 
 ## Task 4: Statistical Inference
-
 
 While exploratory visualizations revealed potential patterns, they cannot definitively distinguish between meaningful trends and random sampling noise. Task 4 involves moving from observation to formal statistical inference. 
 
@@ -1905,17 +1899,17 @@ ggplot(ces_combined, aes(x = revision)) +
 
 ### Statistical Findings
 
-The one-sample t-test yields **t = 3.18** with **p = 0.0015**.
+The one-sample t-test yields *t* = 3.18 with *p* = 0.0015.
 
-**Conclusion**: There is strong statistical evidence (p < 0.05) demonstrating that the average revision is significantly different from zero. The mean revision is 11.3K jobs, indicating a systematic upward (initial estimates tend to be too low) bias. The 95% confidence interval [4.31, 18.2] does not include zero, which the above figure confirms.
+**Conclusion**: There is strong statistical evidence (*p* < 0.05) demonstrating that the average revision is significantly different from zero. The mean revision is 11.3K jobs, indicating a systematic upward (initial estimates tend to be too low) bias. The 95% confidence interval [4.31, 18.2] does not include zero, which the above figure confirms.
 
-While statistically significant, this 11.3K job bias represents approximately 0.0090% of total employment—a remarkably small systematic error in measuring a ~160 million person labor force. This suggests BLS initial estimates are highly accurate despite the statistically detectable bias.
+While statistically significant, this 11.3K job bias represents approximately 0.0090% of total employment—a remarkably small systematic error in measuring roughly 160 million person labor force. This suggests BLS initial estimates are highly accurate despite the statistically detectable bias.
 
 ---
 
 ### Test 2: Has the Fraction of Large Revisions (>0.1%) Increased Post-2020?
 
-Claims relating to BLS reliability often focus not just on average accuracy, but on **catastrophic misses**, where months of initial estimates were dramatically wrong. This test seeks to find inconsistencies in recent years.
+Claims relating to BLS reliability often focus not just on average accuracy, but on "<a href="https://qz.com/bls-revisions-trump-criticism" target="_blank">how useless BLS data has become</a>," where months of initial estimates were dramatically wrong. This test seeks to find inconsistencies in recent years.
 
 **Research Question**
 
@@ -1937,13 +1931,14 @@ As in the previous test, a "large revision" is one exceeding 0.1% of total emplo
 #| message: false
 #| warning: false
 
-# Calculate and display proportions
+# Calculate and display proportions (excluding NA values)
 prop_summary <- ces_combined |>
+  filter(!is.na(large_revision)) |>  # ✅ Remove NAs before grouping
   group_by(period) |>
   summarise(
-    `Large Revisions (>0.1%)` = sum(large_revision, na.rm = TRUE),
+    `Large Revisions (>0.1%)` = sum(large_revision),
     `Total Months` = n(),
-    `Proportion` = mean(large_revision, na.rm = TRUE)
+    `Proportion` = mean(large_revision)
   )
 
 prop_summary |>
@@ -1963,15 +1958,15 @@ prop_summary |>
 
 **Large Revisions: Pre-2020 Era (1979-2019)**:
 
-- Occurred in 56 of 492 months.
-  - Frequency: **11.38%** of all months
+- Occurred in 56 of 490 months.
+  - Frequency: 11.43% of all months
 
 **Conclusion**: Large errors happened roughly once every 9 months (105 months)
 
 **Large Revisions: Post-2020 Era (2020-2025)**:
 
 - Occurred in 12 of 66 months
-  - Frequency: **18.18%** of all months
+  - Frequency: 18.18% of all months
 
 **Conclusion**: Large errors presently occur roughly once every 5 months (66 months) 
 
@@ -2055,8 +2050,8 @@ plot_test2
 
 The stacked bar chart reveals some clear pre/post shifts:
 
-- **Pre-2020 bar**: Only 11.4% red (large revisions)
-- **Post-2020 bar**: 18.2% red (large revisions)
+- Pre-2020 bar: Only 11.4% red (large revisions)
+- Post-2020 bar: 18.2% red (large revisions)
   - The red section is visibly larger post-2020, suggesting increased frequency of large errors, with an observed difference of +6.75 percentage points, or a 59.2% increase.
 
 ---
@@ -2130,9 +2125,9 @@ Cohen's *h* = -0.191, indicating a negligible practical difference between perio
 
 **Observed Proportions**
 
-A two-proportion chi-square test evaluates whether this observed increase is statistically distinguishable from random chance. The proportion test yields **χ² = 1.88** with **p = 0.1701**.
+A two-proportion chi-square test evaluates whether this observed increase is statistically distinguishable from random chance. The proportion test yields χ² = 1.88 with *p* = 0.1701.
 
-**Conclusion**: There is insufficient statistical evidence (p ≥ 0.05) to show that the proportion of large revisions changed post-2020. While the observed difference is +6.75 percentage points, this could plausibly be due to random variation. Therefore, the data shows an increase, but not enough to declare a definitive breakdown given other factors relating to post-pandemic measurement challenges, warranting closer monitoring.
+**Conclusion**: There is insufficient statistical evidence (*p* ≥ 0.05) to show that the proportion of large revisions changed post-2020. While the observed difference is +6.75 percentage points, this could plausibly be due to random variation. Therefore, the data shows an increase, but not enough to declare a definitive breakdown given other factors relating to post-pandemic measurement challenges, warranting closer monitoring.
 
 ---
 
@@ -2322,11 +2317,11 @@ The two-sample t-test yields t = -2.44 with p = 0.0173.
 
 **Period Means**
 
-- Pre-2020 (1979-2019): **52.76K jobs**
-- Post-2020 (2020-2025): **86.94K jobs**
-- Difference: **34.18K jobs** (+64.8%)
+- Pre-2020 (1979-2019): 52.76K jobs
+- Post-2020 (2020-2025): 86.94K jobs
+- Difference: 34.18K jobs (+64.8%)
 
-**Conclusion**: There is strong statistical evidence (p < 0.05) that the average absolute revision magnitude increased post-2020. The typical revision grew by approximately 64.8%.
+**Conclusion**: There is strong statistical evidence (*p* < 0.05) that the average absolute revision magnitude increased post-2020. The typical revision grew by approximately 64.8%.
 
 This increase in average revision size indicates that BLS faced systematic challenges in accurately estimating employment during the pandemic and recovery. This complements Test 2 by showing whether the central tendency shifted, not just the frequency of outliers.
 
@@ -2424,18 +2419,16 @@ This test examines whether the average revision size changed after 2020, providi
 
 **Together, these three tests enable the investigation and verification of potential claims, such as:**
 
-- "BLS always underestimates jobs" → Test 1 evaluates systematic bias
-- "BLS gives us huge misses all the time" → Test 2 assesses frequency of large errors
-- "Revisions are currently massive" → Test 3 compares typical magnitude across eras
-- "The public cannot trust these numbers anymore" → All three tests collectively assess overall reliability
+- "<a href="https://www.whitehouse.gov/articles/2025/08/bls-has-lengthy-history-of-inaccuracies-incompetence/" target="_blank">BLS always underestimates jobs</a>" → Test 1 evaluates systematic bias
+- "<a href="https://www.nytimes.com/2024/12/10/business/economy/bls-data-report.html" target="_blank">BLS gives us huge misses all the time</a>" → Test 2 assesses frequency of large errors
+- "<a href="https://www.npr.org/2025/09/09/nx-s1-5527000/bls-us-job-growth-numbers-revised" target="_blank">Revisions are currently massive</a>" → Test 3 compares typical magnitude across eras
+- "<a href="https://www.npr.org/2025/09/05/nx-s1-5530733/bls-jobs-report-labor-statistics-trump" target="_blank">The public cannot trust these numbers anymore</a>" → All three tests collectively assess overall reliability
 
 Moreover, these tests provide an empirical baseline for assessing whether Dr. McEntarfer's dismissal was justified by data quality concerns or other political reasons. 
 
 ---
 
 ## Task 5: Fact Checks of Claims about BLS
-
----
 
 Public confidence in economic data often seems low amid the pervasive political rhetoric and sensationalist news media outlets. The previous task established a statistical baseline for historical BLS performance. 
 
@@ -2530,9 +2523,9 @@ plot_test2 +
 
 Revisiting this stacked bar chart reveals reinforces clear pre/post shifts:
 
-- **Pre-2020 bar**: Only 11.4% red (large revisions)
-- **Post-2020 bar**: 18.2% red (large revisions)
-  - The red section is visibly larger post-2020, suggesting increased frequency of large errors, with an observed difference of **+6.75 percentage points**, or a 59.2% increase.
+- Pre-2020 bar: Only 11.4% red (large revisions)
+- Post-2020 bar: 18.2% red (large revisions)
+  - The red section is visibly larger post-2020, suggesting increased frequency of large errors, with an observed difference of +6.75 percentage points, or a 59.2% increase.
 
 ---
 
@@ -2867,12 +2860,12 @@ q6_stats |>
 
 ### Key Statistics
 
-**Statistic 1**: Percentile rank of 258K revision: 98.6th percentile (larger than 98.6% of all revisions since 1979)
+- Statistic 1: Percentile rank of 258K revision: 98.6th percentile (larger than 98.6% of all revisions since 1979)
 
-**Statistic 2**: Number of months with revisions ≥ 258K: 8 out of 558 months (1.4%)
+- Statistic 2: Number of months with revisions ≥ 258K: 8 out of 558 months (1.4%)
 
-**Statistic 3**: Mean revision (historical baseline): 56.8K jobs
-- 258K is 4.5× larger than typical revision
+- Statistic 3: Mean revision (historical baseline): 56.8K jobs
+  - 258K is 4.5× larger than typical revision
 
 ---
 
@@ -3040,14 +3033,14 @@ fc2_test_result |>
 
 **Test Results**
 
-- t-statistic: 3.184
-- p-value: 0.0015
+- *t*-statistic: 3.184
+- *p*-value: 0.0015
 - Mean revision: 11.26K jobs
 - 95% CI: [4.31, 18.20]
 
 **Key Insight for "Stunning" and "Dramatic" Claims**
 
-The test shows revisions do not center around zero (p < 0.05), indicating a *slight* systematic upward bias. 
+The test shows revisions do not center around zero (*p* < 0.05), indicating a *slight* systematic upward bias. 
 
 However, the standard deviation of 83.4K jobs is crucial:
 
@@ -3058,7 +3051,7 @@ However, the standard deviation of 83.4K jobs is crucial:
   - ±2 SD captures 95% of values (within ±167K)
   - ±3 SD captures 99.7% of values (within ±250K)
 
-**Conclusion**: 258K falls between 2-3 standard deviations, making it unusual but not shocking (top 2.5-5% if normally distributed). 'Unprecedented' overstates the case, but 'larger than normal' is accurate.
+**Conclusion**: 258K falls between 2-3 standard deviations, making it unusual but not shocking (top 2.5-5% if normally distributed). "Unprecedented" overstates the case, but "larger than normal" is accurate.
 
 ---
 
@@ -3119,7 +3112,6 @@ Absolute numbers (258K) can seem large in isolation, but context matters:
 
 ```
       - Revision % of Level = (258K ÷ 159,439K) × 100 = 0.1618%
-  
 ```
 
 - 0.1618% of workforce shows it's 0.16% error, which is miniscule relative to 159.4 million employed. Equivalently, this value represents a miscount of 16 people in a stadium of 10,000.
