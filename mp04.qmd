@@ -2714,7 +2714,7 @@ As there is evidence to support concerns about recent accuracy, calling BLS "com
 
 **The Claim**
 
-Following the combined 258,000 job downward revision for May and June 2025, multiple sources characterized these as "exceptional." <a href="https://morphocode.com/the-5-minute-walk/" target="_blank"> The Hill reported</a> the revisions "stunned economists," while <a href="https://shorturl.at/wDQO8" target="_blank">Fortune reported</a> reported that revisions are "usually not this dramatic." These revisions occurred shortly before <a href="https://www.epi.org/policywatch/firing-bls-commissioner-erika-mcentarfer/" target="_blank">President Trump dismissed Dr. Erika McEntarfer</a>, Commissioner of the BLS, on August 1, 2025. 
+Following the combined 258,000 job downward revision for May and June 2025, multiple sources characterized these as "exceptional." <a href="https://www.thehill.com/policy/finance/502191-fed-chairman-warns-of-long-road-to-recovery/" target="_blank">The Hill reported</a> the revisions "stunned economists," while <a href="https://shorturl.at/wDQO8" target="_blank">Fortune reported</a> reported that revisions are "usually not this dramatic." These revisions occurred shortly before <a href="https://www.epi.org/policywatch/firing-bls-commissioner-erika-mcentarfer/" target="_blank">President Trump dismissed Dr. Erika McEntarfer</a>, Commissioner of the BLS, on August 1, 2025. 
 
 **Testable Assertion**
 
