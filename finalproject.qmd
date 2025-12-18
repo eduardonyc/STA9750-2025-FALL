@@ -1,0 +1,17 @@
+---
+title: "STA 9750 Final-Project: A Tale of 59 NYC Community Districts"
+author: "Eduardo Alarcon"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    toc: true
+    toc-title: "On this Page"
+    toc-location: left
+    toc-depth: 3
+execute:
+  message: false
+  warning: false
+---
+
+Individual project data is forthcoming. Stay tuned for more details!
