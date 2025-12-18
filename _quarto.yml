@@ -20,6 +20,8 @@ website:
         text: Mini-Project 3
       - href: mp04.qmd
         text: Mini-Project 4  
+      - href: finalproject.qmd
+        text: Final Project
 
 
 format:
