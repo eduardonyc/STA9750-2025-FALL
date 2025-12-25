@@ -10,13 +10,10 @@ format:
     toc-location: left
     toc-depth: 3
     df-print: kable
-    fig-cap-location: bottom
-    tbl-cap-location: top
 execute:
   message: false
   warning: false
   echo: false
-  fig-format: png
 ---
 
 ## Introduction 
