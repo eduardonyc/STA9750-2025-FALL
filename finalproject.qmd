@@ -1,4 +1,5 @@
 ---
+
 title: "STA 9750 Final-Project: A Tale of 59 NYC Community Districts"
 author: "Eduardo Alarcon"
 format: 
@@ -14,6 +15,7 @@ execute:
   message: false
   warning: false
   echo: false
+
 ---
 
 ## Introduction 
@@ -1463,7 +1465,7 @@ This tercile structure enables parallel-trends testing.
 
 A DiD design is a favorable approach to filter out factors (e.g., economic shifts and neighborhood characteristics) impacting trends, allowing for a strict focus on the pandemic's effect. This research evaluates a <a href="https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends" target="_blank">Parallel-Trends Assumption (PTA)</a> framework, to support a DiD interpretation of genuine structural shift in market behavior rather than pre-existing trends.
 
-### Logarithmic Transformation
+#### **Logarithmic Transformation**
 
 To meaningfully execute this comparison, this analysis implements a logarithmic transformation of property values. Because High-EA CDs begin at significantly higher baselines, analyzing raw dollars would blur the comparison of trends. This standardization process yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
@@ -1566,11 +1568,11 @@ max_diff <- max(pretrend_slopes$slope) - min(pretrend_slopes$slope)
 
 ```
 
-Small inter-group differences of `r round(max_diff, 3)`satisfies the PTA requirements, confirming that post-pandemic changes represent structural shifts rather than trajectory continuations.
+Small inter-group differences of `r round(max_diff, 3)` satisfies the PTA requirements, confirming that post-pandemic changes represent structural shifts rather than trajectory continuations.
 
-#### Education and Value: A Lesson on Geography 
+#### **Education and Value: A Lesson on Geography** 
 
-NYC's <a href="https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/" target="_blank">exceptionally diverse EA landscape</a> requires establishing baseline disparities before testing pandemic impacts, as shown in Table 3 below.
+NYC's <a href="https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/" target="_blank">exceptionally diverse EA landscape</a> requires establishing baseline disparities before testing pandemic impacts, as shown in Table 8 below.
 
 
 ```{r}
@@ -1598,7 +1600,7 @@ edu_distribution <- cd_analysis_simple |>
 
 kable(
   edu_distribution,
-  caption = "**Table 3. Distribution of Educational Attainment Across NYC Community Districts (2019)**",
+  caption = "**Table 8: Distribution of EA Across NYC CDs (2019)**",
   col.names = c(
     "CDs",
     "Mean",
@@ -1615,7 +1617,7 @@ kable(
 
 EA varies widely across CDs (SD ≈ 19.8 pp). The 18.9 pp gap between the 25th and 75th percentiles supports tercile grouping, which better accounts for extreme shifts in CD behavior. 
 
-Table 4 below further highlights theses disparities, with BA+ Attainment ranging between 11.8% (e.g., BX01, the South Bronx) to a maximum of 82.7% (e.g., MN05, the Upper West Side), representing a 70 pp difference.
+Table 9 below further highlights theses disparities, with BA+ Attainment ranging between 11.8% (e.g., BX01, the South Bronx) to a maximum of 82.7% (e.g., MN05, the Upper West Side), representing a 70 pp difference.
 
 ```{r}
 #| label: top-bottom-cds
@@ -1644,7 +1646,7 @@ kable(
   top_bottom_tbl,
   caption = "**Table 4. Community Districts with Highest and Lowest Educational Attainment (2019)**",
   col.names = c("Rank", "CD ID", "Borough", "BA+ Attainment"),
-  align = c("l", "c", "l", "r")
+  align = c("l", "l", "l", "l")
 )
 
 ```
