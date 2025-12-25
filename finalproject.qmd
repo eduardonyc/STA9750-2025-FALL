@@ -9,10 +9,14 @@ format:
     toc-title: "On this Page"
     toc-location: left
     toc-depth: 3
-    df-print: kable     
+    df-print: kable
+    fig-cap-location: bottom
+    tbl-cap-location: top
 execute:
   message: false
   warning: false
+  echo: false
+  fig-format: png
 ---
 
 ## Introduction 
@@ -37,8 +41,6 @@ Given the pandemic's impact on work-life demands and redefining dwelling needs, 
 
 Beyond testing these hypotheses, this analysis also investigates whether pandemic-era shifts represent temporary disruption or a systemic realignment of urban real estate economics.
 
----
-
 ## Data Acquisition and Processing
 
 This analysis integrates four data sources through programmatic acquisition, requiring careful transformation to align incompatible geographic coding systems across federal and city databases.
@@ -46,8 +48,6 @@ This analysis integrates four data sources through programmatic acquisition, req
 ### Setup and Configuration
 
 Loading required packages and defining global constants allows for programmatically assembling a 59 CD-level panel for 2017–2019 vs. 2021–2023 and merges it with baseline 2019 American Community Survey (ACS) education variables.
-
-This approach creates a balanced panel of 354 CD-year observations (59 CDs over 6 years), enabling thorough Difference-in-Differences (DiD) in this analysis using consistent neighborhood tracking across time periods.
 
 ```{r}
 
@@ -221,7 +221,7 @@ get_nyc_cd <- function() {
 
 ### PLUTO BBL-to-CD Crosswalk
 
-The `get_pluto_cd_crosswalk()` function uses raw data from NYC Open Data, normalizing approximately 870,000 Borough-Block-Lot (BBL) codes. This process resolves formatting inconsistencies to standardized linkages between individual tax lots and CDs.
+The `get_pluto_cd_crosswalk()` function uses raw data from NY Open Data to implement a Borough–Block–Lot (BBL) to CD crosswalk. This process normalizes approximately 870,000 BBLs, resolving formatting inconsistencies and creating standardized linkages between individual tax lots and CDs. 
 
 ```{r}
 
@@ -294,7 +294,7 @@ get_pluto_cd_crosswalk <- function() {
 
 ```
 
-This process removed 1,154 invalid entries (0.1%), preventing silent join failures downstream.
+This process removed 1,154 invalid entries (0.1%), preventing silent join failures downstream, as shown in Table 1 below.
 
 ```{r}
 
@@ -329,7 +329,7 @@ tibble(
     paste0(round(100 * (nrow(pluto_raw) - nrow(pluto_clean)) / nrow(pluto_raw), 1), "%")
   )
 ) |>
-  kable(caption = "PLUTO BBL Normalization Results")
+  kable(caption = "Table 1: PLUTO BBL Normalization Results")
 
 ```
 
@@ -535,13 +535,11 @@ sales_clean <- sales_clean |>
 
 ```
 
----
-
 ### Enhanced BBL Matching: Two-Stage Approach
 
 ---
 
-A two-stage join strategy combines exact BBL matching with a block-level fallback approach. As standard exact-match joins lose approximately 25% of transactions due to condo billing BBLs, the fallback allows the function to join the remaining unmatched sales record to its specific city block. This process results in 100% match rate, minimizing inaccuracies in analyses within high-density areas.
+A two-stage join strategy combines exact BBL matching with a block-level fallback approach. As standard exact-match joins lose approximately 25% of transactions due to condo billing BBLs, the fallback allows the function to join the remaining unmatched sales record to its specific city block. This process results in 100% match rate, minimizing inaccuracies in analyses within high-density areas, as shown in Table 2.
 
 ```{r}
 
@@ -678,8 +676,8 @@ build_cd_sales_panel <- function(
     
     n_block <- nrow(sales_matched_block)
     
-    message("  Block-matched: ", comma(n_block))
-    message("  Still unmatched: ", comma(nrow(sales_unmatched) - n_block))
+    message("Block-matched: ", comma(n_block))
+    message("Still unmatched: ", comma(nrow(sales_unmatched) - n_block))
     
     # Combine exact and block matches
     sales_with_cd <- bind_rows(
@@ -722,8 +720,8 @@ build_cd_sales_panel <- function(
   message("")
   message("=== Overall Match Statistics ===")
   message("Total sales (all files):     ", comma(total_sales_all_files))
-  message("  Exact BBL matches:         ", comma(n_exact))
-  message("  Block-level matches:       ", comma(n_block))
+  message("Exact BBL matches:           ", comma(n_exact))
+  message("Block-level matches:         ", comma(n_block))
   message("Sales matched to CDs:        ", comma(total_sales_matched))
   message("Sales NOT matched:           ",
           comma(total_sales_all_files - total_sales_matched))
@@ -826,8 +824,8 @@ tibble(
   )
 ) |>
   kable(
-    caption = "Enhanced BBL Matching Results: Two-Stage Approach",
-    align = c("l", "r", "r")
+    caption = "**Table 2: Enhanced BBL Matching Results: Two-Stage Approach**",
+    align = c("l", "l", "l")
   )
 
 ```
@@ -1134,98 +1132,77 @@ cd_edu_summary <- cd_edu_summary |>
 
 ```
 
-Treating EA as a fixed baseline is a critical research control. This step is necessary to isolate pure market demand from potential lurking variables. Updating this data post-COVID would also obfuscate the source of price changes (e.g., preference changes or population shifts). Consequently, holding education constant ensures that results yield an accurate measure of changing housing demand.
+Treating EA as a fixed baseline is a critical research control. This step is necessary to isolate pure market demand from potential confounding variables. Updating education data post-COVID would obfuscate the source of price changes (e.g., preference changes or population shifts). Consequently, holding education constant at 2019 levels  ensures that results yield an accurate measure of changing housing demand. 
+
+Table 3 below demonstrates this fixed baseline strategy, showing that the same 2019 ACS education data is consistently applied across all six research years (2017-2023), enabling clean isolation of pandemic-era market shifts.
+
 
 ```{r}
 
-#| label: sanity-check-period-coverage
-#| include: false
+#| label: integrated-panel-coverage
+#| echo: false
 #| message: false
 #| warning: false
 
-# Sales panel coverage by period and year  
-
-sales_cov <- cd_sales_panel |>
-  count(period, year) |>
-  mutate(period = clean_period(period)) |>
-  arrange(period, year)
+# Create integrated table showing sales years matched to fixed ACS baseline
+integrated_coverage <- cd_sales_panel |>
+  group_by(year) |>
+  summarise(
+    n_cds = n_distinct(cd_id),
+    .groups = "drop"
+  ) |>
+  # Add period labels
+  mutate(
+    period = case_when(
+      year %in% c(2017, 2018, 2019) ~ "Pre-COVID",
+      year %in% c(2021, 2022, 2023) ~ "Post-COVID",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  # Add ACS baseline year (constant 2019)
+  mutate(acs_baseline = 2019) |>
+  # Reorder columns
+  select(
+    Year = year,
+    Period = period,
+    `ACS Baseline` = acs_baseline,
+    CDs = n_cds
+  ) |>
+  arrange(Year)
 
 kable(
-sales_cov,
-caption   = "Coverage of sales panel by period and year",
-col.names = c("Period", "Year", "CD–Years")
+  integrated_coverage,
+  caption = "**Table 3: Sales Years Matched to Fixed ACS Baseline (2019)**",
+  align = c("l", "l", "l", "l")
 )
 
-# ACS education coverage by period and ACS end year  
-
-edu_cov <- cd_education_panel |>
-  count(period, acs_year) |>
-  mutate(period = clean_period(period)) |>
-  arrange(period, acs_year)
-
-
-kable(
-edu_cov,
-caption   = "Coverage of ACS education panel by period and ACS end year",
-col.names = c("Period", "ACS End Year", "CDs")
-)
-
-# Structural checks (silent)  
-
+# Structural validation checks (silent)
 stopifnot(
-
-# Sales years per period
-
-identical(
-sort(unique(cd_sales_panel$year[cd_sales_panel$period == "pre_covid"])),
-PERIOD_DEFINITIONS$pre_covid$sales_years
-),
-identical(
-sort(unique(cd_sales_panel$year[cd_sales_panel$period == "post_covid"])),
-PERIOD_DEFINITIONS$post_covid$sales_years
-),
-
-# ACS end-years per period
-
-identical(
-sort(unique(cd_education_panel$acs_year[cd_education_panel$period == "pre_covid"])),
-PERIOD_DEFINITIONS$pre_covid$acs_end_year
-),
-identical(
-sort(unique(cd_education_panel$acs_year[cd_education_panel$period == "post_covid"])),
-PERIOD_DEFINITIONS$post_covid$acs_end_year
-)
+  # Sales years per period
+  identical(
+    sort(unique(cd_sales_panel$year[cd_sales_panel$period == "pre_covid"])),
+    PERIOD_DEFINITIONS$pre_covid$sales_years
+  ),
+  identical(
+    sort(unique(cd_sales_panel$year[cd_sales_panel$period == "post_covid"])),
+    PERIOD_DEFINITIONS$post_covid$sales_years
+  ),
+  # ACS end-years per period
+  identical(
+    sort(unique(cd_education_panel$acs_year[cd_education_panel$period == "pre_covid"])),
+    PERIOD_DEFINITIONS$pre_covid$acs_end_year
+  ),
+  identical(
+    sort(unique(cd_education_panel$acs_year[cd_education_panel$period == "post_covid"])),
+    PERIOD_DEFINITIONS$post_covid$acs_end_year
+  )
 )
 
 ```
 
 ### Temporal Scope and Final Integration
 
-This analysis compares two three-year periods: pre-COVID (2017-2019) and post-COVID (2021-2023). 
-
-Omitting 2020 is essential to ensure analysis integrity. Given the acute shocks from this year, any statistical anomalies may distort long-term trend analysis; thus, bypassing it yields a clearer view of the market's post-COVID response. 
-
-```{r}
-
-#| label: merge-sales-education
-#| include: false
-
-# Merge sales + education (reuse cd_sales_panel from Chunk 5)
-cd_panel <- cd_sales_panel |>
-  left_join(
-    cd_education_panel |>
-      select(cd_id, period, pct_ba_plus, acs_year),
-    by = c("cd_id", "period")
-  )
-
-# Validate merge
-stopifnot(
-  "Merge failed - row count mismatch" = nrow(cd_panel) == nrow(cd_sales_panel),
-  "Missing education data after merge" = sum(is.na(cd_panel$pct_ba_plus)) == 0L
-)
-```
-
-The final data integration merges sales data (e.g., median prices by CD-year) with education baselines held constant at 2019 levels. Consequently, this approach creates a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years worth of data. This structure facilitates a <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
+The core of this analysis compares two three-year periods: pre-COVID (2017-2019) and post-COVID (2021-2023). 
 
 ```{r}
 
@@ -1249,13 +1226,36 @@ temporal_scope <- tibble(
 
 kable(
   temporal_scope,
-  caption = "**Temporal Scope of Analysis**",
+  caption = "**Table 4: Temporal Scope of Analysis**",
   col.names = c("Component", "Detail"),
   align = c("l", "l")
 )
 
 ```
 
+Omitting 2020 is essential to ensure analysis integrity. Given the acute shocks from this year, any statistical anomalies may distort long-term trend analysis; thus, bypassing it yields a clearer view of the market's post-COVID response. 
+
+The final data integration shown in Table 5 confirms critical data merging (e.g., median prices by CD-year) with education baselines held constant at 2019 levels. 
+
+```{r}
+
+#| label: merge-sales-education
+#| include: false
+
+# Merge sales + education (reuse cd_sales_panel from Chunk 5)
+cd_panel <- cd_sales_panel |>
+  left_join(
+    cd_education_panel |>
+      select(cd_id, period, pct_ba_plus, acs_year),
+    by = c("cd_id", "period")
+  )
+
+# Validate merge
+stopifnot(
+  "Merge failed - row count mismatch" = nrow(cd_panel) == nrow(cd_sales_panel),
+  "Missing education data after merge" = sum(is.na(cd_panel$pct_ba_plus)) == 0L
+)
+```
 
 ```{r}
 
@@ -1288,13 +1288,13 @@ edu_checks_summary <- edu_checks |>
 
 kable(
   edu_checks_summary,
-  caption = "**Merged Panel Diagnostics** (all values should be constant within CD–period)",
+  caption = "**Table 5: Merged Panel Diagnostics**",
   col.names = c(
-    "Min Years", "Max Years",
+    "Min Years (CD Period)", "Max Years (CD Period)",
     "Min BA+ Values", "Max BA+ Values",
     "Min ACS Years", "Max ACS Years"
   ),
-  align = rep("c", 6)
+  align = rep("l", 6)
 )
 
 # Validation assertions (silent)
@@ -1308,6 +1308,10 @@ stopifnot(
 
 ---
 
+The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section creates a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
+
+---
+
 ##  Pre-COVID Analytical Framework
 
 ### Creating the Analysis Set
@@ -1316,7 +1320,7 @@ This baseline analysis addresses the OQ by establishing EA as a strong neighborh
 
 To analyze how these different CDs responded to the pandemic, this research applied a <a href="https://www.investopedia.com/terms/n/nonparametric-statistics.asp" target="_blank">non-parametric</a>, tercile grouping approach, stratifying EAs into "Low," "Medium," and "High" tiers to mitigate outlier effects when comparing distributions. 
 
-Table 1 shows clear delineation, with Low-education CDs yielding a 19% BA+ Attainment average, while High-education CDs average 53% BA+ Attainment. This variation establishes a tangible baseline for comparing how CD housing markets evolved during the pandemic era.
+Table 6 shows clear delineation, with Low-education CDs yielding a 19% BA+ Attainment average, while High-education CDs average 53% BA+ Attainment. This variation establishes a tangible baseline for comparing how CD housing markets evolved during the pandemic era.
 
 ```{r}
 
@@ -1440,7 +1444,7 @@ tercile_summary <- cd_analysis_simple |>
 
 kable(
   tercile_summary,
-  caption = "**Table 1. Education Tercile Ranges**",
+  caption = "**Table 6. Education Tercile Ranges**",
   col.names = c(
     "Education Group",
     "Number of CDs",
@@ -1449,7 +1453,7 @@ kable(
     "*Mean BA+ (%)",
     "Median BA+ (%)"
   ),
-  align = c("l", "c", "r", "r", "r", "r")
+  align = c("l", "l", "l", "l", "l", "l")
 )
 
 ```
@@ -1462,22 +1466,20 @@ This tercile structure enables parallel-trends testing.
 
 A DiD design is a favorable approach to filter out factors (e.g., economic shifts and neighborhood characteristics) impacting trends, allowing for a strict focus on the pandemic's effect. This research evaluates a <a href="https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends" target="_blank">Parallel-Trends Assumption (PTA)</a> framework, to support a DiD interpretation of genuine structural shift in market behavior rather than pre-existing trends.
 
-#### Logarithmic Transformation
+### Logarithmic Transformation
 
-To meaningfully execute this comparison, this analysis implements a logarithmic transformation of property values. Because high EA CDs begin at significantly higher baselines, analyzing raw dollars would blur the comparison of trends. This standardization process yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
+To meaningfully execute this comparison, this analysis implements a logarithmic transformation of property values. Because High-EA CDs begin at significantly higher baselines, analyzing raw dollars would blur the comparison of trends. This standardization process yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
-Figure 1 shows how high-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
+Figure 1 shows how High-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
 
 ```{r}
 
-
-#| label: pretrend-diagnostic
+#| label: fig-pretrend-diagnostic
 #| echo: false
 #| message: false
 #| warning: false
 #| fig-width: 8
 #| fig-height: 5
-#| fig-cap: "**Figure 1. Pre-COVID Price Trends by Education Level (2017–2019).** Average log median sale price trajectories were roughly parallel across education terciles, supporting the parallel trends assumption underlying the difference-in-differences design."
 
 # STEP 1: Prepare pre-trend data for visualization
 # Filter to pre-COVID years only and join tercile assignments
@@ -1511,7 +1513,7 @@ ggplot(
   ) +
   scale_x_continuous(breaks = c(2017, 2018, 2019)) +
   labs(
-    title    = "Pre-COVID Price Trends by Education Level (2017–2019)",
+    title    = "Figure 1: Pre-COVID Price Trends by Education Level (2017–2019)",
     subtitle = "Average log median sale price by education tercile",
     x        = "Year",
     y        = "Log Median Sale Price"
@@ -1527,7 +1529,7 @@ ggplot(
 
 ```
 
-Table 2 shows stable growth consistency, with annual growth ranging from 3.0% to 8.2%.
+Table 7 below highlights stable growth consistency, with annual growth ranging from 3.0% to 8.2%.
 
 ```{r}
 
@@ -1552,13 +1554,13 @@ pretrend_slopes <- pretrend_data |>
 
 kable(
   pretrend_slopes,
-  caption = "**Table 2. Pre-COVID Annual Price Growth by Education Group**",
+  caption = "**Table 7: Pre-COVID Annual Price Growth by Education Group**",
   col.names = c(
     "Education Group",
     "Log-Point Slope",
     "Annual % Growth"
   ),
-  align = c("l", "r", "r")
+  align = c("l", "l", "l")
 )
 
 # Calculate maximum slope difference for parallel trends test
