@@ -1513,7 +1513,7 @@ A DiD design is a favorable approach to filter out factors (e.g., economic shift
 
 To meaningfully execute this comparison, this analysis implements a logarithmic transformation of property values. Because High-EA CDs begin at significantly higher baselines, analyzing raw dollars would blur the comparison of trends. This standardization process yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
-Figure 4 shows how High-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
+Figure 2 shows how High-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
 
 ```{r}
 
@@ -1556,7 +1556,7 @@ ggplot(
   ) +
   scale_x_continuous(breaks = c(2017, 2018, 2019)) +
   labs(
-    title    = "Figure 4: Pre-COVID Price Trends by Education Level (2017–2019)",
+    title    = "Figure 2: Pre-COVID Price Trends by Education Level (2017–2019)",
     subtitle = "Average log median sale price by education tercile",
     x        = "Year",
     y        = "Log Median Sale Price"
@@ -1660,9 +1660,9 @@ kable(
 
 ```
 
-EA varies widely across CDs (SD ≈ 19.8 pp). The 18.9 pp gap between the 25th and 75th percentiles supports tercile grouping, which better accounts for extreme shifts in CD behavior. 
+EA varies widely across CDs ($SD ≈ 19.9\%$). The 19.5 pp gap between the 25th and 75th percentiles supports tercile grouping, which better accounts for extreme shifts in CD behavior. 
 
-Table 9 below further highlights these disparities, with BA+ Attainment ranging between 11.8% (e.g., BX01, the South Bronx) to a maximum of 82.7% (e.g., MN05, the Upper East Side), representing a 70 pp difference.
+Table 9 below further highlights these disparities, with BA+ Attainment ranging between 11.7% (e.g., BX01, the South Bronx) to a maximum of 82.5% (e.g., MN05, the Upper East Side), representing a roughly 71 pp difference.
 
 ```{r}
 
@@ -1827,7 +1827,7 @@ map_title <- tags$div(
   ),
   tags$p(
     style = "margin: 5px 0 0 0; font-size: 13px; color: #7f8c8d;",
-    "Percent of adults age 25+ with Bachelor's degree or higher | ACS 2015-2019 (5-year)"
+    "Percent of adults age 25+ with Bachelor's degree or higher | ACS 2019 (baseline)"
   )
 )
 
@@ -1870,7 +1870,7 @@ htmlwidgets::prependContent(map, map_title)
 
 #### **The Education Premium** 
 
-Pre-COVID, there was a strong linear correlation (*r* = 0.78) between neighborhood EA and its property value, as shown in Figure 2 below. 
+Pre-COVID, there was a strong linear correlation (*r* = 0.78) between neighborhood EA and its property value, as shown in Figure 3 below. 
 
 ```{r}
 
@@ -1902,7 +1902,7 @@ ggplot(
   ) +
   scale_color_brewer(palette = "Set2", name = "Borough") +
   labs(
-    title    = "Figure 2: Pre-COVID Baseline: Education and Property Values",
+    title    = "Figure 3: Pre-COVID Baseline: Education and Property Values",
     subtitle = paste0("Correlation: r = ", round(baseline_cor, 2))
   ) +
   theme_minimal(base_size = 13) +
@@ -1969,7 +1969,7 @@ kable(
 
 Consequently, the full regression equation appears as:
 
-$$\widehat{\text{Median Price}}_{\text{Pre-COVID}} = \$235{,}462 + \$13{,}842 \times \text{BA+\%}$$
+$$\widehat{\text{Median Price}}_{\text{Pre-COVID}} = \$234{,}656 + \$13{,}842 \times \text{BA+\%}$$
 
 Moreover, EA explains 60.3% of the variation in property values across CDs, as shown in Table 11 below.
 
@@ -2006,7 +2006,7 @@ Although EA appears as a dominant neighborhood predictor pre-COVID, the analysis
 
 ### The Education Reversal
 
-The post-COVID scatter plot below reveals a weaker but still positive relationship between EA and property values (*r* = 0.74, down from *r* = 0.78 pre-COVID). 
+The post-COVID scatter plot in Figure 4 below reveals a weaker but still positive relationship between EA and property values (*r* = 0.74, down from *r* = 0.78 pre-COVID). 
 
 ```{r}
 
@@ -2038,7 +2038,7 @@ ggplot(
   ) +
   scale_color_brewer(palette = "Set2", name = "Borough") +
   labs(
-    title    = "Figure 3: Post-COVID: Education and Property Values",
+    title    = "Figure 4: Post-COVID: Education and Property Values",
     subtitle = paste0("Correlation: r = ", round(post_cor, 2))
   ) +
   theme_minimal(base_size = 13) +
@@ -2293,7 +2293,7 @@ kable(
 
 Differences between high and low terciles is statistically significant at *p* = 0.002, with a 95% confidence interval entirely excluding zero. As a result, this outcome indicates  that the pattern is unlikely to have occurred by chance. 
 
-Figure 6 below shows the profound magnitude of this reversal. 
+Figure 5 below shows the profound magnitude of this reversal. 
 
 ```{r}
 #| label: main-did-errorbar-plot
@@ -2332,7 +2332,7 @@ ggplot(
     limits = c(0, 35)
   ) +
   labs(
-    title    = "Figure 6: Property Value Growth by Education Tercile",
+    title    = "Figure 5: Property Value Growth by Education Tercile",
     subtitle = "Mean percentage change in median sale price (2017-19 → 2021-23)",
     x        = "Education Tercile (2019 BA+ Attainment)",
     y        = "Price Change (%)"
@@ -2405,7 +2405,7 @@ Comparing pre- and post-COVID models reveals this shift's extent.
 
 In the pre-COVID period, higher education predicted higher absolute prices, with each pp of BA+ Attainment adding nearly $14,000 to median home values.
 
-$$\widehat{\text{Median Price}} = \$235,462 + \$13,842 \times \text{BA+\%}$$ 
+$$\widehat{\text{Median Price}} = \$234,656 + \$13,842 \times \text{BA+\%}$$ 
 
 In the post-COVID period, this relationship inverted: higher education predicted slower price appreciation. 
 
@@ -2597,11 +2597,11 @@ kable(
 
 There is a consistent negative relationship between EA and price growth across all five boroughs. All boroughs show negative correlations and negative slopes, confirming the pattern extends beyond any single market. 
 
-Staten Island (SI), with its three CDs, exhibits the strongest negative relationship (*r* = -0.990, slope = -0.721). 
+Staten Island (SI), with its three CDs, exhibits the strongest negative relationship (*r* = -0.991, slope = -0.682). 
 
-Brooklyn's near-zero slope (-0.005) and weak correlation (*r* = -0.008) suggests that other factors (e.g., <a href="https://nextcity.org/urbanist-news/in-brooklyn-americas-gentrification-epicenter-building-on-a-model-for-commu" target="_blank">gentrification</a>) drove appreciation more than EA. Additionally, its close proximity to Manhattan may have likely outweighed EA in determining appreciation. Consequently, Brooklyn's unique outcome calls for deeper investigation in future research.
+Brooklyn's near-zero slope (-0.009) and weak correlation (*r* = -0.005) suggests that other factors (e.g., <a href="https://nextcity.org/urbanist-news/in-brooklyn-americas-gentrification-epicenter-building-on-a-model-for-commu" target="_blank">gentrification</a>) drove appreciation more than EA. Additionally, its close proximity to Manhattan may have likely outweighed EA in determining appreciation. Consequently, Brooklyn's unique outcome calls for deeper investigation in future research.
 
-Figure 5 visualizes these borough-specific slopes for direct comparison.
+Figure 6 visualizes these borough-specific slopes for direct comparison.
 
 ```{r}
 
@@ -2617,7 +2617,7 @@ ggplot(
   geom_col(fill = "#7570b3", width = 0.6, alpha = 0.8) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   labs(
-    title    = "Figure 5: Education–Growth Relationship Varies by Borough",
+    title    = "Figure 6: Education–Growth Relationship Varies by Borough",
     subtitle = "Slope: Percentage points of price growth per 1pp increase in BA+ attainment",
     x        = "Borough",
     y        = "Slope (pp per 1% BA+)"
@@ -2632,7 +2632,7 @@ ggplot(
 
 ```
 
-This figure confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.223 to -0.721. 
+This figure confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682. 
 
 ## Discussion
 
@@ -2650,13 +2650,13 @@ It is essential to clarify that this analysis focuses on highlighting a change i
 
 This analysis demonstrates that COVID-19 reshaped the relationship between neighborhood characteristics and property values by reversing the education premium, which was historically a strong predictor of urban real estate prices. Moreover, this finding connects with the team's individual analyses of other neighborhood characteristics. Specifically, this research:
 
-- Aligns with <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Individual%20Report.html" target="_blank">transit findings</a>: Ridership models achieved stronger individual fit than density (R² = 0.433) but showed only marginal significance in the team model (*β* = -0.670, *p* = 0.063), indicating transit access matters primarily through attracting educated residents rather than as an independent driver.
+- Aligns with <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Individual%20Report.html" target="_blank">transit findings</a>: Ridership models achieved stronger individual fit than density ($R^2$ = 0.433) but showed only marginal significance in the team model (*β* = -0.670, *p* = 0.063), indicating transit access matters primarily through attracting educated residents rather than as an independent driver.
 
 - Contextualizes <a href="https://socoyjonathan.github.io/STA9750-2025-FALL/final_project.html" target="_blank">density analysis</a>: The density-only model showed a 4.2 pp spread (19.6% vs 15.4%), but density became non-significant in the team model (*β* = -0.0001, *p* = 0.678), revealing the apparent density penalty was driven by EA.
 
 - Contrasts with <a href="https://madisonbrinson.github.io/STA9750-2025-FALL/individual_report_final.html" target="_blank">job accessibility</a>: Job accessibility showed a 13.0 pp spread comparable to education's 14.2 pp, yet became non-significant in the team model (*β* = -0.139, *p* = 0.597), suggesting both patterns reflect educated workers' reduced need for job proximity.
 
-- Provides baseline context for <a href="https://kelmli.github.io/STA9750-2025-FALL/final_proj.html" target="_blank">crime results</a>: High-crime districts experienced the largest crime increases (+1.58 per 1,000), but crime showed no relationship with property values in either individual (R² ≈ 0.000) or the team model (*β* = -0.029, *p* = 0.765), confirming crime and property values respond independently to neighborhood characteristics.
+- Provides baseline context for <a href="https://kelmli.github.io/STA9750-2025-FALL/final_proj.html" target="_blank">crime results</a>: High-crime districts experienced the largest crime increases (+1.58 per 1,000), but crime showed no relationship with property values in either individual ($R^2$ ≈ 0.000) or the team model (*β* = -0.029, *p* = 0.765), confirming crime and property values respond independently to neighborhood characteristics.
 
 EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.001), The full model's $R^2$ (0.370) equaled the education-only model, confirming other variables added no explanatory power. Their apparent effects in individual analyses reflected EA rather than independent causal mechanisms. Therefore, the education reversal appears to be the dominant structural shift, with other characteristics showing stability (jobs) or modest weakening (density and transit), suggesting pandemic housing dynamics fundamentally re-calibrated NYC's urban economic geography.
 
