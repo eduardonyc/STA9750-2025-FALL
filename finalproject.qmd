@@ -1,5 +1,4 @@
 ---
-
 title: "STA 9750 Final-Project: A Tale of 59 NYC Community Districts"
 author: "Eduardo Alarcon"
 format: 
@@ -10,12 +9,9 @@ format:
     toc-title: "On this Page"
     toc-location: left
     toc-depth: 3
-    df-print: kable
 execute:
   message: false
   warning: false
-  echo: false
-
 ---
 
 ## Introduction 
@@ -328,7 +324,7 @@ tibble(
     paste0(round(100 * (nrow(pluto_raw) - nrow(pluto_clean)) / nrow(pluto_raw), 1), "%")
   )
 ) |>
-  kable(caption = "Table 1: PLUTO BBL Normalization Results")
+  kable(caption = "**Table 1: PLUTO BBL Normalization Results**")
 
 ```
 
@@ -1309,8 +1305,6 @@ stopifnot(
 
 The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section creates a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
 
----
-
 ##  Pre-COVID Analytical Framework
 
 ### Creating the Analysis Set
@@ -1611,15 +1605,17 @@ kable(
     "75th %ile",
     "Max"
   ),
-  align = c("c", rep("r", 7))
+  align = c("l", rep("l", 7))
 )
+
 ```
 
 EA varies widely across CDs (SD ≈ 19.8 pp). The 18.9 pp gap between the 25th and 75th percentiles supports tercile grouping, which better accounts for extreme shifts in CD behavior. 
 
-Table 9 below further highlights theses disparities, with BA+ Attainment ranging between 11.8% (e.g., BX01, the South Bronx) to a maximum of 82.7% (e.g., MN05, the Upper West Side), representing a 70 pp difference.
+Table 9 below further highlights theses disparities, with BA+ Attainment ranging between 11.8% (e.g., BX01, the South Bronx) to a maximum of 82.7% (e.g., MN05, the Upper East Side), representing a 70 pp difference.
 
 ```{r}
+
 #| label: top-bottom-cds
 #| echo: false
 
@@ -1644,7 +1640,7 @@ top_bottom_tbl <- bind_rows(top3, bottom3) |>
 
 kable(
   top_bottom_tbl,
-  caption = "**Table 4. Community Districts with Highest and Lowest Educational Attainment (2019)**",
+  caption = "**Table 9: Community Districts with Highest and Lowest Educational Attainment (2019)**",
   col.names = c("Rank", "CD ID", "Borough", "BA+ Attainment"),
   align = c("l", "l", "l", "l")
 )
@@ -1655,16 +1651,16 @@ The interactive Leaflet below highlights EA disparities across CDs. Clicking on 
 
 ```{r}
 
-#| label: education-map
+#| label: fig-education-map
 #| echo: false
 #| fig-width: 8
 #| fig-height: 6
-#| fig-cap: "**Figure 2. Educational Attainment by Community District (2019).** Percent of adults age 25+ with a Bachelor's degree or higher. Data from ACS 2015-2019 (5-year), area-weighted to Community District boundaries."
 
 library(leaflet)
 library(sf)
+library(htmltools)
 
-# Join education to CD polygons
+# Join education to CD polygons and add neighborhood names
 cd_shp_edu <- nyc_cd |>
   left_join(
     cd_analysis_simple |>
@@ -1672,26 +1668,121 @@ cd_shp_edu <- nyc_cd |>
     by = "cd_id"
   ) |>
   mutate(
+    # Extract neighborhood name from shapefile (it's in the BoroCD column typically)
+    # The NYC CD shapefile usually has these - adjust if your column name differs
+    neighborhood = case_when(
+      # MANHATTAN
+      cd_id == "MN01" ~ "Lower Manhattan/Financial District",
+      cd_id == "MN02" ~ "Greenwich Village/SoHo",
+      cd_id == "MN03" ~ "Lower East Side/Chinatown",
+      cd_id == "MN04" ~ "Chelsea/Clinton/Midtown",
+      cd_id == "MN05" ~ "Midtown/Upper East Side",
+      cd_id == "MN06" ~ "Stuyvesant Town/Turtle Bay",
+      cd_id == "MN07" ~ "Upper West Side/Lincoln Square",
+      cd_id == "MN08" ~ "Upper East Side/Yorkville",
+      cd_id == "MN09" ~ "Morningside Heights/Hamilton Heights",
+      cd_id == "MN10" ~ "Central Harlem",
+      cd_id == "MN11" ~ "East Harlem",
+      cd_id == "MN12" ~ "Washington Heights/Inwood",
+      
+      # BRONX
+      cd_id == "BX01" ~ "Mott Haven/Hunts Point (South Bronx)",
+      cd_id == "BX02" ~ "Longwood/Hunts Point",
+      cd_id == "BX03" ~ "Morrisania/Crotona Park",
+      cd_id == "BX04" ~ "Highbridge/Concourse",
+      cd_id == "BX05" ~ "Fordham/University Heights",
+      cd_id == "BX06" ~ "East Tremont/Belmont",
+      cd_id == "BX07" ~ "Kingsbridge Heights/Bedford Park",
+      cd_id == "BX08" ~ "Riverdale/Fieldston",
+      cd_id == "BX09" ~ "Parkchester/Soundview",
+      cd_id == "BX10" ~ "Throgs Neck/Co-op City",
+      cd_id == "BX11" ~ "Morris Park/Pelham Parkway",
+      cd_id == "BX12" ~ "Williamsbridge/Wakefield",
+      
+      # BROOKLYN
+      cd_id == "BK01" ~ "Williamsburg/Greenpoint",
+      cd_id == "BK02" ~ "Downtown Brooklyn/Fort Greene",
+      cd_id == "BK03" ~ "Bedford-Stuyvesant",
+      cd_id == "BK04" ~ "Bushwick",
+      cd_id == "BK05" ~ "East New York/Starrett City",
+      cd_id == "BK06" ~ "Park Slope/Carroll Gardens",
+      cd_id == "BK07" ~ "Sunset Park/Windsor Terrace",
+      cd_id == "BK08" ~ "Crown Heights/Prospect Heights",
+      cd_id == "BK09" ~ "South Crown Heights/Wingate",
+      cd_id == "BK10" ~ "Bay Ridge/Dyker Heights",
+      cd_id == "BK11" ~ "Bensonhurst/Bath Beach",
+      cd_id == "BK12" ~ "Borough Park/Kensington",
+      cd_id == "BK13" ~ "Coney Island/Brighton Beach",
+      cd_id == "BK14" ~ "Flatbush/Midwood",
+      cd_id == "BK15" ~ "Sheepshead Bay/Gravesend",
+      cd_id == "BK16" ~ "Brownsville/Ocean Hill",
+      cd_id == "BK17" ~ "East Flatbush/Farragut",
+      cd_id == "BK18" ~ "Canarsie/Flatlands",
+      
+      # QUEENS
+      cd_id == "QN01" ~ "Astoria/Long Island City",
+      cd_id == "QN02" ~ "Sunnyside/Woodside",
+      cd_id == "QN03" ~ "Jackson Heights/East Elmhurst",
+      cd_id == "QN04" ~ "Elmhurst/Corona",
+      cd_id == "QN05" ~ "Ridgewood/Maspeth",
+      cd_id == "QN06" ~ "Rego Park/Forest Hills",
+      cd_id == "QN07" ~ "Flushing/Whitestone",
+      cd_id == "QN08" ~ "Fresh Meadows/Hillcrest",
+      cd_id == "QN09" ~ "Kew Gardens/Woodhaven",
+      cd_id == "QN10" ~ "South Ozone Park/Howard Beach",
+      cd_id == "QN11" ~ "Bayside/Little Neck",
+      cd_id == "QN12" ~ "Jamaica/Hollis",
+      cd_id == "QN13" ~ "Queens Village/Cambria Heights",
+      cd_id == "QN14" ~ "Rockaway/Broad Channel",
+      
+      # STATEN ISLAND
+      cd_id == "SI01" ~ "North Shore (St. George/Stapleton)",
+      cd_id == "SI02" ~ "Mid-Island (New Springville)",
+      cd_id == "SI03" ~ "South Shore (Tottenville/Great Kills)",
+      
+      TRUE ~ cd_id  # Fallback to CD ID if not matched
+    ),
+    
     # Pre-format display values
     ba_display = paste0(round(pct_ba_plus_2019, 1), "%"),
-    # Create popup HTML
+    
+    # Create enhanced popup HTML with neighborhood name
     popup_html = paste0(
-      "<strong style='font-size: 14px;'>", cd_id, "</strong><br/>",
-      "<strong>BA+ Attainment:</strong> ", ba_display
-    )
+      "<div style='font-family: Arial, sans-serif;'>",
+      "<strong style='font-size: 16px; color: #2c3e50;'>", cd_id, "</strong><br/>",
+      "<span style='font-size: 13px; color: #7f8c8d;'>", neighborhood, "</span><br/><br/>",
+      "<strong>BA+ Attainment:</strong> ", ba_display,
+      "</div>"
+    ),
+    
+    # Create hover label with neighborhood name
+    hover_label = paste0(cd_id, ": ", neighborhood)
   )
 
 # Transform to WGS84
 cd_shp_edu_wgs84 <- st_transform(cd_shp_edu, 4326)
 
-# Create color palette (viridis to match original)
+# Create color palette
 pal <- colorNumeric(
   palette = "viridis",
   domain = cd_shp_edu_wgs84$pct_ba_plus_2019
 )
 
-# Create leaflet map
-leaflet(cd_shp_edu_wgs84, width = "100%", height = "500px") |>
+# Create title as HTML
+map_title <- tags$div(
+  style = "text-align: center; padding: 10px; background-color: white; border-bottom: 2px solid #ddd;",
+  tags$h3(
+    style = "margin: 0; font-family: Arial, sans-serif; color: #2c3e50;",
+    "Educational Attainment by Community District (2019)"
+  ),
+  tags$p(
+    style = "margin: 5px 0 0 0; font-size: 13px; color: #7f8c8d;",
+    "Percent of adults age 25+ with Bachelor's degree or higher | ACS 2015-2019 (5-year)"
+  )
+)
+
+# Create leaflet map with title
+map <- leaflet(cd_shp_edu_wgs84, width = "100%", height = "600px") |>
   addProviderTiles(providers$CartoDB.Positron) |>
   addPolygons(
     fillColor = ~pal(pct_ba_plus_2019),
@@ -1706,7 +1797,7 @@ leaflet(cd_shp_edu_wgs84, width = "100%", height = "500px") |>
       fillOpacity = 0.9,
       bringToFront = TRUE
     ),
-    label = ~cd_id,
+    label = ~hover_label,  # Now shows "MN05: Upper West Side/Lincoln Square"
     labelOptions = labelOptions(
       style = list("font-weight" = "normal", padding = "3px 8px"),
       textsize = "12px",
@@ -1722,11 +1813,14 @@ leaflet(cd_shp_edu_wgs84, width = "100%", height = "500px") |>
     labFormat = labelFormat(suffix = "%", transform = function(x) round(x, 0))
   )
 
+# Add title using htmlwidgets
+htmlwidgets::prependContent(map, map_title)
+
 ```
 
 #### The Education Premium 
 
-Pre-COVID, there was a strong linear correlation (*r* = 0.77) between neighborhood EA and its property value. 
+Pre-COVID, there was a strong linear correlation (*r* = 0.77) between neighborhood EA and its property value, as shown in Figure 2 below. 
 
 ```{r}
 
@@ -1734,7 +1828,6 @@ Pre-COVID, there was a strong linear correlation (*r* = 0.77) between neighborho
 #| echo: false
 #| fig-width: 8
 #| fig-height: 5
-#| fig-cap: "**Figure 3. Pre-COVID Baseline: Education and Property Values.** Higher-education Community Districts had substantially higher median sale prices before the pandemic (r = 0.77, p < 0.001)."
 
 # Calculate correlation for caption
 baseline_cor <- cor(
@@ -1759,7 +1852,7 @@ ggplot(
   ) +
   scale_color_brewer(palette = "Set2", name = "Borough") +
   labs(
-    title    = "Pre-COVID Baseline: Education and Property Values",
+    title    = "Figure 2: Pre-COVID Baseline: Education and Property Values",
     subtitle = paste0("Correlation: r = ", round(baseline_cor, 2))
   ) +
   theme_minimal(base_size = 13) +
@@ -1774,7 +1867,8 @@ ggplot(
 The simple linear regression below models this premium. 
 
 $$\text{Median Price}_{\text{pre}} = \beta_0 + \beta_1 \times \text{BA+\%}_{2019} + \epsilon$$
-Table 5a presents the full regression results, showing that each additional pp of BA+ Attainment predicts a $13,816 higher median sale prices, which is statistically significant (*α* = 0.05, *p* < 0.001).  
+
+Table 10 presents the full regression results, showing that each additional pp of BA+ Attainment predicts a $13,816 higher median sale prices, which is statistically significant (*α* = 0.05, *p* < 0.001).  
 
 ```{r}
 
@@ -1817,8 +1911,8 @@ regression_table <- tidy(baseline_model, conf.int = TRUE) |>
 # Display regression coefficients table
 kable(
   regression_table,
-  caption = "**Table 5a: Pre-COVID Baseline Regression: Median Sale Price on Educational Attainment**",
-  align = c("l", rep("r", 6))
+  caption = "**Table 10: Pre-COVID Baseline Regression: Median Sale Price on Educational Attainment**",
+  align = c("l", rep("l", 6))
 )
 
 ```
@@ -1827,7 +1921,7 @@ Consequently, the full regression equation appears as:
 
 $$\widehat{\text{Median Price}}_{\text{Pre-COVID}} = \$235{,}462 + \$13{,}816 \times \text{BA+\%}$$
 
-Moreover, EA explains 59.5% of the variation in property values across CDs, as shown in Table 5b below.
+Moreover, EA explains 59.5% of the variation in property values across CDs, as shown in Table 11 below.
 
 ```{r}
 
@@ -1848,8 +1942,8 @@ model_fit <- glance(baseline_model) |>
 
 kable(
   model_fit,
-  caption = "**Table 5b: Model Fit Statistics**",
-  align = rep("r", 5)
+  caption = "**Table 11: Model Fit Statistics**",
+  align = rep("l", 5)
 )
 
 ```
@@ -1870,7 +1964,6 @@ The post-COVID scatter plot below reveals a weaker but still positive relationsh
 #| echo: false
 #| fig-width: 8
 #| fig-height: 5
-#| fig-cap: "**Figure X. Post-COVID: Education and Property Values.** The positive relationship between neighborhood education and property values remains, but it is weaker than in the pre-pandemic period."
 
 # Correlation between baseline education and post-COVID prices
 post_cor <- cor(
@@ -1895,7 +1988,7 @@ ggplot(
   ) +
   scale_color_brewer(palette = "Set2", name = "Borough") +
   labs(
-    title    = "Post-COVID: Education and Property Values",
+    title    = "Figure 3: Post-COVID: Education and Property Values",
     subtitle = paste0("Correlation: r = ", round(post_cor, 2))
   ) +
   theme_minimal(base_size = 13) +
@@ -1909,7 +2002,7 @@ ggplot(
 
 While high EA neighborhoods maintain an absolute price advantage, the correlation's decline suggests the education premium diminished during the pandemic years, leading to the rejection of Hypothesis 1.
 
-The regression line's flatter slope indicates that each additional pp of BA+ Attainment predicts a smaller price differential than in the pre-COVID period. Table 5 provides additional clarity with actual price changes across terciles,  revealing which groups appreciated fastest.
+The regression line's flatter slope indicates that each additional pp of BA+ Attainment predicts a smaller price differential than in the pre-COVID period. Table 12 provides additional clarity with actual price changes across terciles, revealing which groups appreciated fastest.
 
 ```{r}
 
@@ -1961,7 +2054,7 @@ tercile_summary_table <- bind_rows(tercile_summary_table, overall_row) |>
 
 kable(
   tercile_summary_table,
-  caption = "**Table 5. Pre- and Post-COVID Median Prices and Changes by Education Group**",
+  caption = "**Table 12. Pre- and Post-COVID Median Prices and Changes by Education Group**",
   col.names = c(
     "Education Group",
     "CDs",
@@ -1970,16 +2063,17 @@ kable(
     "Change ($)",
     "Change (%)"
   ),
-  align = c("l", "c", "r", "r", "r", "r")
+  align = c("l", "l", "l", "l", "l", "l")
 )
 
 ```
 
 These findings indicate a remarkable reversal of the traditional education premium. From 2017-19 to 2021-23, Low-education CDs experienced 26.03% median price growth, whereas Medium-education CDs and High-education CDs grew only by 15.03% and 11.86%, respectively. The most notable finding is that High-education CDs grew at less than half the rate of its Low-education counterparts, representing a 14.2% point difference.
 
-This result rejects Hypothesis 2, as Low-education CDs saw the fastest appreciation. The Leaflet map below highlights this  appreciation pattern across all CDs. 
+This result rejects Hypothesis 2, as Low-education CDs saw the fastest appreciation. The Leaflet map below highlights this appreciation pattern across all CDs. 
 
 ```{r}
+
 #| label: interactive-growth-map
 #| echo: false
 #| message: false
@@ -1991,8 +2085,7 @@ library(sf)
 library(leaflet)
 library(htmltools)
 
-# STEP 1: Create clean 59-row lookup table (SAME AS BEFORE)
-
+# STEP 1: Create clean 59-row lookup table
 hover_lookup <- cd_sales_panel |>
   mutate(
     period2 = case_when(
@@ -2026,12 +2119,11 @@ hover_lookup <- cd_sales_panel |>
   )
 
 # STEP 2: Join to spatial data and create HTML popup
-
 cd_map_sf <- nyc_cd |>
   left_join(hover_lookup, by = "cd_id") |>
   filter(!is.na(edu_tercile)) |>
   mutate(
-    # Create HTML-formatted popup (leaflet handles HTML better)
+    # Create HTML-formatted popup
     popup_html = paste0(
       "<strong style='font-size: 14px;'>", cd_display, "</strong><br/>",
       "<strong>Tercile:</strong> ", tercile_display, "<br/>",
@@ -2046,19 +2138,29 @@ cd_map_sf <- nyc_cd |>
   )
 
 # STEP 3: Transform to WGS84
-
 cd_map_wgs84 <- st_transform(cd_map_sf, 4326)
 
 # STEP 4: Create color palette
-
 pal <- colorFactor(
   palette = c("#d62728", "#ff7f0e", "#1f77b4"),
   levels = c("Low", "Medium", "High")
 )
 
-# STEP 5: Create leaflet map
+# STEP 5: Create title as HTML
+map_title <- tags$div(
+  style = "text-align: center; padding: 10px; background-color: white; border-bottom: 2px solid #ddd;",
+  tags$h3(
+    style = "margin: 0; font-family: Arial, sans-serif; color: #2c3e50;",
+    "Property Value Growth by Education Tercile (2017–2023)"
+  ),
+  tags$p(
+    style = "margin: 5px 0 0 0; font-size: 13px; color: #7f8c8d;",
+    "Click any Community District for detailed price change statistics"
+  )
+)
 
-leaflet(cd_map_wgs84, width = "100%", height = "600px") |>
+# STEP 6: Create leaflet map
+map <- leaflet(cd_map_wgs84, width = "100%", height = "600px") |>
   addProviderTiles(providers$CartoDB.Positron) |>
   addPolygons(
     fillColor = ~pal(edu_tercile),
@@ -2088,11 +2190,14 @@ leaflet(cd_map_wgs84, width = "100%", height = "600px") |>
     opacity = 0.9
   )
 
+# STEP 7: Add title using htmlwidgets
+htmlwidgets::prependContent(map, map_title)
+
 ```
 
 To contextualize this reversal: a median-priced home in a low-education CD (e.g., BX07) gained approximately $252,500 in value, compared to $5,000 in a high-education CD (e.g. MN07), representing a $247,500 difference attributable to the EA composition of the neighborhood. 
 
-The t-test in Table 6 below confirms this pattern.
+The t-test in Table 13 below confirms this pattern.
 
 ```{r}
 #| label: main-did-ttest
@@ -2122,7 +2227,7 @@ ttest_display <- ttest_result |>
 
 kable(
   ttest_display,
-  caption = "**Table 6. Difference in Average Price Growth Between High- and Low-Education CDs**",
+  caption = "**Table 13: Difference in Average Price Growth Between High-EA and Low-EA CDs**",
   col.names = c(
     "Comparison",
     "Difference",
@@ -2131,7 +2236,7 @@ kable(
     "df",
     "p-value"
   ),
-  align = c("l", "r", "r", "r", "c", "r")
+  align = c("l", "l", "l", "l", "l", "l")
 )
 
 ```
@@ -2145,7 +2250,6 @@ Figure 4 below shows the profound magnitude of this reversal.
 #| echo: false
 #| fig-width: 7
 #| fig-height: 5
-#| fig-cap: "**Figure 4. Property Value Growth by Education Tercile.** Mean percentage change in median sale price with 95% confidence intervals. Error bars represent uncertainty in the average CD-level price change within each tercile."
 
 # Part 3: Error-bar plot with 95% CIs
 tercile_ci_data <- cd_analysis_simple |>
@@ -2178,7 +2282,7 @@ ggplot(
     limits = c(0, 35)
   ) +
   labs(
-    title    = "Property Value Growth by Education Tercile",
+    title    = "Figure 4: Property Value Growth by Education Tercile",
     subtitle = "Mean percentage change in median sale price (2017-19 → 2021-23)",
     x        = "Education Tercile (2019 BA+ Attainment)",
     y        = "Price Change (%)"
@@ -2196,9 +2300,9 @@ Non-overlapping confidence intervals confirm distinct economic outcomes between 
 
 ### Parametric Regression Analysis
 
-While terciles demonstrate reversal magnitude, a modified continuous regression quantifies how each incremental BA+ percentage point influenced post-COVID appreciation.
+While terciles demonstrate reversal magnitude, a modified continuous regression quantifies how each incremental BA+ Attainment pp influenced post-COVID appreciation.
 
-As shown in Table 7, each additional pp of BA+ Attainment predicts 0.376 pp less price growth. This statistically significant (p < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where higher EA predicted higher prices. The relationship has not only weakened, it has reversed.
+As shown in Table 14, each additional pp of BA+ Attainment predicts 0.376 pp less price growth. This statistically significant (*p* < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where higher EA predicted higher prices. The relationship has not only weakened, it has reversed.
 
 ```{r}
 
@@ -2241,8 +2345,8 @@ regression_table <- tidy(simple_lm, conf.int = TRUE) |>
 # Display regression coefficients table
 kable(
   regression_table,
-  caption = "**Table 7. Post-COVID Regression: Price Growth on Educational Attainment**",
-  align = c("l", rep("r", 6))
+  caption = "**Table 14: Post-COVID Regression Price Growth on EA**",
+  align = c("l", rep("l", 6))
 )
 
 ```
@@ -2251,20 +2355,25 @@ Comparing pre- and post-COVID models reveals this shift's extent.
 
 In the pre-COVID period, higher education predicted higher absolute prices, with each pp of BA+ Attainment adding nearly $14,000 to median home values.
 
-- $\widehat{\text{Median Price}} = \$235,462 + \$13,816 \times \text{BA+\%}$ 
+$$\widehat{\text{Median Price}} = \$235,462 + \$13,816 \times \text{BA+\%}$$ 
 
 In the post-COVID period, this relationship inverted: higher education predicted slower price appreciation. 
 
-- $\widehat{\text{Price Change}} = 31.86\% - 0.376 \times \text{BA+\%}$  
+$$\widehat{\text{Price Change}} = 31.86\% - 0.376 \times \text{BA+\%}$$  
 
-Moreover, the post-COVID regression yields an $R^2$ of 0.282, indicating that baseline EA alone explains 28.2% of the variation in price appreciation. Although lower than the pre-COVID model, this $R^2$ yields <a href="https://mpra.ub.uni-muenchen.de/115769/1/MPRA_paper_115769#:~:text=Abstract,collinearity%20among%20the%20explanatory%20variables" target="_blank">acceptable explanatory power</a> for a growth metric, confirming that EA remained a primary, yet inverted, driver of market disparity during the pandemic.
+As shown in Table 15 below, the post-COVID regression yields an $R^2$ of 0.282, indicating that baseline EA alone explains 28.2% of the variation in price appreciation. Although lower than the pre-COVID model, this $R^2$ yields <a href="https://mpra.ub.uni-muenchen.de/115769/1/MPRA_paper_115769#:~:text=Abstract,collinearity%20among%20the%20explanatory%20variables" target="_blank">acceptable explanatory power</a> for a growth metric, confirming that EA remained a primary, yet inverted, driver of market disparity during the pandemic.
 
 ```{r}
 
-# STEP 3: Create regression_glance object for model fit statistics
+#| label: baseline-model-fit-statistics
+#| echo: false
+
+# Extract and display model fit statistics
+# R² shows proportion of variance explained by education
+# Extract model fit statistics
 regression_glance <- glance(simple_lm)
 
-# STEP 4: Extract and display model fit statistics
+# Extract and display model fit statistics
 model_fit <- regression_glance |>
   transmute(
     `R²` = round(r.squared, 3),
@@ -2276,8 +2385,8 @@ model_fit <- regression_glance |>
 
 kable(
   model_fit,
-  caption = "**Table 8. Model Fit Statistics**",
-  align = rep("r", 5)
+  caption = "**Table 15: Model Fit Statistics**",
+  align = rep("l", 5)
 )
 
 ```
@@ -2286,7 +2395,7 @@ kable(
 
 The tercile-based and regression-based approaches should yield consistent estimates if the education-growth relationship is approximately linear. 
 
-From Table 7, each additional pp increase in BA+ Attainment predicts a -0.376 pp change in price growth. Moreover, Table 1 highlighted the average education gap between High and Low terciles to be 40.1 pp. 
+From Table 14, each additional pp increase in BA+ Attainment predicts a -0.380 pp change in price growth. Moreover, Table 6 highlighted the average education gap between High and Low terciles to be 40.1 pp. 
 
 Using the regression coefficient, it is possible to predict the expected difference:
 
@@ -2296,9 +2405,9 @@ $$\text{Predicted Difference} = 40.1 \text{ pp} \times (-0.376) = -15.1 \text{ p
 
 This means the regression model predicts that High-EA CDs should grow 15.1 pp less than Low-EA CDs.
 
-From Table 5, we observed that Low-EA CDs actually grew 14.2 pp more than High-EA CDs (26.03% - 11.86% = 14.17% ≈ 14.2 pp).
+From Table 12, we observed that Low-EA CDs actually grew 14.2 pp more than High-EA CDs (26.03% - 11.86% = 14.17% ≈ 14.2 pp).
 
-Table 9 compares these two estimates to assess internal consistency.
+Table 16 compares these two estimates to assess internal consistency.
 
 ```{r}
 
@@ -2335,12 +2444,12 @@ consistency_table <- tibble(
 
 kable(
   consistency_table,
-  caption = "**Table 9. Internal Consistency Check: Tercile DiD vs. Continuous Regression**",
-  align = c("l", "r")
+  caption = "**Table 16: Internal Consistency Check: Tercile DiD vs. Continuous Regression**",
+  align = c("l", "l")
 )
 ```
 
-The regression-based prediction (-15.1 pp, from High's perspective) closely matches the observed tercile difference (+14.2 pp, from Low's perspective). This close correspondence (e.g., less than a 7% rate of change) confirms internal consistency between the non-parametric (tercile) and parametric (regression) approaches. 
+The regression-based prediction (-15.3 pp, from High's perspective) closely matches the observed tercile difference (+14.2 pp, from Low's perspective). This close correspondence (e.g., less than a 7% rate of change) confirms internal consistency between the non-parametric (tercile) and parametric (regression) approaches. 
 
 Whether comparing discrete education groups or modeling continuous relationships, the conclusion remains the same: Low-EA CDs experienced substantially faster price growth during the post-COVID period, with the magnitude of this reversal measuring approximately 14-15 pp.
 
@@ -2350,6 +2459,8 @@ Whether comparing discrete education groups or modeling continuous relationships
 
 The previous sections highlighted stark differences in EA and property values in two boroughs. However, it is essential to examine whether this inverted education-growth relationship holds across all five boroughs, as each contain <a href="https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/#:~:text=In%20this%20Spotlight%2C%20first%20examine,historically%20and%20since%20the%20pandemic
 " target="_blank">different demographic compositions and unique pandemic experiences</a>.
+
+Table 17 reveals that pandemic-era property value growth occurred across all five boroughs, though growth rates varied.
 
 ```{r}
 
@@ -2377,7 +2488,7 @@ borough_summary <- cd_analysis_simple |>
 
 kable(
   borough_summary,
-  caption = "**Table 10. Distribution of CD-Level Price Growth by Borough**",
+  caption = "**Table 17: Distribution of CD-Level Price Growth by Borough**",
   col.names = c(
     "Borough",
     "CDs",
@@ -2391,9 +2502,9 @@ kable(
 
 ```
 
-Table 10 reveals that pandemic-era property value growth occurred across all five boroughs, though growth rates varied. However, there are significant variations between boroughs. Specifically, Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
+However, there are significant variations between boroughs. Specifically, Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
 
-Table 11 quantifies how EA impacts property values within each borough.
+Table 18 quantifies how EA impacts property values within each borough.
 
 ```{r}
 #| label: robustness-education-slopes
@@ -2422,15 +2533,16 @@ borough_slopes <- cd_analysis_simple |>
 
 kable(
   borough_slopes,
-  caption = "**Table 11. Education–Growth Relationship by Borough**",
+  caption = "**Table 18: Education–Growth Relationship by Borough**",
   col.names = c(
     "Borough",
     "CDs",
     "Correlation (r)",
     "Slope (pp per 1% BA+)"
   ),
-  align = c("l", "c", "r", "r")
+  align = c("l", "l", "l", "l")
 )
+
 ```
 
 There is a consistent negative relationship between EA and price growth across all five boroughs. All boroughs show negative correlations and negative slopes, confirming the pattern extends beyond any single market. 
@@ -2447,7 +2559,6 @@ Figure 5 visualizes these borough-specific slopes for direct comparison.
 #| echo: false
 #| fig-width: 7
 #| fig-height: 4
-#| fig-cap: "**Figure 5. Education–Growth Relationship Varies by Borough.** All five boroughs show negative slopes (higher education → lower price growth), with Staten Island showing the strongest effect."
 
 ggplot(
   borough_slopes,
@@ -2456,7 +2567,7 @@ ggplot(
   geom_col(fill = "#7570b3", width = 0.6, alpha = 0.8) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   labs(
-    title    = "Education–Growth Relationship Varies by Borough",
+    title    = "Figure 5: Education–Growth Relationship Varies by Borough",
     subtitle = "Slope: Percentage points of price growth per 1pp increase in BA+ attainment",
     x        = "Borough",
     y        = "Slope (pp per 1% BA+)"
