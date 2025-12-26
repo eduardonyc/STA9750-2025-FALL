@@ -1498,7 +1498,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 This tercile structure enables parallel-trends testing.
 
 *Note: The roughly 40 percentage point (pp) gap between high and low tercile means (59.6% - 19.3%) will be part of later internal consistency checks in the regression analysis.*
@@ -1610,7 +1610,7 @@ max_diff <- max(pretrend_slopes$slope) - min(pretrend_slopes$slope)
 
 ```
 
-Small inter-group differences of `r round(max_diff, 3)` satisfies the PTA requirements, confirming that post-pandemic changes represent structural shifts rather than trajectory continuations.
+Small inter-group differences of ``r round(max_diff, 3)`` satisfies the PTA requirements, confirming that post-pandemic changes represent structural shifts rather than trajectory continuations.
 
 #### **Education and Value: A Lesson on Geography** 
 
