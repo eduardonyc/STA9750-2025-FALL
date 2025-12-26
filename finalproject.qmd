@@ -1,5 +1,5 @@
 ---
-title: "STA 9750 Final Project: A Tale of 59 NYC Community Districts"
+title: "STA 9750 Final Project - A Market Realigned: How COVID-19 Altered the Value of Educational Attainment"
 author: "Eduardo Alarcon"
 format: 
   html:
