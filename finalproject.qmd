@@ -18,7 +18,7 @@ execute:
 
 ### The Overarching and Specific Questions
 
-The COVID-19 pandemic introduced a significant structural break in urban living patterns. Unprecedented disruptions altered individual needs and preferences, challenging the neighborhood characteristics that traditionally predicted property value premiums. These shifts drive our research team’s investigation into how value determinants adapted to these new dynamics, guided by the Overarching Question (OQ):
+The COVID-19 pandemic introduced a significant structural break in urban living patterns. Unprecedented disruptions altered individual needs and preferences, challenging the neighborhood characteristics that traditionally predicted property value premiums. These shifts drive our research team’s investigation into how property value drivers shifted to these new dynamics, guided by the Overarching Question (OQ):
 
 *Did COVID-19 reshape the relationship between neighborhood characteristics and property values across NYC’s Community Districts (CDs)?*
 
@@ -30,7 +30,7 @@ While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Re
 
 Given the pandemic's impact on work-life demands and redefining dwelling needs, this question explores two hypotheses.
 
-**Hypothesis 1**: The positive correlation between education and property values would strengthen post-COVID.
+**Hypothesis 1**: The positive correlation between EA and property values would strengthen post-COVID.
 
 **Hypothesis 2**: High-EA CDs would experience stronger property value growth post-COVID as remote work freed professionals to prioritize neighborhood amenities over commute times.
 
@@ -38,7 +38,7 @@ Beyond testing these hypotheses, this analysis also investigates whether pandemi
 
 ## Data Acquisition and Processing
 
-This analysis integrates four data sources through programmatic retrieval, requiring careful transformation to align incompatible geographic coding systems across federal and city databases.
+This analysis integrates four data sources through programmatic retrieval, standardizing incongruent spatial boundaries to align coding systems across federal and city databases.
 
 ### Setup and Configuration
 
@@ -322,7 +322,7 @@ tibble(
 
 ### Department of Finance Rolling Sales Data
 
-The `get_dof_sales_year_boro()` function automates collection and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Additionally, quality filters remove transactions under $10,000, restricting data collection to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a> (e.g., 1, 2, 2A, 2B, and 2C).  
+The `get_dof_sales_year_boro()` function automates collecting and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Additionally, exclusion criteria filters transactions under $10,000 and restrict the sample to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a>, specifically 1, 2, 2A, 2B, and 2C.  
 
 ```{r}
 
@@ -524,7 +524,7 @@ sales_clean <- sales_clean |>
 
 ### Enhanced BBL Matching: Two-Stage Approach
 
-A two-stage strategy combines exact BBL matching with a block-level fallback. While exact matching loses approximately 25% of transactions (often condo billing BBLs), the fallback links these records to their specific city block, achieving a 100% match rate, as shown in Table 2. 
+A two-stage strategy combines exact BBL matching with a block-level fallback. While exact matching loses approximately 25% of transactions (e.g., condo billing BBLs), the fallback links these records to their specific city block, achieving a 100% match rate, as shown in Table 2. 
 
 ```{r}
 
@@ -1162,9 +1162,9 @@ cd_edu_summary <- cd_edu_summary |>
 
 ```
 
-Treating EA as a fixed baseline is a critical research control. This step is necessary to isolate pure market demand from potential confounding variables. Updating education data post-COVID would obfuscate the source of price changes (e.g., preference changes or population shifts). Consequently, holding education constant at 2019 levels  ensures that results yield an accurate measure of changing housing demand. 
+Treating EA as a fixed baseline is a critical research control. This step is necessary to isolate pure market demand from potential extraneous variables. Updating education data post-COVID would obfuscate the source of price changes (e.g., preference changes or population shifts). Consequently, holding education constant at 2019 levels  ensures that results yield an accurate measure of changing housing demand. 
 
-Table 3 below demonstrates this fixed baseline strategy, showing that the same 2019 ACS education data is consistently applied across all six research years (2017-2023), enabling clean isolation of pandemic-era market shifts.
+Table 3 below demonstrates this fixed baseline strategy, showing that the same 2019 ACS education data is consistently applied across all six research years (2017-2023), enabling appropriate isolation of pandemic-era market shifts.
 
 ```{r}
 
@@ -1232,7 +1232,6 @@ stopifnot(
 ### Temporal Scope and Final Integration
 
 The core of this analysis compares two three-year periods: pre-COVID (2017-2019) and post-COVID (2021-2023). 
-
 ```{r}
 
 #| label: temporal-coverage-summary
@@ -1262,9 +1261,9 @@ kable(
 
 ```
 <div style="height: 15px;"></div>
-Omitting 2020 is essential to ensure analysis integrity. Given the acute shocks from this year, any statistical anomalies may distort long-term trend analysis; thus, bypassing it yields a clearer view of the market's post-COVID response. 
+Omitting 2020 is essential to ensure analysis integrity. Given the acute disruptions from this year, any statistical anomalies may distort long-term trend analysis; thus, bypassing it yields a clearer view of the market's post-COVID response. 
 
-The final data integration shown in Table 5 confirms critical data merging (e.g., median prices by CD-year) with education baselines held constant at 2019 levels. 
+The final data integration shown in Table 5 confirms critical merging (e.g., median prices by CD-year) with education baselines held constant at 2019 levels. 
 
 ```{r}
 
@@ -1337,7 +1336,7 @@ stopifnot(
 <div style="height: 15px;"></div>
 ---
 
-The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section create a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years' worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
+The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section create a balanced panel of 59 CDs encompassing over six years ($N = 354$) worth of data. This longitudinal structure supports this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis, ensuring that any identified trends accurately link to post-pandemic shifts.
 
 ##  Pre-COVID Analytical Framework
 
@@ -1491,11 +1490,11 @@ This tercile structure enables parallel-trends testing.
 
 ### Pre-Trend Diagnostics
 
-A DiD design is a favorable approach to filter out factors (e.g., economic shifts and neighborhood characteristics) impacting trends, allowing for a strict focus on the pandemic's effect. This research evaluates a <a href="https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends" target="_blank">Parallel-Trends Assumption (PTA)</a> framework, to support a DiD interpretation of genuine structural shift in market behavior rather than pre-existing trends.
+A DiD design is a favorable approach to filter out factors (e.g., economic shifts and neighborhood characteristics) impacting trends, allowing for a strict focus on the pandemic's effect. This research tests the <a href="https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends" target="_blank">Parallel-Trends Assumption (PTA)</a> to support a DiD interpretation of genuine structural shift in market response rather than pre-existing trends.
 
 #### **Logarithmic Transformation**
 
-This analysis implements a logarithmic transformation of property values to meaningfully draw comparisons. Since High-EA CDs begin at significantly higher baselines, standardization yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
+This analysis implements a logarithmic transformation of property values to meaningfully draw comparisons. Since High-EA CDs begin at significantly higher baseline values, standardization yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
 Figure 2 shows how High-EA CDs start at roughly twice the price level of Low-EA CDs. However, the three trajectories rise at similar rates, reinforcing the PTA.
 
@@ -2032,7 +2031,7 @@ ggplot(
 
 While High-EA neighborhoods maintain an absolute price advantage, the correlation's decline suggests the education premium diminished during the pandemic years, leading to the rejection of Hypothesis 1.
 
-The regression line's flatter slope indicates that each additional pp of BA+ Attainment predicts a smaller price differential than in the pre-COVID period. Table 12 provides additional clarity with actual price changes across terciles, revealing which groups appreciated fastest.
+The regression line's flatter slope indicates that each additional pp of BA+ Attainment predicts a smaller price difference than in the pre-COVID period. Table 12 provides additional clarity with actual price changes across terciles, revealing which groups appreciated fastest.
 
 ```{r}
 
@@ -2098,7 +2097,7 @@ kable(
 
 ```
 <div style="height: 15px;"></div>
-These findings indicate a remarkable reversal of the traditional education premium. From 2017-19 to 2021-23, Low-EA CDs experienced 26.03% median price growth, compared to just 15.03% and 11.86% for Medium- and High-EA CDs, respectively. Notably, High-EA CDs grew at less than half the rate of Low-EA counterparts, representing a 14.2 pp difference.
+These findings indicate an exceptional reversal of the traditional education premium. From 2017-19 to 2021-23, Low-EA CDs experienced 26.03% median price growth, compared to just 15.03% and 11.86% for Medium- and High-EA CDs, respectively. Notably, High-EA CDs grew at less than half the rate of Low-EA counterparts, representing a 14.2 pp difference.
 
 This result rejects Hypothesis 2, as Low-EA CDs saw the fastest appreciation. The Leaflet map below highlights this appreciation pattern across all CDs. 
 
@@ -2267,7 +2266,7 @@ kable(
 
 ```
 <div style="height: 15px;"></div>
-Differences between high and low terciles is statistically significant at *p* = 0.002, with a 95% confidence interval entirely excluding zero. As a result, this outcome indicates  that the pattern is unlikely to have occurred by chance. 
+Differences between high and low terciles is statistically significant at *p* = 0.002, with a 95% confidence interval excluding zero. As a result, this outcome indicates that the pattern is unlikely to have occurred by chance. 
 
 Figure 5 below shows the profound magnitude of this reversal. 
 
@@ -2337,13 +2336,13 @@ ggplot(tercile_ci_data, aes(x = edu_tercile, y = mean_change, color = edu_tercil
 
 ```
 
-Non-overlapping confidence intervals confirm distinct economic outcomes between the High-EA and Low-EA groups, indicating the 14.2 pp spread represents structural shifts rather than anomaly.
+Non-overlapping confidence intervals confirm distinct economic outcomes between the High-EA and Low-EA groups, indicating the 14.2 pp spread represents structural shifts rather than an anomaly.
 
 ### Parametric Regression Analysis
 
 While terciles demonstrate reversal magnitude, a modified continuous regression quantifies how each incremental BA+ Attainment pp influenced post-COVID appreciation.
 
-As shown in Table 14, each additional pp of BA+ Attainment predicts 0.380 pp less price growth. This statistically significant (*p* < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where High-EA predicted higher prices. The relationship has not only weakened, it has reversed.
+As shown in Table 14, each additional pp of BA+ Attainment predicts 0.380 pp less price growth. This statistically significant (*p* < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where High-EA predicted higher prices. The relationship has not only weakened, but it has also reversed.
 
 ```{r}
 
@@ -2402,7 +2401,7 @@ In the post-COVID period, this relationship inverted: High-EA predicted slower p
 
 $$\widehat{\text{Price Change}} = 32.00\% - 0.380 \times \text{BA+\%}$$  
 
-As shown in Table 15 below, the post-COVID regression yields an $R^2$ of 0.291, indicating that baseline EA alone explains 29.1% of the variation in price appreciation. Although lower than the pre-COVID model, this $R^2$ yields <a href="https://mpra.ub.uni-muenchen.de/115769/1/MPRA_paper_115769#:~:text=Abstract,collinearity%20among%20the%20explanatory%20variables" target="_blank">acceptable explanatory power</a> for a growth metric, confirming that EA remained a primary, yet inverted, driver of market disparity during the pandemic.
+As shown in Table 15 below, the post-COVID regression yields an $R^2$ of 0.291, indicating that baseline EA alone explains 29.1% of the variation in price appreciation. Although lower than the pre-COVID model, this $R^2$ yields <a href="https://mpra.ub.uni-muenchen.de/115769/1/MPRA_paper_115769#:~:text=Abstract,collinearity%20among%20the%20explanatory%20variables" target="_blank">acceptable explanatory power</a> for a growth metric, confirming that EA remained a primary, yet inverted, driver of market changes during the pandemic.
 
 ```{r}
 
@@ -2435,6 +2434,7 @@ kable(
 ### Internal Consistency Check
 
 Tercile-based and regression-based approaches should yield consistent estimates if the relationship is linear. 
+
 $$\text{Predicted Difference} = \text{Education Gap} \times \text{Regression Coefficient}$$
 
 $$\text{Predicted Difference} = 40 \text{ pp} \times (-0.380) ≈ -15.3 \text{ pp}$$
@@ -2484,9 +2484,9 @@ kable(
 )
 ```
 <div style="height: 15px;"></div>
-The regression-based prediction (-15.3 pp, from High's perspective) closely matches the observed tercile difference (+14.2 pp, from Low's perspective). This close correspondence (e.g., less than a 7% rate of change) confirms internal consistency between the non-parametric (tercile) and parametric (regression) approaches. 
+The regression-based prediction (-15.3 pp, from High's perspective) closely matches the observed tercile difference (+14.2 pp, from Low's perspective). This minimal deviation validates the consistency of the results, regardless of using a tercile or regression approach.
 
-Whether comparing discrete education groups or modeling continuous relationships, the conclusion remains the same: Low-EA CDs experienced substantially faster price growth during the post-COVID period, with the magnitude of this reversal measuring approximately 14 to 15 pp.
+Whether comparing discrete education tiers or modeling continuous relationships, the conclusion remains the same: Low-EA CDs experienced substantially faster price growth during the post-COVID period, with the magnitude of this reversal measuring approximately 14 to 15 pp.
 
 ## Spatial Variation: Examining Consistency Across Boroughs
 
@@ -2535,7 +2535,7 @@ kable(
 
 ```
 <div style="height: 15px;"></div>
-Manhattan exhibited the highest volatility ($SD = 15.9\%$). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
+Manhattan exhibited the highest volatility ($SD = 15.9\%$). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more stable ($SD=8.6\%$).
 
 Table 18 quantifies how EA impacts property values within each borough.
 
@@ -2822,7 +2822,7 @@ Several factors likely explain this borough-wide education premium reversal.
 
 Remote work <a href="https://www.cnn.com/2023/09/03/homes/remote-work-housing" target="_blank">reduced the need for living near employment-rich and amenitiy-filled hubs</a>, usually concentrated in High-EA CDs. Also, affordability pressures led buyers to migrate toward to <a href="https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf" target="_blank">undervalued CDs in the outer-borough areas</a>, offering greater access to homeownership opportunities. Lastly, lower valuation CDs experienced post-pandemic market correction, leading to catch-up growth, or <a href="https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate" target="_blank">a donut effect</a>, shifting market demand and creating higher prices in once affordable CDs. 
 
-These factors likely created a feedback loop. As the premium for High-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA CDs while High-EA growth stagnated. However, this represents a change in growth dynamics rather than market structure. High-EA neighborhoods maintained their valuation premiums but lost their advantage in appreciation rates.
+These factors likely created a compounding market cycle. As the premium for High-EA CDs diminished, demand shifted toward outer-borough markets, accelerating appreciation in Low-EA CDs while High-EA growth stagnated. However, this represents a change in growth dynamics rather than market structure. High-EA neighborhoods maintained their pricing premiums but lost their advantage in appreciation rates.
 
 ### Contribution to Overarching Question
 
@@ -2836,13 +2836,13 @@ This analysis demonstrates that COVID-19 reshaped the relationship between neigh
 
 - Provides baseline context for <a href="https://kelmli.github.io/STA9750-2025-FALL/final_proj.html" target="_blank">crime results</a>: High-crime CDs experienced the largest crime increases (+1.58 per 1,000), but crime showed no relationship with property values in either individual ($R^2$ ≈ 0.000) or the team model (*β* = -0.029, *p* = 0.765), confirming crime and property values respond independently to neighborhood characteristics.
 
-In the team model, EA emerged as the singular statistically significant predictor (*β* = -0.402, *p* < 0.001). While the full model improved explanatory power ($R^2 = 0.370$) over the education-only baseline ($R^2 = 0.291$), the lack of independent significance for density, crime, and transit confirms that education was the primary characteristic driving appreciation variance. Consequently, this reversal represents the dominant structural shift of the period, suggesting that pandemic dynamics fundamentally recalibrated NYC's urban economic geography.
+In the team model, EA emerged as the sole statistically significant predictor (*β* = -0.402, *p* < 0.001). Although the full model improved explanatory power ($R^2 = 0.370$) over the education-only model ($R^2 = 0.291$), the lack of significance for density, crime, and transit confirms that EA was the primary characteristic driving appreciation variance. Consequently, this reversal represents the dominant structural shift of the period, suggesting that the pandemic fundamentally changed NYC's urban economic geography.
 
 ## Limitations and Conclusion
 
-While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low-EA areas. Second, residents in High-EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return to physical work locations</a>. 
+While this analysis provides clear evidence of a post-pandemic reversal, several limitations arise from the results. First, CD level data may obscure location-specific variations, such as gentrification within Low-EA areas. Second, residents in High-EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return to physical work locations</a>. 
 
-Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional High-EA CDs are less significant, driven by demand shifts toward outer-borough value.
+Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic revised buyer preferences, disrupting traditional drivers of value. Consequently, affordability pressures created a new urban landscape where traditional High-EA CDs are less significant, driven by demand shifts toward outer-borough value.
 
 ## References
 
