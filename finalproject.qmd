@@ -22,7 +22,7 @@ The COVID-19 pandemic introduced a significant structural break in urban living 
 
 *Did COVID-19 reshape the relationship between neighborhood characteristics and property values across NYC’s Community Districts (CDs)?*
 
-While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html" target="_blank">team's broader effort</a> examines crime, density, job accessbility, and transit, this analysis isolates Educational Attainment (EA). Historically, High-EA neighborhoods commanded significant price premiums from well-known <a href="https://www.annualreviews.org/deliver/fulltext/resource/11/1/annurev-resource-100518-094151.pdf?itemId=/content/journals/10.1146/annurev-resource-100518-094151&mimeType=application/pdf" target="_blank">agglomeration effects</a>. However, the pandemic’s disruption of physical proximity necessitates a re-evaluation of this premium. Consequently, this study seeks to answer the specific question (SQ):
+While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html" target="_blank">team's broader effort</a> examines crime, density, job accessibility, and transit, this analysis isolates Educational Attainment (EA). Historically, High-EA neighborhoods commanded significant price premiums from well-known <a href="https://www.annualreviews.org/deliver/fulltext/resource/11/1/annurev-resource-100518-094151.pdf?itemId=/content/journals/10.1146/annurev-resource-100518-094151&mimeType=application/pdf" target="_blank">agglomeration effects</a>. However, the pandemic’s disruption of physical proximity necessitates a re-evaluation of this premium. Consequently, this study seeks to answer the specific question (SQ):
 
 *Did the strength of the relationship between neighborhood educational attainment and property values change post-COVID, and did this change differ across NYC's CDs?*
 
@@ -76,7 +76,7 @@ library(utils)
 library(broom)   # tidy(), glance()
 library(knitr)   # kable tables
 library(infer)   # t_test
-library(plotly)  # spatial heterogeniety analysis   
+library(plotly)  # spatial heterogeneity analysis   
 library(stats)   # descriptive statistics  
 
 options(dplyr.summarise.inform = FALSE)
@@ -117,19 +117,6 @@ clean_period <- function(x) {
   recode(x,!!!PERIOD_LABELS,
          .default = as.character(x)
          )
-}
-
-# Labels for periods
-PERIOD_LABELS <- c(
-  pre_covid  = "Pre-COVID",
-  post_covid = "Post-COVID"
-)
-
-clean_period <- function(x) {
-  recode(x,
-    !!!PERIOD_LABELS,
-    .default = as.character(x)
-  )
 }
 
 ```
@@ -763,7 +750,7 @@ build_cd_sales_panel <- function(
     )
   }
 
-  # 8. Final summary (used in previous renderings for confirmatopm)  
+  # 8. Final summary (used in previous renderings for confirmation)  
   message("")
   message("=== Final CD Sales Panel ===")
   message("CD sales panel built with ", nrow(cd_panel), " rows.")
@@ -2548,7 +2535,7 @@ kable(
 
 ```
 <div style="height: 15px;"></div>
-Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
+Manhattan exhibited the highest volatility ($SD = 15.9\%$). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
 
 Table 18 quantifies how EA impacts property values within each borough.
 
