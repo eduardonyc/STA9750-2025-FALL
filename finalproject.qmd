@@ -2846,6 +2846,31 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 
 ## References
 
+### Background and Context Readings
+
+- CNN. *Remote work and the housing market.*  
+  <https://www.cnn.com/2023/09/03/homes/remote-work-housing>
+
+- Freddie Mac. *Migration and Housing Demand* (Research note, PDF).  
+  <https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf>
+
+- NYC Comptroller. *New York: A City of Diverse Neighborhoods* (report link as cited in document).  
+  <https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/>
+
+- NYC Future. *Boosting college attainment.*  
+  <https://nycfuture.org/research/boosting-college-attainment>
+
+- PSC-CUNY (Clarion). *Barriers to college attainment.*  
+  <https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/>
+
+- Stanford SIEPR. *Donut Effect: How COVID-19 Shapes Real Estate.*  
+  <https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate>
+
+- USA Today. *Workers defy return-to-office mandates.*  
+  <https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/>
+
+---
+
 ### Data Sources
 
 - NYC Department of City Planning. *NYC Community Districts (nycd_25c) shapefile (ZIP).*  
@@ -2884,39 +2909,9 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 
 ---
 
-### Background and Context Readings
+### Research Team Reports
 
-- CNN. *Remote work and the housing market.*  
-  <https://www.cnn.com/2023/09/03/homes/remote-work-housing>
-
-- Freddie Mac. *Migration and Housing Demand* (Research note, PDF).  
-  <https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf>
-
-- NYC Comptroller. *New York: A City of Diverse Neighborhoods* (report link as cited in document).  
-  <https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/>
-
-- NYC Future. *Boosting college attainment.*  
-  <https://nycfuture.org/research/boosting-college-attainment>
-
-- PSC-CUNY (Clarion). *Barriers to college attainment.*  
-  <https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/>
-
-- Stanford SIEPR. *Donut Effect: How COVID-19 Shapes Real Estate.*  
-  <https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate>
-
-- USA Today. *Workers defy return-to-office mandates.*  
-  <https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/>
-
----
-
-### Team Summary Report
-
-- Alarcon, E., Brinson, M., Li, K., Ng Li, T., & Socoy, J. (2025). *STA 9750 Team Summary Report: COVID-19 and NYC Property Values.* Baruch College.  
-  <https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html>
-
----
-
-### Individual Team Member Reports
+#### **Individual Team Member Reports**
 
 - Brinson, Madison. *STA 9750 Individual Report.*  
   <https://madisonbrinson.github.io/STA9750-2025-FALL/individual_report_final.html>
@@ -2929,3 +2924,8 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 
 - Socoy, Jonathan. *STA 9750 Final Project.*  
   <https://socoyjonathan.github.io/STA9750-2025-FALL/final_project.html>
+
+#### **Team Summary Report**
+
+- Alarcon, E., Brinson, M., Li, K., Ng Li, T., & Socoy, J. (2025). *STA 9750 Team Summary Report: COVID-19 and NYC Property Values.* Baruch College.  
+  <https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html>
