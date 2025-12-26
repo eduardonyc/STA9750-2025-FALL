@@ -42,7 +42,7 @@ This analysis integrates four data sources through programmatic retrieval, requi
 
 ### Setup and Configuration
 
-Loading required packages and defining global constants allows for programmatically assembling a 59 CD-level panel for 2017–2019 vs. 2021–2023 and merges it with baseline 2019 American Community Survey (ACS) education variables.
+Loading required packages and defining global constants allows for programmatically assembling a 59 CD-level panel for 2017–2019 vs. 2021–2023 and merging it with baseline 2019 American Community Survey (ACS) education variables.
 
 ```{r}
 
@@ -208,7 +208,7 @@ get_nyc_cd <- function() {
 
 ### PLUTO Borough–Block–Lot-to-CD Crosswalk
 
-The `get_pluto_cd_crosswalk()` function uses raw data from NY Open Data to implement a Borough–Block–Lot (BBL) to CD crosswalk. This process normalizes approximately 870,000 BBLs, resolving formatting inconsistencies and creating standardized linkages between individual tax lots and CDs. 
+The `get_pluto_cd_crosswalk()` function uses raw data from NY Open Data to implement a Borough–Block–Lot (BBL) to CD crosswalk. This process normalizes approximately 860,000 BBLs, resolving formatting inconsistencies and creating standardized linkages between individual tax lots and CDs. 
 
 ```{r}
 
@@ -895,7 +895,7 @@ stopifnot(
 
 ### American Community Survey Education Data
 
-Sourced from Table B15003, the American Community Survey (ACS) dataset aggregates educational variables from approximately 2,200 tracts that do not perfectly align well with NYC CD boundaries. Therefore, it is best to use an <a href="https://cran.r-project.org/web/packages/areal/vignettes/areal-weighted-interpolation.html" target="_blank">area-weighted aggregation approach</a>, which is a geographic method that redistributes data between mismatched areas to account for 100% of the population. 
+Sourced from Table B15003, the American Community Survey (ACS) dataset aggregates educational variables from approximately 2,200 tracts that do not perfectly align with NYC CD boundaries. Therefore, this study implements an <a href="https://cran.r-project.org/web/packages/areal/vignettes/areal-weighted-interpolation.html" target="_blank">area-weighted aggregation approach</a>, which is a geographic method that redistributes data between mismatched areas to account for 100% of the population. 
 
 $$\text{Total}_{\text{Pop BA+}} = \sum_{\text{tracts}} \left( \text{Tract}_{\text{Pop BA+}} \times \frac{\text{Intersection Area}}{\text{Tract Area}} \right)$$
 
@@ -1337,7 +1337,7 @@ stopifnot(
 <div style="height: 15px;"></div>
 ---
 
-The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section creates a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
+The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section create a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years' worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
 
 ##  Pre-COVID Analytical Framework
 
@@ -2610,7 +2610,7 @@ The citywide correlation of *r* = -0.540 represents the overall negative relatio
 
 Staten Island (SI), with its three CDs, exhibits the strongest negative relationship (*r* = -0.991, slope = -0.682). 
 
-Brooklyn's near-zero slope (-0.009) and weak correlation (*r* = -0.005) suggests that other factors (e.g., <a href="https://nextcity.org/urbanist-news/in-brooklyn-americas-gentrification-epicenter-building-on-a-model-for-commu" target="_blank">gentrification</a>) drove appreciation more than EA. Additionally, its close proximity to Manhattan may have likely outweighed EA in determining appreciation. Consequently, Brooklyn's unique outcome calls for deeper investigation in future research.
+Brooklyn's near-zero slope (-0.009) and weak correlation (*r* = -0.005) suggests that other factors (e.g., <a href="https://nextcity.org/urbanist-news/in-brooklyn-americas-gentrification-epicenter-building-on-a-model-for-commu" target="_blank">gentrification</a>) drove appreciation more than EA. Additionally, its close proximity to Manhattan likely outweighed EA in determining appreciation. Consequently, Brooklyn's unique outcome calls for deeper investigation in future research.
 
 Figure 6 visualizes these borough-specific slopes for direct comparison.
 
@@ -2836,11 +2836,11 @@ This analysis demonstrates that COVID-19 reshaped the relationship between neigh
 
 - Provides baseline context for <a href="https://kelmli.github.io/STA9750-2025-FALL/final_proj.html" target="_blank">crime results</a>: High-crime CDs experienced the largest crime increases (+1.58 per 1,000), but crime showed no relationship with property values in either individual ($R^2$ ≈ 0.000) or the team model (*β* = -0.029, *p* = 0.765), confirming crime and property values respond independently to neighborhood characteristics.
 
-EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.001), The full model's $R^2$ (0.370) equaled the education-only model, confirming other variables added no explanatory power. Their apparent effects in individual analyses reflected EA rather than independent causal mechanisms. Therefore, the education reversal appears to be the dominant structural shift, with other characteristics showing stability (jobs) or modest weakening (density and transit), suggesting pandemic housing dynamics fundamentally re-calibrated NYC's urban economic geography.
+EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.001). The full model's $R^2$ (0.370) equaled the education-only model, confirming other variables added no explanatory power. Their apparent effects in individual analyses reflected EA rather than independent causal mechanisms. Therefore, the education reversal appears to be the dominant structural shift, with other characteristics showing stability (jobs) or modest weakening (density and transit), suggesting pandemic housing dynamics fundamentally recalibrated NYC's urban economic geography.
 
 ## Limitations and Conclusion
 
-While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low-EA areas. Second, residents in High-EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return back to physical work locations</a>. 
+While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low-EA areas. Second, residents in High-EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return to physical work locations</a>. 
 
 Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional High-EA CDs are less significant, driven by demand shifts toward outer-borough value.
 
