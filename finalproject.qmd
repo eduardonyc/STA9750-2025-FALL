@@ -28,7 +28,7 @@ While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Re
 
 ### Hypotheses
 
-Given the pandemic's impact on work-life demands and redefining dwelling needs, this question explores two hypotheses.
+Given the pandemic's impact on work-life demands and dwelling needs, this question explores two hypotheses.
 
 **Hypothesis 1**: The positive correlation between EA and property values would strengthen post-COVID.
 
@@ -38,11 +38,11 @@ Beyond testing these hypotheses, this analysis also investigates whether pandemi
 
 ## Data Acquisition and Processing
 
-This analysis integrates four data sources through programmatic retrieval, standardizing incongruent spatial boundaries to align coding systems across federal and city databases.
+This analysis integrates four data sources through programmatic retrieval, resolving incongruent spatial boundaries to align coding systems across federal and city databases.
 
 ### Setup and Configuration
 
-Loading required packages and defining global constants allows for programmatically assembling a 59 CD-level panel for 2017–2019 vs. 2021–2023 and merging it with baseline 2019 American Community Survey (ACS) education variables.
+Loading required packages and defining global constants enables the programmatic assembly of a 59 CD-level panel for 2017–2019 vs. 2021–2023 and merging it with baseline 2019 American Community Survey (ACS) education variables.
 
 ```{r}
 
@@ -322,7 +322,7 @@ tibble(
 
 ### Department of Finance Rolling Sales Data
 
-The `get_dof_sales_year_boro()` function automates the collection and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Additionally, exclusion criteria filters transactions under $10,000 and restrict the sample to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a>, specifically 1, 2, 2A, 2B, and 2C.  
+The `get_dof_sales_year_boro()` function automates the collection and cleaning of Annualized Sales reports from the NYC Department of Finance (DOF). Additionally, exclusion criteria filter transactions under $10,000 and restrict the sample to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a>, specifically 1, 2, 2A, 2B, and 2C.  
 
 ```{r}
 
