@@ -34,7 +34,7 @@ Given the pandemic's impact on work-life demands and redefining dwelling needs, 
 
 **Hypothesis 2**: High-education CDs would experience stronger property value growth post-COVID as remote work freed professionals to prioritize neighborhood amenities over commute times.
 
-Beyond testing these hypotheses, this analysis also investigates whether pandemic-era shifts represent temporary disruption or a systemic realignment of urban real estate economics.
+Beyond testing these hypotheses, this analysis also investigates whether pandemic-era shifts represent a temporary disruption or a systemic realignment of urban real estate economics.
 
 ## Data Acquisition and Processing
 
@@ -289,7 +289,7 @@ get_pluto_cd_crosswalk <- function() {
 
 ```
 
-This process removed 1,154 invalid entries (0.1%), preventing silent join failures downstream, as shown in Table 1 below.
+Table 1 highlights the removal of 1,154 invalid entries (0.1%) that prevent silent join failures downstream.
 
 ```{r}
 
@@ -532,9 +532,7 @@ sales_clean <- sales_clean |>
 
 ### Enhanced BBL Matching: Two-Stage Approach
 
----
-
-A two-stage join strategy combines exact BBL matching with a block-level fallback approach. As standard exact-match joins lose approximately 25% of transactions due to condo billing BBLs, the fallback allows the function to join the remaining unmatched sales record to its specific city block. This process results in 100% match rate, minimizing inaccuracies in analyses within high-density areas, as shown in Table 2.
+A two-stage strategy combines exact BBL matching with a block-level fallback. While exact matching loses ~25% of transactions (often condo billing BBLs), the fallback links these records to their specific city block, achieving a 100% match rate (Table 2). 
 
 ```{r}
 
@@ -831,7 +829,7 @@ tibble(
 
 ```
 
-Figure 1 demonstrates the two-stage matching approach's effectiveness across all year-borough combinations. The consistent match rates allow for unbiased geographic analysis by recovering transactions (e.g., condos) that exact BBL matching alone would miss.
+As shown in Figure 1, this consistency across boroughs minimizes bias by recovering high-density transactions (e.g., condo sales) that standard matching would miss.
 
 ```{r}
 
@@ -874,18 +872,14 @@ ggplot(match_viz_data, aes(x = borough_clean, y = count, fill = status)) +
 
 ```
 
-
----
-
-*Note: The code block below handles all data acquisition and pre-processing to establish the foundational datasets for this research These background processes include structural validations to ensure data integrity before thorough analysis.*
-
-
 ```{r}
 
 #| label: load-core-data
 #| include: false
 #| message: false
 #| warning: false
+
+#Note: This code block handles all data acquisition and pre-processing to establish the foundational datasets for this research These background processes include structural validations to ensure data integrity before thorough analysis.
 
 # Load core spatial pieces
 nyc_cd <- get_nyc_cd()
@@ -1363,7 +1357,7 @@ This baseline analysis addresses the OQ by establishing EA as a strong neighborh
 
 To analyze how these different CDs responded to the pandemic, this research applied a <a href="https://www.investopedia.com/terms/n/nonparametric-statistics.asp" target="_blank">non-parametric</a>, tercile grouping approach, stratifying EAs into "Low," "Medium," and "High" tiers to mitigate outlier effects when comparing distributions. 
 
-Table 6 shows clear distinctions between strata, with Low-education CDs yielding a 19% BA+ Attainment (Bachelor's degree or higher) average, while High-education CDs average 53% BA+ Attainment. This variation establishes a tangible baseline for comparing how CD housing markets evolved during the pandemic era.
+Table 6 shows clear distinctions between strata: Low-education CDs yield a 19% BA+ Attainment (Bachelor’s degree or higher) average, while High-education CDs average 53%. This variation establishes a tangible baseline for comparing how housing markets evolved.
 
 ```{r}
 
@@ -1511,7 +1505,7 @@ A DiD design is a favorable approach to filter out factors (e.g., economic shift
 
 #### **Logarithmic Transformation**
 
-To meaningfully execute this comparison, this analysis implements a logarithmic transformation of property values. Because High-EA CDs begin at significantly higher baselines, analyzing raw dollars would blur the comparison of trends. This standardization process yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
+This analysis implements a logarithmic transformation of property values to meaningfully draw comparisons. Since High-EA CDs begin at significantly higher baselines, standardization yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
 Figure 2 shows how High-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
 
@@ -1870,7 +1864,7 @@ htmlwidgets::prependContent(map, map_title)
 
 #### **The Education Premium** 
 
-Pre-COVID, there was a strong linear correlation (*r* = 0.78) between neighborhood EA and its property value, as shown in Figure 3 below. 
+Table 3 shows a strong linear correlation (*r* = 0.78) between neighborhood EA and its property value in the Pre-COVID era.
 
 ```{r}
 
@@ -2006,7 +2000,7 @@ Although EA appears as a dominant neighborhood predictor pre-COVID, the analysis
 
 ### The Education Reversal
 
-The post-COVID scatter plot in Figure 4 below reveals a weaker but still positive relationship between EA and property values (*r* = 0.74, down from *r* = 0.78 pre-COVID). 
+Figure 4 reveals a weaker but still positive post-COVID relationship between EA and property values (*r* = 0.74, down from *r* = 0.78).
 
 ```{r}
 
@@ -2118,7 +2112,7 @@ kable(
 
 ```
 
-These findings indicate a remarkable reversal of the traditional education premium. From 2017-19 to 2021-23, Low-EA CDs experienced 26.03% median price growth, whereas Medium-EA CDs and High-education CDs grew only by 15.03% and 11.86%, respectively. The most notable finding is that High-EA CDs grew at less than half the rate of its Low-EA counterparts, representing a 14.2% point difference.
+These findings indicate a remarkable reversal of the traditional education premium. From 2017-19 to 2021-23, Low-EA CDs experienced 26.03% median price growth, compared to just 15.03% and 11.86% for Medium- and High-EA CDs, respectively. Notably, High-EA CDs grew at less than half the rate of Low-EA counterparts, representing a 14.2 pp difference.
 
 This result rejects Hypothesis 2, as Low-EA CDs saw the fastest appreciation. The Leaflet map below highlights this appreciation pattern across all CDs. 
 
@@ -2314,35 +2308,49 @@ tercile_ci_data <- cd_analysis_simple |>
   ) |>
   filter(!is.na(edu_tercile))
 
-ggplot(
-  tercile_ci_data,
-  aes(x = edu_tercile, y = mean_change, color = edu_tercile)
-) +
+ggplot(tercile_ci_data, aes(x = edu_tercile, y = mean_change, color = edu_tercile)) +
   geom_point(size = 4) +
   geom_errorbar(
     aes(ymin = ci_lower, ymax = ci_upper),
-    width     = 0.2,
+    width = 0.2,
     linewidth = 1
+  ) +
+  # Reference line at citywide average
+  geom_hline(
+    yintercept = mean(cd_analysis_simple$price_change_pct),
+    linetype = "dashed",
+    alpha = 0.5
+  ) +
+  # Add annotations
+  annotate(
+    "text",
+    x = 1.3,
+    y = mean(cd_analysis_simple$price_change_pct) + 2,
+    label = paste0("Citywide avg: ", 
+                   round(mean(cd_analysis_simple$price_change_pct), 1), "%"),
+    size = 3,
+    hjust = 0
   ) +
   scale_color_manual(
     values = c("Low" = "#d95f02", "Medium" = "#7570b3", "High" = "#1b9e77")
   ) +
   scale_y_continuous(
     labels = function(x) paste0(x, "%"),
-    limits = c(0, 35)
+    limits = c(0, 35),
+    breaks = seq(0, 35, 5)
   ) +
   labs(
-    title    = "Figure 5: Property Value Growth by Education Tercile",
-    subtitle = "Mean percentage change in median sale price (2017-19 → 2021-23)",
-    x        = "Education Tercile (2019 BA+ Attainment)",
-    y        = "Price Change (%)"
+    title = "Figure 5: Property Value Growth by Education Tercile",
+    subtitle = "Mean percentage change in median sale price (2017-19 → 2021-23)\nError bars show 95% confidence intervals; dashed line shows citywide average",
+    x = "Education Tercile (2019 BA+ Attainment)",
+    y = "Price Change (%)"
   ) +
   theme_minimal(base_size = 13) +
   theme(
-    legend.position      = "none",
-    plot.title           = element_text(face = "bold", size = 14),
-    plot.subtitle        = element_text(size = 11),
-    panel.grid.major.x   = element_blank()
+    legend.position = "none",
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10, color = "gray30"),
+    panel.grid.major.x = element_blank()
   )
 ```
 
@@ -2443,17 +2451,11 @@ kable(
 
 ### Internal Consistency Check
 
-The tercile-based and regression-based approaches should yield consistent estimates if the education-growth relationship is approximately linear. 
-
-From Table 14, each additional pp increase in BA+ Attainment predicts a -0.380 pp change in price growth. Moreover, Table 6 highlighted the average education gap between High and Low terciles to be roughly 40 pp. 
-
-Using the regression coefficient, it is possible to predict the expected difference:
-
+Tercile-based and regression-based approaches should yield consistent estimates if the relationship is linear. 
 $$\text{Predicted Difference} = \text{Education Gap} \times \text{Regression Coefficient}$$
 
 $$\text{Predicted Difference} = 40 \text{ pp} \times (-0.380) ≈ -15.3 \text{ pp}$$
-
-This means the regression model predicts that High-EA CDs should grow 15.3 pp less than Low-EA CDs.
+Table 14 predicts a -0.380 pp change in growth per additional BA+ point. Given the roughly 40 pp gap between High and Low terciles (Table 6), the regression model predicts High-EA CDs should grow 15.3 pp less than Low-EA CDs.
 
 From Table 12, we observed that Low-EA CDs actually grew 14.2 pp more than High-EA CDs (26.03% - 11.86% = 14.17% ≈ 14.2 pp).
 
@@ -2507,10 +2509,10 @@ Whether comparing discrete education groups or modeling continuous relationships
 
 ## Robustness: Citywide Validation by Borough
 
-The previous sections highlighted stark differences in EA and property values in two boroughs. However, it is essential to examine whether this inverted education-growth relationship holds across all five boroughs, as each contain <a href="https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/#:~:text=In%20this%20Spotlight%2C%20first%20examine,historically%20and%20since%20the%20pandemic
-" target="_blank">different demographic compositions and unique pandemic experiences</a>.
+It is essential to examine whether this inverted education-growth relationship holds across all five boroughs, given their contrasting <a href="https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/#:~:text=In%20this%20Spotlight%2C%20first%20examine,historically%20and%20since%20the%20pandemic
+" target="_blank">demographic compositions and unique pandemic experiences</a>.
 
-Table 17 reveals that pandemic-era property value growth occurred across all five boroughs, though growth rates varied.
+While property values grew citywide, rates varied significantly, as seen in Table 17 below.
 
 ```{r}
 
@@ -2552,15 +2554,18 @@ kable(
 
 ```
 
-However, there are significant variations between boroughs. Specifically, Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
+Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
 
 Table 18 quantifies how EA impacts property values within each borough.
 
 ```{r}
+
 #| label: robustness-education-slopes
 #| echo: false
 
-# Education-growth relationship by borough
+library(kableExtra)  # For row formatting
+
+# Calculate borough-level relationships
 borough_slopes <- cd_analysis_simple |>
   group_by(borough) |>
   summarise(
@@ -2581,8 +2586,33 @@ borough_slopes <- cd_analysis_simple |>
   ) |>
   arrange(slope)
 
-kable(
+# Calculate citywide pattern
+citywide_pattern <- cd_analysis_simple |>
+  summarise(
+    borough     = "All Boroughs (Citywide)",
+    n           = n(),
+    correlation = cor(
+      pct_ba_plus_2019,
+      price_change_pct,
+      use = "complete.obs"
+    ),
+    slope       = coef(
+      lm(price_change_pct ~ pct_ba_plus_2019)
+    )[2]
+  ) |>
+  mutate(
+    correlation = round(correlation, 3),
+    slope       = round(slope, 3)
+  )
+
+# Combine with citywide at the bottom
+education_slopes_table <- bind_rows(
   borough_slopes,
+  citywide_pattern
+)
+
+kable(
+  education_slopes_table,
   caption = "**Table 18: Education–Growth Relationship by Borough**",
   col.names = c(
     "Borough",
@@ -2591,11 +2621,13 @@ kable(
     "Slope (pp per 1% BA+)"
   ),
   align = c("l", "l", "l", "l")
-)
+) |>
+  kable_styling() |>
+  row_spec(nrow(education_slopes_table), bold = TRUE)
 
 ```
 
-There is a consistent negative relationship between EA and price growth across all five boroughs. All boroughs show negative correlations and negative slopes, confirming the pattern extends beyond any single market. 
+The citywide correlation of *r* = -0.540 represents the overall negative relationship between EA and price growth across all 59 CDs. However, there is considerable variation in how this pattern emerges across boroughs.
 
 Staten Island (SI), with its three CDs, exhibits the strongest negative relationship (*r* = -0.991, slope = -0.682). 
 
@@ -2632,7 +2664,165 @@ ggplot(
 
 ```
 
-This figure confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682. 
+This figure confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682.  
+
+Figure 7 provides an interactive view to explore individual CDs, boroughs, and these slope relationships.
+
+```{r}
+
+#| label: fig-interactive-borough-education
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7.5
+
+library(plotly)
+
+# Calculate correlation for citywide pattern (education vs GROWTH)
+citywide_correlation <- cor(
+  cd_analysis_simple$pct_ba_plus_2019, 
+  cd_analysis_simple$price_change_pct,
+  use = "complete.obs"
+)
+
+# Prepare data with regression lines for each borough
+borough_data_with_regression <- cd_analysis_simple %>%
+  filter(!is.na(borough)) %>%
+  group_by(borough) %>%
+  mutate(
+    fitted_value = predict(lm(price_change_pct ~ pct_ba_plus_2019)),
+    borough_n = n(),
+    borough_r = cor(pct_ba_plus_2019, price_change_pct, use = "complete.obs"),
+    borough_slope = coef(lm(price_change_pct ~ pct_ba_plus_2019))[2]
+  ) %>%
+  ungroup()
+
+# Get unique boroughs for legend ordering
+boroughs <- borough_data_with_regression %>%
+  distinct(borough, borough_n, borough_r, borough_slope) %>%
+  arrange(desc(abs(borough_slope)))
+
+# Create base plot
+p <- plot_ly()
+
+# Add traces for each borough (points + line together)
+for (i in 1:nrow(boroughs)) {
+  boro <- boroughs$borough[i]
+  boro_data <- borough_data_with_regression %>% filter(borough == boro)
+  
+  # Calculate legend label with correlation
+  legend_label <- paste0(
+    boro, 
+    " (n=", boroughs$borough_n[i], 
+    ", r=", round(boroughs$borough_r[i], 2), ")"
+  )
+  
+  # Add scatter points
+  p <- p %>%
+    add_markers(
+      data = boro_data,
+      x = ~pct_ba_plus_2019,
+      y = ~price_change_pct,
+      name = legend_label,
+      legendgroup = boro,
+      text = ~paste0(
+        "<b>", cd_id, "</b><br>",
+        "Borough: ", borough, "<br>",
+        "BA+ Attainment: ", round(pct_ba_plus_2019, 1), "%<br>",
+        "Price Growth: ", round(price_change_pct, 1), "%"
+      ),
+      hoverinfo = "text",
+      marker = list(size = 10, opacity = 0.7),
+      showlegend = TRUE
+    )
+  
+  # Add regression line 
+  p <- p %>%
+    add_lines(
+      data = boro_data,
+      x = ~pct_ba_plus_2019,
+      y = ~fitted_value,
+      name = legend_label,
+      legendgroup = boro,
+      line = list(width = 2.5, dash = "dash"),
+      showlegend = FALSE,
+      hoverinfo = "skip"
+    )
+}
+
+# Layout  
+p <- p %>%
+  layout(
+    title = list(
+      text = paste0(
+        "<b style='font-size:16px'>Figure 7: Interactive Borough-Level Education-Growth Relationship</b>",
+        "<br>",
+        "<span style='font-size:12px; color:#666'>Click legend items to show/hide boroughs (including regression lines) | Hover points for details</span>"
+      ),
+      x = 0,
+      y = 0.98,
+      xanchor = "left",
+      yanchor = "top",
+      pad = list(t = 10, b = 20)
+    ),
+    xaxis = list(
+      title = "Educational Attainment (% BA+, 2019)",
+      ticksuffix = "%",
+      gridcolor = "#E5E5E5",
+      range = c(0, 85)
+    ),
+    yaxis = list(
+      title = "Price Change (%)",
+      ticksuffix = "%",
+      gridcolor = "#E5E5E5",
+      range = c(-20, 55)
+    ),
+    hovermode = "closest",
+    legend = list(
+      orientation = "v",
+      x = 1.02,
+      y = 0.75,   
+      xanchor = "left",
+      yanchor = "top",
+      bgcolor = "rgba(255,255,255,0.95)",
+      bordercolor = "#666666",
+      borderwidth = 1,
+      font = list(size = 11)
+    ),
+    plot_bgcolor = "white",
+    paper_bgcolor = "white",
+    margin = list(
+      l = 80,
+      r = 220,   
+      t = 120,   
+      b = 80
+    )
+  )
+
+# Add annotation for citywide pattern - positioned lower
+p <- p %>%
+  add_annotations(
+    x = 0.02,
+    y = 1.28,  # Moved down from 0.98 to 0.88
+    xref = "paper",
+    yref = "paper",
+    text = paste0(
+      "<b>Citywide Pattern:</b><br>",
+      "r = ", round(citywide_correlation, 2), "<br>",
+      "Slope = -0.380 pp per 1% BA+<br>"),
+    showarrow = FALSE,
+    align = "left",
+    xanchor = "left",
+    yanchor = "top",
+    bgcolor = "rgba(255,255,255,0.95)",
+    bordercolor = "#666666",
+    borderwidth = 1,
+    borderpad = 6,
+    font = list(size = 11)
+  )
+
+p
+
+```
 
 ## Discussion
 
@@ -2642,13 +2832,11 @@ Several factors likely explain this borough-wide education premium reversal.
 
 Remote work <a href="https://www.cnn.com/2023/09/03/homes/remote-work-housing" target="_blank">reduced the need for living near employment-rich and amenitiy-filled hubs</a>, usually concentrated in high-EA CDs. Also, affordability pressures led buyers to migrate toward to <a href="https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf" target="_blank">undervalued CDs in the outer-borough areas</a>, offering greater access to homeownership opportunities. Lastly, lower valuation CDs experienced post-pandemic market correction, leading to catch-up growth, or <a href="https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate" target="_blank">a donut effect</a>, shifting market demand and creating higher prices in once affordable CDs. 
 
-These factors likely worked together in as a systemic feedback loop. As the agglomeration premium of high-EA CDs diminished, market demand shifted toward peripheral, or outer-borough markets. This demand surge created a compounding effect, accelerating appreciation in Low-EA districts while High-EA growth stagnated.
-
-It is essential to clarify that this analysis focuses on highlighting a change in growth rather than hierarchy. High-EA neighborhoods maintained their absolute price dominance throughout the pandemic. The reversal occurred primarily in appreciation rates. However, it remains unclear whether these findings reveal a permanent value change or a temporary disruption. 
+These factors likely created a feedback loop. As the premium for high-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA districts while High-EA growth stagnated. However, this represents a change in growth rather than hierarchy. High-EA neighborhoods maintained absolute price dominance, but lost their advantage in appreciation rates.
 
 ### Contribution to Overarching Question
 
-This analysis demonstrates that COVID-19 reshaped the relationship between neighborhood characteristics and property values by reversing the education premium, which was historically a strong predictor of urban real estate prices. Moreover, this finding connects with the team's individual analyses of other neighborhood characteristics. Specifically, this research:
+This analysis demonstrates that COVID-19 reshaped the relationship between neighborhood characteristics and property values by reversing the education premium, which was historically a strong predictor of urban real estate prices. Moreover, this finding connects with the team’s analyses of other characteristics, as it:
 
 - Aligns with <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Individual%20Report.html" target="_blank">transit findings</a>: Ridership models achieved stronger individual fit than density ($R^2$ = 0.433) but showed only marginal significance in the team model (*β* = -0.670, *p* = 0.063), indicating transit access matters primarily through attracting educated residents rather than as an independent driver.
 
@@ -2664,7 +2852,7 @@ EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.
 
 While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low EA areas. Second, residents in high EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return back to physical work locations</a>. 
 
-Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic not only disrupted NYC property value logic, it reshaped buyer preferences. Consequently, affordability pressures created a new urban landscape where the traditional high EA clusters, a once historical driver of property value, are less significant with demand shifts toward value offered by outer-borough CDs.
+Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional high-EA CDs are less significant, driven by demand shifts toward outer-borough value.
 
 ---
 
@@ -2686,11 +2874,12 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 - NYC Department of Finance. *Definitions of property assessment terms.*  
   <https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page>
 
+- U.S. Census Bureau. *American Community Survey 5-Year Estimates (2015-2019), Table B15003: Educational Attainment for the Population 25 Years and Over.*  
+  Accessed via tidycensus R package. <https://www.census.gov/programs-surveys/acs>
+  
 ---
 
 ### Methods and Technical References
-- *The Effect Book.* “Difference-in-Differences” (parallel trends section).  
-  <https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends>
 
 - Columbia University Mailman School of Public Health. *Difference-in-difference estimation.*  
   <https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation>
@@ -2701,20 +2890,18 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 - Investopedia. *Nonparametric Statistics.*  
   <https://www.investopedia.com/terms/n/nonparametric-statistics.asp>
 
+- *The Effect Book.* “Difference-in-Differences” (parallel trends section).  
+  <https://theeffectbook.net/ch-DifferenceinDifference.html#untreated-groups-and-parallel-trends>
+
 ---
 
 ### Background and Context Readings
-- Stanford SIEPR. *Donut Effect: How COVID-19 Shapes Real Estate.*  
-  <https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate>
-
-- Freddie Mac. *Migration and Housing Demand* (Research note, PDF).  
-  <https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf>
 
 - CNN. *Remote work and the housing market.*  
   <https://www.cnn.com/2023/09/03/homes/remote-work-housing>
 
-- USA Today. *Workers defy return-to-office mandates.*  
-  <https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/>
+- Freddie Mac. *Migration and Housing Demand* (Research note, PDF).  
+  <https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf>
 
 - NYC Comptroller. *New York: A City of Diverse Neighborhoods* (report link as cited in document).  
   <https://comptroller.nyc.gov/reports/>
@@ -2725,9 +2912,16 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 - PSC-CUNY (Clarion). *Barriers to college attainment.*  
   <https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/>
 
+- Stanford SIEPR. *Donut Effect: How COVID-19 Shapes Real Estate.*  
+  <https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate>
+
+- USA Today. *Workers defy return-to-office mandates.*  
+  <https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/>
+
 ---
 
 ### Peer Project Pages
+
 - Brinson, Madison. *STA 9750 Individual Report.*  
   <https://madisonbrinson.github.io/STA9750-2025-FALL/individual_report_final.html>
 
