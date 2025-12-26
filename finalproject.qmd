@@ -524,7 +524,7 @@ sales_clean <- sales_clean |>
 
 ### Enhanced BBL Matching: Two-Stage Approach
 
-A two-stage strategy combines exact BBL matching with a block-level fallback. While exact matching loses ~25% of transactions (often condo billing BBLs), the fallback links these records to their specific city block, achieving a 100% match rate (Table 2). 
+A two-stage strategy combines exact BBL matching with a block-level fallback. While exact matching loses approximately 25% of transactions (often condo billing BBLs), the fallback links these records to their specific city block, achieving a 100% match rate, as shown in Table 2. 
 
 ```{r}
 
@@ -821,7 +821,7 @@ tibble(
 
 ```
 <div style="height: 15px;"></div>
-As shown in Figure 1, this consistency across boroughs minimizes bias by recovering high-density transactions (e.g., condo sales) that standard matching would miss.
+Figure 1 highlights this consistency across boroughs, minimizing selection bias by recovering high-density transactions that standard matching would miss.
 
 ```{r}
 
@@ -1674,14 +1674,14 @@ top_bottom_tbl <- bind_rows(top3, bottom3) |>
 
 kable(
   top_bottom_tbl,
-  caption = "**Table 9: Community Districts with Highest and Lowest Educational Attainment (2019)**",
+  caption = "**Table 9: CDs with Highest and Lowest Educational Attainment (2019)**",
   col.names = c("Rank", "CD ID", "Borough", "BA+ Attainment"),
   align = c("l", "l", "l", "l")
 )
 
 ```
 <div style="height: 15px;"></div>
-The interactive Leaflet below highlights EA disparities across CDs. Clicking on an individual CD reveals its percentage of EA.
+The Leaflet map below highlights EA disparities across CDs. Clicking on an individual CD reveals its percentage of EA.
 
 ```{r}
 
@@ -1945,7 +1945,7 @@ regression_table <- tidy(baseline_model, conf.int = TRUE) |>
 # Display regression coefficients table
 kable(
   regression_table,
-  caption = "**Table 10: Pre-COVID Baseline Regression: Median Sale Price on Educational Attainment**",
+  caption = "**Table 10: Pre-COVID Baseline Regression - Median Sale Price on EA**",
   align = c("l", rep("l", 6))
 )
 
@@ -2438,7 +2438,7 @@ Tercile-based and regression-based approaches should yield consistent estimates 
 $$\text{Predicted Difference} = \text{Education Gap} \times \text{Regression Coefficient}$$
 
 $$\text{Predicted Difference} = 40 \text{ pp} \times (-0.380) ≈ -15.3 \text{ pp}$$
-Table 14 predicts a -0.380 pp change in growth per additional BA+ point. Given the roughly 40 pp gap between High and Low terciles (Table 6), the regression model predicts High-EA CDs should grow 15.3 pp less than Low-EA CDs.
+Table 14 predicts a -0.380 pp change in growth per additional BA+ Attainment point. Given the roughly 40 pp gap between High and Low terciles (Table 6), the regression model predicts High-EA CDs should grow 15.3 pp less than Low-EA CDs.
 
 From Table 12, we observed that Low-EA CDs actually grew 14.2 pp more than High-EA CDs (26.03% - 11.86% = 14.17% ≈ 14.2 pp).
 
@@ -2643,7 +2643,7 @@ ggplot(
 
 ```
 
-This figure further confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682.  
+This figure further confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a weak-to-strong negative relationship, with slopes ranging from -0.230 to -0.682.  
 
 Figure 7 provides an interactive view to explore individual CDs, boroughs, and these slope relationships.
 
@@ -2822,7 +2822,7 @@ Several factors likely explain this borough-wide education premium reversal.
 
 Remote work <a href="https://www.cnn.com/2023/09/03/homes/remote-work-housing" target="_blank">reduced the need for living near employment-rich and amenitiy-filled hubs</a>, usually concentrated in High-EA CDs. Also, affordability pressures led buyers to migrate toward to <a href="https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf" target="_blank">undervalued CDs in the outer-borough areas</a>, offering greater access to homeownership opportunities. Lastly, lower valuation CDs experienced post-pandemic market correction, leading to catch-up growth, or <a href="https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate" target="_blank">a donut effect</a>, shifting market demand and creating higher prices in once affordable CDs. 
 
-These factors likely created a feedback loop. As the premium for High-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA CDs while High-EA growth stagnated. However, this represents a change in growth rather than hierarchy. High-EA neighborhoods maintained absolute price dominance, but lost their advantage in appreciation rates.
+These factors likely created a feedback loop. As the premium for High-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA CDs while High-EA growth stagnated. However, this represents a change in growth dynamics rather than market structure. High-EA neighborhoods maintained their valuation premiums but lost their advantage in appreciation rates.
 
 ### Contribution to Overarching Question
 
@@ -2836,7 +2836,7 @@ This analysis demonstrates that COVID-19 reshaped the relationship between neigh
 
 - Provides baseline context for <a href="https://kelmli.github.io/STA9750-2025-FALL/final_proj.html" target="_blank">crime results</a>: High-crime CDs experienced the largest crime increases (+1.58 per 1,000), but crime showed no relationship with property values in either individual ($R^2$ ≈ 0.000) or the team model (*β* = -0.029, *p* = 0.765), confirming crime and property values respond independently to neighborhood characteristics.
 
-EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.001). The full model's $R^2$ (0.370) equaled the education-only model, confirming other variables added no explanatory power. Their apparent effects in individual analyses reflected EA rather than independent causal mechanisms. Therefore, the education reversal appears to be the dominant structural shift, with other characteristics showing stability (jobs) or modest weakening (density and transit), suggesting pandemic housing dynamics fundamentally recalibrated NYC's urban economic geography.
+In the team model, EA emerged as the singular statistically significant predictor (*β* = -0.402, *p* < 0.001). While the full model improved explanatory power ($R^2 = 0.370$) over the education-only baseline ($R^2 = 0.291$), the lack of independent significance for density, crime, and transit confirms that education was the primary characteristic driving appreciation variance. Consequently, this reversal represents the dominant structural shift of the period, suggesting that pandemic dynamics fundamentally recalibrated NYC's urban economic geography.
 
 ## Limitations and Conclusion
 
@@ -2873,7 +2873,7 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 - Columbia University Mailman School of Public Health. *Difference-in-difference estimation.*  
   <https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation>
 
-- CRAN (R). **areal** vignette: *Areal weighted interpolation.*  
+- CRAN (R). areal vignette: *Areal weighted interpolation.*  
   <https://cran.r-project.org/web/packages/areal/vignettes/areal-weighted-interpolation.html>
 
 - Investopedia. *Nonparametric Statistics.*  
@@ -2909,7 +2909,14 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 
 ---
 
-### Peer Project Pages
+### Team Summary Report
+
+- Alarcon, E., Brinson, M., Li, K., Ng Li, T., & Socoy, J. (2025). *STA 9750 Team Summary Report: COVID-19 and NYC Property Values.* Baruch College.  
+  <https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html>
+
+---
+
+### Individual Team Member Reports
 
 - Brinson, Madison. *STA 9750 Individual Report.*  
   <https://madisonbrinson.github.io/STA9750-2025-FALL/individual_report_final.html>
