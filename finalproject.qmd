@@ -2744,7 +2744,7 @@ p <- p |>
   layout(
     title = list(
       text = paste0(
-        "<b style='font-size:16px'>Figure 7: Interactive Borough-Level Education-Growth Relationship</b>",
+        "<b style='font-size:16px'>Figure 7: Borough-Level Education-Growth Relationship</b>",
         "<br>",
         "<span style='font-size:12px; color:#666'>Click legend items to show/hide boroughs (including regression lines) | Hover points for details</span>"
       ),
@@ -2871,7 +2871,7 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
   <https://data.cityofnewyork.us/resource/64uk-42ks.csv?>
 
 - NYC Department of Finance. *Rolling Sales (annualized sales landing / directory).*  
-  <https://www.nyc.gov/assets/finance/downloads/pdf/rolling_sales/annualized-sales>
+  <https://www.nyc.gov/site/finance/property/property-annualized-sales-update.page>
 
 - NYC Department of Finance. *Definitions of property assessment terms.*  
   <https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page>
@@ -2906,7 +2906,7 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
   <https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf>
 
 - NYC Comptroller. *New York: A City of Diverse Neighborhoods* (report link as cited in document).  
-  <https://comptroller.nyc.gov/reports/>
+  <https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/>
 
 - NYC Future. *Boosting college attainment.*  
   <https://nycfuture.org/research/boosting-college-attainment>
