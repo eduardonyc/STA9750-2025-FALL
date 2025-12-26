@@ -1,5 +1,5 @@
 ---
-title: "STA 9750 Final-Project: A Tale of 59 NYC Community Districts"
+title: "STA 9750 Final Project: A Tale of 59 NYC Community Districts"
 author: "Eduardo Alarcon"
 format: 
   html:
@@ -55,7 +55,11 @@ Loading required packages and defining global constants allows for programmatica
 library(dplyr)
 library(ggplot2)
 library(glue)
+library(htmltools)
+library(htmlwidgets)
 library(janitor)
+library(kableExtra) 
+library(leaflet)
 library(lubridate)
 library(purrr)
 library(readr)
@@ -79,7 +83,7 @@ options(dplyr.summarise.inform = FALSE)
 # NYC counties for ACS (Bronx, Brooklyn, Manhattan, Queens, Staten Island)
 NYC_COUNTIES <- c("005", "047", "061", "081", "085")
 
-# ACS B15003 variables we'll actually use
+# ACS B15003 variables  
 ACS_EDUCATION_VARS <- c(
   "B15003_001",  # Total population 25+
   "B15003_022",  # BA
@@ -163,7 +167,7 @@ get_nyc_cd <- function() {
     unzip(zip_path, exdir = dir_out)
   }
   
-  # Find the actual .shp file inside the unzipped directory
+  # Find the .shp file  
   shp_path <- list.files(
     dir_out,
     pattern    = "\\.shp$",
@@ -200,7 +204,7 @@ get_nyc_cd <- function() {
     stop("Duplicate cd_id values found: ", paste(dup_ids$cd_id, collapse = ", "))
   }
 
-  # Validate that we have exactly 59 CDs
+  # Validate that there are exactly 59 CDs
   if (nrow(cd_sf) != 59) {
     stop("Expected 59 Community Districts but got ", nrow(cd_sf))
   }
@@ -335,7 +339,9 @@ tibble(
 The get_dof_sales_year_boro() function automates collection and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Also, quality filters remove transactions under $10,000, restricting data collection to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a> (e.g., 1, 2, 2A, 2B, and 2C).  
 
 ```{r}
-# Chunk 4: DOF 
+
+#| label: dof-sales-year-boro
+#| include: false
 
 get_dof_sales_year_boro <- function(year, borough_name) {
   # 1. Validate inputs  
@@ -547,12 +553,12 @@ build_cd_sales_panel <- function(
   boroughs    = c("bronx", "brooklyn", "manhattan", "queens", "staten_island"),
   pluto_xwalk = NULL
 ) {
-  # 0. Dependencies / inputs 
+  # 1. Dependencies / inputs 
   if (is.null(pluto_xwalk)) {
     pluto_xwalk <- get_pluto_cd_crosswalk()
   }
 
-  # 1. Year/borough grid 
+  # 2. Year/borough grid 
   combos <- expand_grid(
     year    = c(pre_years, post_years),
     borough = boroughs
@@ -566,7 +572,7 @@ build_cd_sales_panel <- function(
   sales_list        <- vector("list", nrow(combos))
   match_summary_vec <- vector("list", nrow(combos))
 
-  # 2. Loop over year × borough combos  
+  # 3. Loop over year × borough combos  
   for (i in seq_len(nrow(combos))) {
     yr <- combos$year[i]
     bo <- combos$borough[i]
@@ -588,7 +594,7 @@ build_cd_sales_panel <- function(
       next
     }
 
-    # 2a. Match stats vs. PLUTO crosswalk (per-file diagnostic)
+    # 3a. Match stats vs. PLUTO crosswalk (per-file diagnostic)
     n_total   <- nrow(sales)
     matched   <- inner_join(sales, pluto_xwalk, by = "bbl")
     n_matched <- nrow(matched)
@@ -618,7 +624,7 @@ build_cd_sales_panel <- function(
     )
   }
 
-  # 3. Bind all years/boroughs together  
+  # 4. Bind all years/boroughs together  
   all_sales <- bind_rows(sales_list)
   match_summary_all <- bind_rows(match_summary_vec)
 
@@ -628,20 +634,20 @@ build_cd_sales_panel <- function(
   
   assign("sales_match_summary", match_summary_all, envir = .GlobalEnv)
 
-  # 4. Collapse to CD–year panel with Enhanced Matching  
+  # 5. Collapse to CD–year panel with Enhanced Matching  
   
-  # 4a. First attempt: Exact BBL match
-  # This captures ~75% of transactions with standard tax lot BBLs
+    # 5a. First attempt: Exact BBL match
+    # This captures ~75% of transactions with standard tax lot BBLs
   sales_matched_exact <- all_sales |>
     inner_join(pluto_xwalk, by = "bbl")
   
   n_exact <- nrow(sales_matched_exact)
   
-  # 4b. Second attempt: Block-level matching for unmatched sales
-  # Unmatched sales are typically condos with billing BBLs that don't appear
-  # in PLUTO's standard BBL crosswalk. We recover these by matching to their
-  # physical city block, then assigning the most common CD for that block.
-  # This fallback approach recovers ~25% of transactions that would otherwise be lost.
+    # 5b. Second attempt: Block-level matching for unmatched sales
+    # Unmatched sales are typically condos with billing BBLs that don't appear
+    # in PLUTO's standard BBL crosswalk. Recovery occurs by matching to their
+    # physical city block, then assigning the most common CD for that block.
+    # This fallback approach recovers approximately 25% of transactions that would otherwise be lost.
   sales_unmatched <- all_sales |>
     anti_join(pluto_xwalk, by = "bbl")
   
@@ -687,7 +693,7 @@ build_cd_sales_panel <- function(
     n_block <- 0
   }
   
-  # 4c. Aggregate to CD-year level
+  # 5c. Aggregate to CD-year level
   # Create period labels and collapse transaction-level data to CD-year medians
   cd_panel <- sales_with_cd |>
     mutate(
@@ -758,7 +764,7 @@ build_cd_sales_panel <- function(
     )
   }
 
-  # 8. Final summary  
+  # 8. Final summary (used in previous renderings for confirmatopm)  
   message("")
   message("=== Final CD Sales Panel ===")
   message("CD sales panel built with ", nrow(cd_panel), " rows.")
@@ -838,7 +844,7 @@ As shown in Figure 1, this consistency across boroughs minimizes bias by recover
 #| fig-width: 10
 #| fig-height: 6
 
-# Prepare data
+# Data prep for plotting
 match_viz_data <- sales_match_summary |>
   mutate(
     borough_clean = str_to_title(str_replace(borough, "_", " ")),
@@ -912,13 +918,13 @@ $$\text{Total}_{\text{Pop BA+}} = \sum_{\text{tracts}} \left( \text{Tract}_{\tex
 #| label: define-acs-cd-education
 #| include: false
 
-# Get ACS Education Data by Community District (area-weighted)
+# Get ACS Education Data by CD (area-weighted)
 get_acs_cd_education <- function(end_year,
                                  cd_sf        = get_nyc_cd(),
                                  counties     = NYC_COUNTIES,
                                  period_label = NULL) {
   
-  # 0. Cache check
+  # 1. Cache check
   cache_file <- glue("data_clean/acs_education_{end_year}.rds")
   
   if (file.exists(cache_file)) {
@@ -938,7 +944,7 @@ get_acs_cd_education <- function(end_year,
   
   message("=== Downloading ACS education data (", end_year, " 5-year) ===")
   
-  # 1. Pull tract-level ACS data  
+  # 2. Pull tract-level ACS data  
   acs_tracts <- suppressMessages(
     get_acs(
       geography   = "tract",
@@ -964,12 +970,12 @@ get_acs_cd_education <- function(end_year,
   
   message("  Downloaded ", nrow(acs_tracts), " census tracts")
   
-  # 2. Make geometries valid and align CRS  
+  # 3. Make geometries valid and align CRS  
   acs_tracts <- st_make_valid(acs_tracts)
   cd_sf      <- st_make_valid(cd_sf)
   cd_sf      <- cd_sf |> st_transform(st_crs(acs_tracts))
   
-  # 3. Area-weighted intersection  
+  # 4. Area-weighted intersection  
   message("  Computing area-weighted intersections...")
   
   inter <- suppressWarnings(
@@ -998,7 +1004,7 @@ get_acs_cd_education <- function(end_year,
       weight = if_else(tract_area > 0, inter_area / tract_area, 0)
     )
   
-  # 4. Apply weights and aggregate to CD level  
+  # 5. Apply weights and aggregate to CD level  
   cd_edu <- inter |>
     mutate(
       wt_total_pop_25plus = total_pop_25plus * weight,
@@ -1020,7 +1026,7 @@ get_acs_cd_education <- function(end_year,
       acs_end_year = end_year
     )
   
-  # 5. Backwards-compatible names for the rest of your pipeline  
+  # 6. Backwards-compatible names for the rest of your pipeline  
   cd_edu <- cd_edu |>
     mutate(
       pct_ba_plus = pct_ba_plus_25plus,
@@ -1028,7 +1034,7 @@ get_acs_cd_education <- function(end_year,
     ) |>
     arrange(cd_id)
   
-  # 6. Validate and report  
+  # 7. Validate and report  
   n_cds <- n_distinct(cd_edu$cd_id)
   if (n_cds != 59) {
     warning("Expected 59 CDs, found ", n_cds)
@@ -1041,12 +1047,12 @@ get_acs_cd_education <- function(end_year,
     round(max(cd_edu$pct_ba_plus, na.rm = TRUE), 1), "%"
   )
   
-  # 7. Cache BASELINE (no period)  
+  # 8. Cache BASELINE (no period)  
   if (!dir.exists("data_clean")) dir.create("data_clean")
   saveRDS(cd_edu, cache_file)
   message("  ✓ Cached to: ", cache_file, "\n")
   
-  # 8. Attach period label to the returned object  
+  # 9. Attach period label to the returned object  
   if (!is.null(period_label)) {
     cd_edu <- cd_edu |>
       mutate(period = period_label)
@@ -1071,7 +1077,7 @@ build_cd_education_panel <- function() {
   
   panel <- bind_rows(pre, post)
   
-  # Validate expected structure: 59 CDs × 2 periods
+  # Validate expected structure: 59 CDs × 2 periods (used in previous renderings)
   stopifnot(
     "Expected 118 rows (59 CDs × 2 periods)" = nrow(panel) == 118,
     "Missing pre_covid CDs"                 = sum(panel$period == "pre_covid") == 59,
@@ -1112,7 +1118,7 @@ stopifnot(
 #| message: false
 #| warning: false
 
-# 1. Guess which column in cd_education_panel is BA+ (in % or proportion)
+# 1. Determine which column in cd_education_panel is BA+ (in % or proportion)
 ba_candidates <- names(cd_education_panel)[
   grepl("ba",  names(cd_education_panel), ignore.case = TRUE) |
   grepl("bach", names(cd_education_panel), ignore.case = TRUE)
@@ -1126,8 +1132,7 @@ if (length(ba_candidates) == 0) {
 }
 
 ba_col <- ba_candidates[1]
-# If you know the correct name, you can override:
-# ba_col <- "YOUR_COLUMN_NAME_HERE"
+# # ba_col <- "YOUR_COLUMN_NAME_HERE"
 
 # 2. Standardize period labels to a simple Pre/Post flag
 cd_edu_tmp <- cd_education_panel |>
@@ -1148,7 +1153,7 @@ cd_edu_summary <- cd_edu_tmp |>
     .groups = "drop"
   )
 
-# 4. Convert to percent if necessary (0–1 → 0–100)
+# 4. Convert to percent, if necessary
 max_ba <- max(cd_edu_summary$ba_raw, na.rm = TRUE)
 
 cd_edu_summary <- cd_edu_summary |>
@@ -1190,7 +1195,7 @@ integrated_coverage <- cd_sales_panel |>
     n_cds = n_distinct(cd_id),
     .groups = "drop"
   ) |>
-  # Add period labels
+  # Period labels
   mutate(
     period = case_when(
       year %in% c(2017, 2018, 2019) ~ "Pre-COVID",
@@ -1198,7 +1203,7 @@ integrated_coverage <- cd_sales_panel |>
       TRUE ~ NA_character_
     )
   ) |>
-  # Add ACS baseline year (constant 2019)
+  # ACS baseline year (constant 2019)
   mutate(acs_baseline = 2019) |>
   # Reorder columns
   select(
@@ -1281,7 +1286,7 @@ The final data integration shown in Table 5 confirms critical data merging (e.g.
 #| label: merge-sales-education
 #| include: false
 
-# Merge sales + education (reuse cd_sales_panel from Chunk 5)
+# Merge sales + education (reuse cd_sales_panel)
 cd_panel <- cd_sales_panel |>
   left_join(
     cd_education_panel |>
@@ -1361,7 +1366,7 @@ Table 6 shows clear distinctions between strata: Low-education CDs yield a 19% B
 
 ```{r}
 
-### Chunk 8 - Create Analysis Dataset
+# Create Analysis Dataset
 
 #| label: create-analysis-dataset
 #| code-fold: true
@@ -1369,7 +1374,7 @@ Table 6 shows clear distinctions between strata: Low-education CDs yield a 19% B
 #| output: false
 
 # STEP 1: Collapse 354 CD-year observations to 59 CD-level averages
-# This averaging reduces year-to-year noise and creates structure for DiD analysis
+# Averaging reduces year-to-year noise and creates structure for DiD analysis
 cd_analysis_simple <- cd_sales_panel |>
   mutate(
     # Simplified period labels for pivot_wider operation
@@ -1570,7 +1575,7 @@ Table 7 below highlights stable growth consistency, with annual growth ranging f
 
 ```{r}
 
-#| label: pretrend-slopes
+#| label: pre-trend-slopes
 #| echo: false
 
 # Calculate trend slopes for each education tercile
@@ -1600,7 +1605,7 @@ kable(
   align = c("l", "l", "l")
 )
 
-# Calculate maximum slope difference for parallel trends test
+# Calculate maximum slope difference for parallel-trends test
 # Small difference (<0.05) supports parallel trends assumption
 max_diff <- max(pretrend_slopes$slope) - min(pretrend_slopes$slope)
 
@@ -1712,9 +1717,9 @@ cd_shp_edu <- nyc_cd |>
     by = "cd_id"
   ) |>
   mutate(
-    # Extract neighborhood name from shapefile (it's in the BoroCD column typically)
-    # The NYC CD shapefile usually has these - adjust if your column name differs
+    # Extract neighborhood name from shapefile  
     neighborhood = case_when(
+      
       # MANHATTAN
       cd_id == "MN01" ~ "Lower Manhattan/Financial District",
       cd_id == "MN02" ~ "Greenwich Village/SoHo",
@@ -1841,7 +1846,7 @@ map <- leaflet(cd_shp_edu_wgs84, width = "100%", height = "600px") |>
       fillOpacity = 0.9,
       bringToFront = TRUE
     ),
-    label = ~hover_label,  # Now shows "MN05: Upper West Side/Lincoln Square"
+    label = ~hover_label,   
     labelOptions = labelOptions(
       style = list("font-weight" = "normal", padding = "3px 8px"),
       textsize = "12px",
@@ -1857,8 +1862,8 @@ map <- leaflet(cd_shp_edu_wgs84, width = "100%", height = "600px") |>
     labFormat = labelFormat(suffix = "%", transform = function(x) round(x, 0))
   )
 
-# Add title using htmlwidgets
-htmlwidgets::prependContent(map, map_title)
+# Addition of title
+prependContent(map, map_title)
 
 ```
 
@@ -1873,7 +1878,7 @@ Table 3 shows a strong linear correlation (*r* = 0.78) between neighborhood EA a
 #| fig-width: 8
 #| fig-height: 5
 
-# Calculate correlation for caption
+# Calculate correlation
 baseline_cor <- cor(
   cd_analysis_simple$pct_ba_plus_2019,
   cd_analysis_simple$price_pre,
@@ -1933,7 +1938,7 @@ library(broom)
 
 regression_table <- tidy(baseline_model, conf.int = TRUE) |>
   mutate(
-    # Replace generic term names with descriptive labels
+    # Descriptive labeling
     term = c("Intercept", "BA+ Attainment (%)"),
     # Format numeric columns as currency/thousands
     across(c(estimate, std.error, conf.low, conf.high), ~comma(round(.x, 0))),
@@ -1973,8 +1978,6 @@ Moreover, EA explains 60.3% of the variation in property values across CDs, as s
 #| echo: false
 
 # Extract and display model fit statistics
-# R² shows proportion of variance explained by education
-# Extract model fit statistics
 model_fit <- glance(baseline_model) |>
   transmute(
     `R²` = round(r.squared, 3),
@@ -2074,7 +2077,7 @@ high_mean <- tercile_summary_table |>
   filter(edu_tercile == "High") |>
   pull(avg_change_pct)
 
-did_estimate_raw <- low_mean - high_mean  # This is the exact 14.17 → 14.2
+did_estimate_raw <- low_mean - high_mean   
 
 # Add overall row
 overall_row <- cd_analysis_simple |>
@@ -2087,7 +2090,7 @@ overall_row <- cd_analysis_simple |>
     avg_change_pct     = mean(price_change_pct,    na.rm = TRUE)
   )
 
-# NOW round for display
+# Rounding for display
 tercile_summary_table <- bind_rows(tercile_summary_table, overall_row) |>
   mutate(
     avg_price_pre      = dollar(round(avg_price_pre, 0)),
@@ -2124,10 +2127,6 @@ This result rejects Hypothesis 2, as Low-EA CDs saw the fastest appreciation. Th
 #| warning: false
 #| fig.width: 10
 #| fig.height: 8
-
-library(sf)
-library(leaflet)
-library(htmltools)
 
 # STEP 1: Create clean 59-row lookup table
 hover_lookup <- cd_sales_panel |>
@@ -2235,7 +2234,7 @@ map <- leaflet(cd_map_wgs84, width = "100%", height = "600px") |>
   )
 
 # STEP 7: Add title using htmlwidgets
-htmlwidgets::prependContent(map, map_title)
+prependContent(map, map_title)
 
 ```
 
@@ -2321,7 +2320,7 @@ ggplot(tercile_ci_data, aes(x = edu_tercile, y = mean_change, color = edu_tercil
     linetype = "dashed",
     alpha = 0.5
   ) +
-  # Add annotations
+  # Annotations
   annotate(
     "text",
     x = 1.3,
@@ -2352,6 +2351,7 @@ ggplot(tercile_ci_data, aes(x = edu_tercile, y = mean_change, color = edu_tercil
     plot.subtitle = element_text(size = 10, color = "gray30"),
     panel.grid.major.x = element_blank()
   )
+
 ```
 
 Non-overlapping confidence intervals confirm distinct economic outcomes between the High-EA and Low-EA groups, indicating the 14.2 pp spread represents structural shifts rather than anomaly.
@@ -2367,7 +2367,7 @@ As shown in Table 14, each additional pp of BA+ Attainment predicts 0.380 pp les
 #| label: main-did-regression
 #| echo: false
 
-# STEP 1: Estimate post-COVID regression
+# 1: Estimate post-COVID regression
 # Model: Price Change (%) = β₀ + β₁(BA+ %) + ε
 simple_lm <- lm(
   price_change_pct ~ pct_ba_plus_2019,
@@ -2378,7 +2378,7 @@ simple_lm <- lm(
 post_slope <- coef(simple_lm)[2]
 post_intercept <- coef(simple_lm)[1]
 
-# STEP 2: Create clean regression table using broom package
+# 2: Create clean regression table using broom package
 regression_table <- tidy(simple_lm, conf.int = TRUE) |>
   mutate(
     # Replace generic term names with descriptive labels
@@ -2549,7 +2549,7 @@ kable(
     "Min",
     "Max"
   ),
-  align = c("l", "c", "r", "r", "r", "r")
+  align = c("l", "l", "l", "l", "l", "l")
 )
 
 ```
@@ -2562,8 +2562,6 @@ Table 18 quantifies how EA impacts property values within each borough.
 
 #| label: robustness-education-slopes
 #| echo: false
-
-library(kableExtra)  # For row formatting
 
 # Calculate borough-level relationships
 borough_slopes <- cd_analysis_simple |>
@@ -2677,14 +2675,14 @@ Figure 7 provides an interactive view to explore individual CDs, boroughs, and t
 
 library(plotly)
 
-# Calculate correlation for citywide pattern (education vs GROWTH)
+# Calculate correlation for citywide pattern (education vs growth)
 citywide_correlation <- cor(
   cd_analysis_simple$pct_ba_plus_2019, 
   cd_analysis_simple$price_change_pct,
   use = "complete.obs"
 )
 
-# Prepare data with regression lines for each borough
+# Data with regression lines for each borough
 borough_data_with_regression <- cd_analysis_simple %>%
   filter(!is.na(borough)) %>%
   group_by(borough) %>%
@@ -2696,7 +2694,7 @@ borough_data_with_regression <- cd_analysis_simple %>%
   ) %>%
   ungroup()
 
-# Get unique boroughs for legend ordering
+# Unique boroughs for legend ordering
 boroughs <- borough_data_with_regression %>%
   distinct(borough, borough_n, borough_r, borough_slope) %>%
   arrange(desc(abs(borough_slope)))
@@ -2798,11 +2796,11 @@ p <- p %>%
     )
   )
 
-# Add annotation for citywide pattern - positioned lower
+# Annotation for citywide pattern
 p <- p %>%
   add_annotations(
     x = 0.02,
-    y = 1.28,  # Moved down from 0.98 to 0.88
+    y = 1.28,  
     xref = "paper",
     yref = "paper",
     text = paste0(
@@ -2859,6 +2857,7 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 ## References
 
 ### Data Sources
+
 - NYC Department of City Planning. *NYC Community Districts (nycd_25c) shapefile (ZIP).*  
   <https://s-media.nyc.gov/agencies/dcp/assets/files/zip/data-tools/bytes/community-districts/nycd_25c.zip>
 
