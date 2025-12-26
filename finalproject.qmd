@@ -834,7 +834,7 @@ tibble(
   )
 
 ```
-
+<div style="height: 10px;"></div>
 As shown in Figure 1, this consistency across boroughs minimizes bias by recovering high-density transactions (e.g., condo sales) that standard matching would miss.
 
 ```{r}
