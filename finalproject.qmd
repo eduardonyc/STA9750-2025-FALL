@@ -22,7 +22,7 @@ The COVID-19 pandemic introduced a significant structural break in urban living 
 
 *Did COVID-19 reshape the relationship between neighborhood characteristics and property values across NYC’s Community Districts (CDs)?*
 
-While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html" target="_blank">team's broader effort</a> examines crime, density, job accessbility, and transit, this analysis isolates Educational Attainment (EA). Historically, high-education neighborhoods commanded significant price premiums from well-known <a href="https://www.annualreviews.org/deliver/fulltext/resource/11/1/annurev-resource-100518-094151.pdf?itemId=/content/journals/10.1146/annurev-resource-100518-094151&mimeType=application/pdf" target="_blank">agglomeration effects</a>. However, the pandemic’s disruption of physical proximity necessitates a re-evaluation of this premium. Consequently, this study seeks to answer the specific question (SQ):
+While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html" target="_blank">team's broader effort</a> examines crime, density, job accessbility, and transit, this analysis isolates Educational Attainment (EA). Historically, High-EA neighborhoods commanded significant price premiums from well-known <a href="https://www.annualreviews.org/deliver/fulltext/resource/11/1/annurev-resource-100518-094151.pdf?itemId=/content/journals/10.1146/annurev-resource-100518-094151&mimeType=application/pdf" target="_blank">agglomeration effects</a>. However, the pandemic’s disruption of physical proximity necessitates a re-evaluation of this premium. Consequently, this study seeks to answer the specific question (SQ):
 
 *Did the strength of the relationship between neighborhood educational attainment and property values change post-COVID, and did this change differ across NYC's CDs?*
 
@@ -32,7 +32,7 @@ Given the pandemic's impact on work-life demands and redefining dwelling needs, 
 
 **Hypothesis 1**: The positive correlation between education and property values would strengthen post-COVID.
 
-**Hypothesis 2**: High-education CDs would experience stronger property value growth post-COVID as remote work freed professionals to prioritize neighborhood amenities over commute times.
+**Hypothesis 2**: High-EA CDs would experience stronger property value growth post-COVID as remote work freed professionals to prioritize neighborhood amenities over commute times.
 
 Beyond testing these hypotheses, this analysis also investigates whether pandemic-era shifts represent a temporary disruption or a systemic realignment of urban real estate economics.
 
@@ -1360,7 +1360,7 @@ This baseline analysis addresses the OQ by establishing EA as a strong neighborh
 
 To analyze how these different CDs responded to the pandemic, this research applied a <a href="https://www.investopedia.com/terms/n/nonparametric-statistics.asp" target="_blank">non-parametric</a>, tercile grouping approach, stratifying EAs into "Low," "Medium," and "High" tiers to mitigate outlier effects when comparing distributions. 
 
-Table 6 shows clear distinctions between strata: Low-education CDs yield a 19% BA+ Attainment (Bachelor’s degree or higher) average, while High-education CDs average 53%. This variation establishes a tangible baseline for comparing how housing markets evolved.
+Table 6 shows clear distinctions between strata: Low-EA CDs yield a 19% BA+ Attainment (Bachelor’s degree or higher) average, while High-EA CDs average 53%. This variation establishes a tangible baseline for comparing how housing markets evolved.
 
 ```{r}
 
@@ -1510,7 +1510,7 @@ A DiD design is a favorable approach to filter out factors (e.g., economic shift
 
 This analysis implements a logarithmic transformation of property values to meaningfully draw comparisons. Since High-EA CDs begin at significantly higher baselines, standardization yields relative appreciation rates, ensuring comparability across terciles. For example, a 0.10 log point shift results in an approximate 10% change in value.
 
-Figure 2 shows how High-EA CDs start at roughly twice the price level of low-education districts. However, the three trajectories rise at similar rates, reinforcing the PTA.
+Figure 2 shows how High-EA CDs start at roughly twice the price level of Low-EA CDs. However, the three trajectories rise at similar rates, reinforcing the PTA.
 
 ```{r}
 
@@ -2043,7 +2043,7 @@ ggplot(
 
 ```
 
-While high EA neighborhoods maintain an absolute price advantage, the correlation's decline suggests the education premium diminished during the pandemic years, leading to the rejection of Hypothesis 1.
+While High-EA neighborhoods maintain an absolute price advantage, the correlation's decline suggests the education premium diminished during the pandemic years, leading to the rejection of Hypothesis 1.
 
 The regression line's flatter slope indicates that each additional pp of BA+ Attainment predicts a smaller price differential than in the pre-COVID period. Table 12 provides additional clarity with actual price changes across terciles, revealing which groups appreciated fastest.
 
@@ -2356,7 +2356,7 @@ Non-overlapping confidence intervals confirm distinct economic outcomes between 
 
 While terciles demonstrate reversal magnitude, a modified continuous regression quantifies how each incremental BA+ Attainment pp influenced post-COVID appreciation.
 
-As shown in Table 14, each additional pp of BA+ Attainment predicts 0.380 pp less price growth. This statistically significant (*p* < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where higher EA predicted higher prices. The relationship has not only weakened, it has reversed.
+As shown in Table 14, each additional pp of BA+ Attainment predicts 0.380 pp less price growth. This statistically significant (*p* < 0.001) negative coefficient directly contradicts the pre-COVID pattern, where High-EA predicted higher prices. The relationship has not only weakened, it has reversed.
 
 ```{r}
 
@@ -2407,11 +2407,11 @@ kable(
 <div style="height: 15px;"></div>
 Comparing pre- and post-COVID models reveals this shift's extent.
 
-In the pre-COVID period, higher education predicted higher absolute prices, with each pp of BA+ Attainment adding nearly $14,000 to median home values.
+In the pre-COVID period, High-EA predicted higher absolute prices, with each pp of BA+ Attainment adding nearly $14,000 to median home values.
 
 $$\widehat{\text{Median Price}} = \$234,656 + \$13,842 \times \text{BA+\%}$$ 
 
-In the post-COVID period, this relationship inverted: higher education predicted slower price appreciation. 
+In the post-COVID period, this relationship inverted: High-EA predicted slower price appreciation. 
 
 $$\widehat{\text{Price Change}} = 32.00\% - 0.380 \times \text{BA+\%}$$  
 
@@ -2833,9 +2833,9 @@ p
 
 Several factors likely explain this borough-wide education premium reversal. 
 
-Remote work <a href="https://www.cnn.com/2023/09/03/homes/remote-work-housing" target="_blank">reduced the need for living near employment-rich and amenitiy-filled hubs</a>, usually concentrated in high-EA CDs. Also, affordability pressures led buyers to migrate toward to <a href="https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf" target="_blank">undervalued CDs in the outer-borough areas</a>, offering greater access to homeownership opportunities. Lastly, lower valuation CDs experienced post-pandemic market correction, leading to catch-up growth, or <a href="https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate" target="_blank">a donut effect</a>, shifting market demand and creating higher prices in once affordable CDs. 
+Remote work <a href="https://www.cnn.com/2023/09/03/homes/remote-work-housing" target="_blank">reduced the need for living near employment-rich and amenitiy-filled hubs</a>, usually concentrated in High-EA CDs. Also, affordability pressures led buyers to migrate toward to <a href="https://www.freddiemac.com/research/pdf/202206-Note-Migration-08.pdf" target="_blank">undervalued CDs in the outer-borough areas</a>, offering greater access to homeownership opportunities. Lastly, lower valuation CDs experienced post-pandemic market correction, leading to catch-up growth, or <a href="https://siepr.stanford.edu/publications/policy-brief/donut-effect-how-covid-19-shapes-real-estate" target="_blank">a donut effect</a>, shifting market demand and creating higher prices in once affordable CDs. 
 
-These factors likely created a feedback loop. As the premium for high-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA districts while High-EA growth stagnated. However, this represents a change in growth rather than hierarchy. High-EA neighborhoods maintained absolute price dominance, but lost their advantage in appreciation rates.
+These factors likely created a feedback loop. As the premium for High-EA CDs diminished, demand shifted toward peripheral markets, accelerating appreciation in Low-EA districts while High-EA growth stagnated. However, this represents a change in growth rather than hierarchy. High-EA neighborhoods maintained absolute price dominance, but lost their advantage in appreciation rates.
 
 ### Contribution to Overarching Question
 
@@ -2853,9 +2853,9 @@ EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.
 
 ## Limitations and Conclusion
 
-While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low EA areas. Second, residents in high EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return back to physical work locations</a>. 
+While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low-EA areas. Second, residents in High-EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return back to physical work locations</a>. 
 
-Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional high-EA CDs are less significant, driven by demand shifts toward outer-borough value.
+Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional High-EA CDs are less significant, driven by demand shifts toward outer-borough value.
 
 ## References
 
