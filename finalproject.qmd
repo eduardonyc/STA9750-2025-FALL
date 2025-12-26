@@ -20,7 +20,7 @@ execute:
 
 The COVID-19 pandemic introduced a significant structural break in urban living patterns. Unprecedented disruptions altered individual needs and preferences, challenging the neighborhood characteristics that traditionally predicted property value premiums. These shifts drive our research team’s investigation into how value determinants adapted to these new dynamics, guided by the Overarching Question (OQ):
 
-*Did COVID-19 reshape the relationship between neighborhood characteristics and property values across NYC’s CDs?*
+*Did COVID-19 reshape the relationship between neighborhood characteristics and property values across NYC’s Community Districts?*
 
 While the <a href="https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html" target="_blank">team's broader effort</a> examines crime, density, job accessbility, and transit, this analysis isolates Educational Attainment (EA). Historically, high-education neighborhoods commanded significant price premiums from well-known <a href="https://www.annualreviews.org/deliver/fulltext/resource/11/1/annurev-resource-100518-094151.pdf?itemId=/content/journals/10.1146/annurev-resource-100518-094151&mimeType=application/pdf" target="_blank">agglomeration effects</a>. However, the pandemic’s disruption of physical proximity necessitates a re-evaluation of this premium. Consequently, this study seeks to answer the specific question (SQ):
 
@@ -336,7 +336,7 @@ tibble(
 
 ### Department of Finance Rolling Sales Data
 
-The get_dof_sales_year_boro() function automates collection and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Also, quality filters remove transactions under $10,000, restricting data collection to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a> (e.g., 1, 2, 2A, 2B, and 2C).  
+The `get_dof_sales_year_boro()` function automates collection and cleaning Annualized Sales reports from the NYC Department of Finance (DOF). Also, quality filters remove transactions under $10,000, restricting data collection to <a href="https://www.nyc.gov/site/finance/property/definitions-of-property-assessment-terms.page" target="_blank">residential tax classes</a> (e.g., 1, 2, 2A, 2B, and 2C).  
 
 ```{r}
 
