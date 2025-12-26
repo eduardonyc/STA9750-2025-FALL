@@ -76,6 +76,7 @@ library(utils)
 library(broom)   # tidy(), glance()
 library(knitr)   # kable tables
 library(infer)   # t_test
+library(plotly)  # spatial heterogeniety analysis   
 library(stats)   # descriptive statistics  
 
 options(dplyr.summarise.inform = FALSE)
@@ -331,8 +332,6 @@ tibble(
   kable(caption = "**Table 1: PLUTO BBL Normalization Results**")
 
 ```
-
----
 
 ### Department of Finance Rolling Sales Data
 
@@ -1612,7 +1611,7 @@ max_diff <- max(pretrend_slopes$slope) - min(pretrend_slopes$slope)
 
 Small inter-group differences of ``r round(max_diff, 3)`` satisfies the PTA requirements, confirming that post-pandemic changes represent structural shifts rather than trajectory continuations.
 
-#### **Education and Value: A Lesson on Geography** 
+#### **Education and Value: A Lesson on NYC Geography** 
 
 NYC's <a href="https://psc-cuny.org/clarion/2021/february/barriers-college-attainment/" target="_blank">exceptionally diverse EA landscape</a> requires establishing baseline disparities before testing pandemic impacts, as shown in Table 8 below.
 
@@ -1657,7 +1656,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 EA varies widely across CDs ($SD ≈ 19.9\%$). The 19.5 pp gap between the 25th and 75th percentiles supports tercile grouping, which better accounts for extreme shifts in CD behavior. 
 
 Table 9 below further highlights these disparities, with BA+ Attainment ranging between 11.7% (e.g., BX01, the South Bronx) to a maximum of 82.5% (e.g., MN05, the Upper East Side), representing a roughly 71 pp difference.
@@ -1694,7 +1693,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 The interactive Leaflet below highlights EA disparities across CDs. Clicking on an individual CD reveals its percentage of EA.
 
 ```{r}
@@ -1964,7 +1963,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Consequently, the full regression equation appears as:
 
 $$\widehat{\text{Median Price}}_{\text{Pre-COVID}} = \$234{,}656 + \$13{,}842 \times \text{BA+\%}$$
@@ -1993,10 +1992,8 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Although EA appears as a dominant neighborhood predictor pre-COVID, the analysis below demonstrates a statistically significant disruption to this trend, exposing a sharp post-pandemic reversal in the education premium.
-
----
 
 ## Post-COVID Analysis and Results
 
@@ -2113,7 +2110,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 These findings indicate a remarkable reversal of the traditional education premium. From 2017-19 to 2021-23, Low-EA CDs experienced 26.03% median price growth, compared to just 15.03% and 11.86% for Medium- and High-EA CDs, respectively. Notably, High-EA CDs grew at less than half the rate of Low-EA counterparts, representing a 14.2 pp difference.
 
 This result rejects Hypothesis 2, as Low-EA CDs saw the fastest appreciation. The Leaflet map below highlights this appreciation pattern across all CDs. 
@@ -2236,7 +2233,7 @@ map <- leaflet(cd_map_wgs84, width = "100%", height = "600px") |>
 prependContent(map, map_title)
 
 ```
-
+<div style="height: 15px;"></div>
 Contextualizing this reversal shows that Low-EA districts gained nearly $29,000 more than High-EA districts on average. In other words, a home purchased in a traditionally "less desirable" neighborhood in 2017 significantly outperformed its High-EA counterpart by 2023.
 
 The *t*-test in Table 13 below confirms this pattern.
@@ -2282,7 +2279,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Differences between high and low terciles is statistically significant at *p* = 0.002, with a 95% confidence interval entirely excluding zero. As a result, this outcome indicates  that the pattern is unlikely to have occurred by chance. 
 
 Figure 5 below shows the profound magnitude of this reversal. 
@@ -2407,7 +2404,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Comparing pre- and post-COVID models reveals this shift's extent.
 
 In the pre-COVID period, higher education predicted higher absolute prices, with each pp of BA+ Attainment adding nearly $14,000 to median home values.
@@ -2499,14 +2496,12 @@ kable(
   align = c("l", "l")
 )
 ```
-
+<div style="height: 15px;"></div>
 The regression-based prediction (-15.3 pp, from High's perspective) closely matches the observed tercile difference (+14.2 pp, from Low's perspective). This close correspondence (e.g., less than a 7% rate of change) confirms internal consistency between the non-parametric (tercile) and parametric (regression) approaches. 
 
 Whether comparing discrete education groups or modeling continuous relationships, the conclusion remains the same: Low-EA CDs experienced substantially faster price growth during the post-COVID period, with the magnitude of this reversal measuring approximately 14 to 15 pp.
 
----
-
-## Robustness: Citywide Validation by Borough
+## Spatial Variation: Examining Consistency Across Boroughs
 
 It is essential to examine whether this inverted education-growth relationship holds across all five boroughs, given their contrasting <a href="https://comptroller.nyc.gov/reports/new-york-a-city-of-diverse-evolving-neighborhoods/#:~:text=In%20this%20Spotlight%2C%20first%20examine,historically%20and%20since%20the%20pandemic
 " target="_blank">demographic compositions and unique pandemic experiences</a>.
@@ -2552,7 +2547,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Manhattan exhibited the highest volatility ($SD = 15.9\%$)). Queens showed similar variation ($SD=11.7\%$), while Brooklyn remained relatively more consistent ($SD=8.6\%$).
 
 Table 18 quantifies how EA impacts property values within each borough.
@@ -2623,7 +2618,7 @@ kable(
   row_spec(nrow(education_slopes_table), bold = TRUE)
 
 ```
-
+<div style="height: 15px;"></div>
 The citywide correlation of *r* = -0.540 represents the overall negative relationship between EA and price growth across all 59 CDs. However, there is considerable variation in how this pattern emerges across boroughs.
 
 Staten Island (SI), with its three CDs, exhibits the strongest negative relationship (*r* = -0.991, slope = -0.682). 
@@ -2661,7 +2656,7 @@ ggplot(
 
 ```
 
-This figure confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682.  
+This figure further confirms that no borough experienced the traditional positive education-growth relationship during the post-COVID period. In four of five boroughs, there was a moderate-to-strong negative relationship, with slopes ranging from -0.230 to -0.682.  
 
 Figure 7 provides an interactive view to explore individual CDs, boroughs, and these slope relationships.
 
@@ -2672,8 +2667,6 @@ Figure 7 provides an interactive view to explore individual CDs, boroughs, and t
 #| fig-width: 10
 #| fig-height: 7.5
 
-library(plotly)
-
 # Calculate correlation for citywide pattern (education vs growth)
 citywide_correlation <- cor(
   cd_analysis_simple$pct_ba_plus_2019, 
@@ -2682,20 +2675,20 @@ citywide_correlation <- cor(
 )
 
 # Data with regression lines for each borough
-borough_data_with_regression <- cd_analysis_simple %>%
-  filter(!is.na(borough)) %>%
-  group_by(borough) %>%
+borough_data_with_regression <- cd_analysis_simple |>
+  filter(!is.na(borough)) |>
+  group_by(borough) |>
   mutate(
     fitted_value = predict(lm(price_change_pct ~ pct_ba_plus_2019)),
     borough_n = n(),
     borough_r = cor(pct_ba_plus_2019, price_change_pct, use = "complete.obs"),
     borough_slope = coef(lm(price_change_pct ~ pct_ba_plus_2019))[2]
-  ) %>%
+  ) |>
   ungroup()
 
 # Unique boroughs for legend ordering
-boroughs <- borough_data_with_regression %>%
-  distinct(borough, borough_n, borough_r, borough_slope) %>%
+boroughs <- borough_data_with_regression |>
+  distinct(borough, borough_n, borough_r, borough_slope) |>
   arrange(desc(abs(borough_slope)))
 
 # Create base plot
@@ -2704,7 +2697,7 @@ p <- plot_ly()
 # Add traces for each borough (points + line together)
 for (i in 1:nrow(boroughs)) {
   boro <- boroughs$borough[i]
-  boro_data <- borough_data_with_regression %>% filter(borough == boro)
+  boro_data <- borough_data_with_regression |> filter(borough == boro)
   
   # Calculate legend label with correlation
   legend_label <- paste0(
@@ -2714,7 +2707,7 @@ for (i in 1:nrow(boroughs)) {
   )
   
   # Add scatter points
-  p <- p %>%
+  p <- p |>
     add_markers(
       data = boro_data,
       x = ~pct_ba_plus_2019,
@@ -2733,7 +2726,7 @@ for (i in 1:nrow(boroughs)) {
     )
   
   # Add regression line 
-  p <- p %>%
+  p <- p |>
     add_lines(
       data = boro_data,
       x = ~pct_ba_plus_2019,
@@ -2746,8 +2739,8 @@ for (i in 1:nrow(boroughs)) {
     )
 }
 
-# Layout  
-p <- p %>%
+# Layout
+p <- p |>
   layout(
     title = list(
       text = paste0(
@@ -2762,16 +2755,27 @@ p <- p %>%
       pad = list(t = 10, b = 20)
     ),
     xaxis = list(
-      title = "Educational Attainment (% BA+, 2019)",
+      title = list(
+        text = "Educational Attainment (% BA+, 2019)",
+        standoff = 25   
+      ),
       ticksuffix = "%",
       gridcolor = "#E5E5E5",
-      range = c(0, 85)
+      range = c(0, 85),
+      tickfont = list(size = 11),
+      automargin = TRUE   
     ),
     yaxis = list(
-      title = "Price Change (%)",
+      title = list(
+        text = "Price Change (%)",
+        standoff = 20   
+      ),
       ticksuffix = "%",
       gridcolor = "#E5E5E5",
-      range = c(-20, 55)
+      range = c(-20, 55),
+      tickfont = list(size = 11),
+      automargin = TRUE,   
+      side = "left"
     ),
     hovermode = "closest",
     legend = list(
@@ -2788,15 +2792,16 @@ p <- p %>%
     plot_bgcolor = "white",
     paper_bgcolor = "white",
     margin = list(
-      l = 80,
+      l = 120,    
       r = 220,   
       t = 120,   
-      b = 80
+      b = 100,    
+      pad = 10    
     )
   )
 
 # Annotation for citywide pattern
-p <- p %>%
+p <- p |>
   add_annotations(
     x = 0.02,
     y = 1.28,  
@@ -2805,7 +2810,8 @@ p <- p %>%
     text = paste0(
       "<b>Citywide Pattern:</b><br>",
       "r = ", round(citywide_correlation, 2), "<br>",
-      "Slope = -0.380 pp per 1% BA+<br>"),
+      "Slope = -0.380 pp per 1% BA+<br>"
+    ),
     showarrow = FALSE,
     align = "left",
     xanchor = "left",
@@ -2850,8 +2856,6 @@ EA was the only significant predictor in the team model (*β* = -0.402, *p* < 0.
 While this analysis provides clear evidence of a post-pandemic reversal, several limitations inform the results. First, CD level data may obscure location-specific variations, such as gentrification within Low EA areas. Second, residents in high EA CDs may have held onto their properties; thus, low growth may have resulted from a lack of available real estate, masking retention premiums. Finally, as the data extends only through 2023, it is unclear if these findings are indicative of temporary disruptions or longstanding, permanent shifts, considering recent employer mandates calling for <a href="https://www.usatoday.com/story/money/2025/08/27/work-from-home-workers-defy-rto-mandates/85821219007/" target="_blank">employees to return back to physical work locations</a>. 
 
 Despite these limitations, this research reveals pre- and post-COVID shifts reversed the relationship between neighborhood EA and property values in NYC. The pandemic reshaped buyer preferences, disrupting traditional valuation logic. Consequently, affordability pressures created a new urban landscape where traditional high-EA CDs are less significant, driven by demand shifts toward outer-borough value.
-
----
 
 ## References
 
