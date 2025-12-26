@@ -1180,7 +1180,6 @@ Treating EA as a fixed baseline is a critical research control. This step is nec
 
 Table 3 below demonstrates this fixed baseline strategy, showing that the same 2019 ACS education data is consistently applied across all six research years (2017-2023), enabling clean isolation of pandemic-era market shifts.
 
-
 ```{r}
 
 #| label: integrated-panel-coverage
@@ -1276,7 +1275,7 @@ kable(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 Omitting 2020 is essential to ensure analysis integrity. Given the acute shocks from this year, any statistical anomalies may distort long-term trend analysis; thus, bypassing it yields a clearer view of the market's post-COVID response. 
 
 The final data integration shown in Table 5 confirms critical data merging (e.g., median prices by CD-year) with education baselines held constant at 2019 levels. 
@@ -1349,7 +1348,7 @@ stopifnot(
 )
 
 ```
-
+<div style="height: 15px;"></div>
 ---
 
 The approaches highlighted in the <a href="https://eduardonyc.github.io/STA9750-2025-FALL/finalproject.html#data-acquisition-and-processing" target="_blank">Data Acquisition and Processing</a> section creates a balanced panel of 354 CD-year observations, with 59 CDs encompassing six years worth of data. This structure facilitates this research's <a href="https://www.publichealth.columbia.edu/research/population-health-methods/difference-difference-estimation" target="_blank">Difference-in-Differences</a> (DiD) analysis,  ensuring that any identified trends accurately link to post-pandemic shifts.
