@@ -2929,3 +2929,5 @@ Despite these limitations, this research reveals pre- and post-COVID shifts reve
 
 - Alarcon, E., Brinson, M., Li, K., Ng Li, T., & Socoy, J. (2025). *STA 9750 Team Summary Report: COVID-19 and NYC Property Values.* Baruch College.  
   <https://tiffany-ngli.github.io/STA9750-2025-FALL/Summary%20Report.html>
+  
+  TEST
